@@ -1,0 +1,12 @@
+# Vector object file: #
+
+Offsets:
+            0:.w = Number of points
+            2:.w = Number of frames
+            4:.w = Start of pointers to frames
+            8: ..
+            n: List of object data; pointer to object (w) then sort point of obj (w)
+            -1
+
+            Each object has polygons etc stored same as before.
+            Set of frames of points (x,y,z) all w

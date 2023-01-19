@@ -1,0 +1,13 @@
+# prefs file: #
+
+default: 
+            'k4nx'
+Offsets:
+            0:  "k" = Keyboard
+                "m" = Mouse
+                "n" = WASD
+                "j" = Joystick
+                "p" = Path
+            1:  "4" = Four Channel
+            2:  "s" = Stereo
+            3:  "b" = Background music

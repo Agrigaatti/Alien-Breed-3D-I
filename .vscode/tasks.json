@@ -1,0 +1,34 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+        {
+            "type": "amigaassembly",
+            "vasm": {
+                "enabled": true,
+                "command": "${config:amiga-assembly.binDir}/vasmm68k_mot",
+                "args": [
+                    "-m68020",
+                    "-Fhunk",
+                    "-linedebug"
+                ]
+            },
+            "vlink": {
+                "enabled": true,
+                "command": "${config:amiga-assembly.binDir}/vlink",
+                "createStartupSequence": true,
+                "createExeFileParentDir": true,
+                "exefilename": "../uae/dh0/myprogram",
+                "args": [
+                    "-bamigahunk",
+                    "-Bstatic"
+                ]
+            },
+            "problemMatcher": [],
+            "label": "amigaassembly: build current file",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
