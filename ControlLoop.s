@@ -121,7 +121,7 @@ FINISHEDLEVEL:       dc.w        STARTLEVEL
 *********************************************************************************************
 ; mors: m = master, s = slave, n = nothing?, q = quit/exit
 
-StartGame:
+PlayGame:
 
                      move.b      #'n',mors
 

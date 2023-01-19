@@ -74,68 +74,68 @@ tsp7l:
 tsp7h:
               dc.w      0
 
-              dc.w      $106,$c40
+              dc.w      bplcon3,$c40
  
 TITLEPALCOP:
-val           SET       $180
+val           SET       color00
               REPT      32
               dc.w      val,0
 val           SET       val+2
               ENDR 
  
-              dc.w      $106,$2c40
-val           SET       $180
+              dc.w      bplcon3,$2c40
+val           SET       color00
               REPT      32
               dc.w      val,0
 val           SET       val+2
               ENDR
  
-              dc.w      $106,$4c40
-val           SET       $180
+              dc.w      bplcon3,$4c40
+val           SET       color00
               REPT      32
               dc.w      val,0
 val           SET       val+2
               ENDR 
  
-              dc.w      $106,$6c40
-val           SET       $180
-              REPT      32
-              dc.w      val,0
-val           SET       val+2
-              ENDR
-
-val           SET       $180
-              dc.w      $106,$e40
-              REPT      32
-              dc.w      val,0
-val           SET       val+2
-              ENDR 
- 
-              dc.w      $106,$2e40
-val           SET       $180
-              REPT      32
-              dc.w      val,0
-val           SET       val+2
-              ENDR
- 
-              dc.w      $106,$4e40
-val           SET       $180
-              REPT      32
-              dc.w      val,0
-val           SET       val+2
-              ENDR 
- 
-              dc.w      $106,$6e40
-val           SET       $180
+              dc.w      bplcon3,$6c40
+val           SET       color00
               REPT      32
               dc.w      val,0
 val           SET       val+2
               ENDR
 
+val           SET       color00
+              dc.w      bplcon3,$e40
+              REPT      32
+              dc.w      val,0
+val           SET       val+2
+              ENDR 
  
-              dc.w      $106,$8c40
+              dc.w      bplcon3,$2e40
+val           SET       $180
+              REPT      32
+              dc.w      val,0
+val           SET       val+2
+              ENDR
+ 
+              dc.w      bplcon3,$4e40
+val           SET       color00
+              REPT      32
+              dc.w      val,0
+val           SET       val+2
+              ENDR 
+ 
+              dc.w      bplcon3,$6e40
+val           SET       color00
+              REPT      32
+              dc.w      val,0
+val           SET       val+2
+              ENDR
+
+ 
+              dc.w      bplcon3,$8c40
 OPTSCRNCOP:
-val           SET       $180
+val           SET       color00
               REPT      8
               dc.w      val,$fff
 val           SET       val+2
@@ -147,66 +147,52 @@ val           SET       val+2
 val           SET       val+2
 
               ENDR 
-              dc.w      $106,$ac40
-val           SET       $180
+              dc.w      bplcon3,$ac40
+val           SET       color00
               REPT      32
               dc.w      val,$fff
 val           SET       val+2
               ENDR
 
-              dc.w      $108,0
-              dc.w      $10a,0
+              dc.w      bpl1mod,0
+              dc.w      bpl2mod,0
 
               dc.w      bpl1ptl
-ts1l:
-              dc.w      0
+ts1l:         dc.w      0
               dc.w      bpl1pth
-ts1h:
-              dc.w      0
+ts1h:         dc.w      0
 
               dc.w      bpl2ptl
-ts2l:
-              dc.w      0
+ts2l:         dc.w      0
               dc.w      bpl2pth
-ts2h:
-              dc.w      0
+ts2h:         dc.w      0
  
               dc.w      bpl3ptl
-ts3l:
-              dc.w      0
+ts3l:         dc.w      0
               dc.w      bpl3pth
-ts3h:
-              dc.w      0
+ts3h:         dc.w      0
  
               dc.w      bpl4ptl
-ts4l:
-              dc.w      0
+ts4l:         dc.w      0
               dc.w      bpl4pth
-ts4h:
-              dc.w      0
+ts4h:         dc.w      0
  
               dc.w      bpl5ptl
-ts5l:
-              dc.w      0
+ts5l:         dc.w      0
               dc.w      bpl5pth
-ts5h:
-              dc.w      0
+ts5h:         dc.w      0
 
               dc.w      bpl6ptl
-ts6l:
-              dc.w      0
+ts6l:         dc.w      0
               dc.w      bpl6pth
-ts6h:
-              dc.w      0
+ts6h:         dc.w      0
 
               dc.w      bpl7ptl
-ts7l:
-              dc.w      0
+ts7l:         dc.w      0
               dc.w      bpl7pth
-ts7h:
-              dc.w      0
+ts7h:         dc.w      0
  
-              dc.w      $106,$8c40
+              dc.w      bplcon3,$8c40
  
 OPTCOP:
  

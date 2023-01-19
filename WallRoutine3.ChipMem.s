@@ -4,6 +4,12 @@
 
 *********************************************************************************************
 
+                  ifnd                   ENABLESEEWALL
+ENABLESEEWALL equ 0
+                  endc
+
+*********************************************************************************************
+
                   incdir                 "includes"
                   include                "macros.i"
 
@@ -124,23 +130,24 @@ pstit:
                   add.w                  d5,d5
                   swap                   d5
  
-                  bra                    screendivide
+                  bra                    screendivide                       ; skip forward
 
 *********************************************************************************************
 
 itercount:        dc.w                   0
 
 *********************************************************************************************
+; Seewall
 
 screendividethru:
-.scrdrawlop:
 
+.scrdrawlop:
                   move.w                 (a0)+,d0
                   move.l                 frompt,a3
                   adda.w                 .scrintocop(pc,d0.w*2),a3
                   move.l                 (a0)+,d1
  
-                  bra                    .pastscrinto
+                  bra                    .pastscrinto                       ; skip forward
 
 *********************************************************************************************
 
@@ -215,6 +222,8 @@ screendividethru:
                   dbra                   d7,.scrdrawlop
                   rts
 
+*********************************************************************************************
+
 .ffscrpickhowbright:
                   SCALE
 
@@ -275,22 +284,23 @@ outofcalc:
                   tst.w                  d7
                   bge.s                  .somethingtodraw
                   rts
-.somethingtodraw:
 
+.somethingtodraw:
                   move.l                 #consttab,a1
                   move.l                 #WorkSpace,a0
 
-                ; tst.b seethru
-                ; bne screendividethru
+                  IFNE                   ENABLESEEWALL
+                  tst.b                  seethru
+                  bne                    screendividethru
+                  ENDC
 
 scrdrawlop:
-
                   move.w                 (a0)+,d0
                   move.l                 frompt,a3
                   adda.w                 scrintocop(pc,d0.w*2),a3
                   move.l                 (a0)+,d1
  
-                  bra                    pastscrinto
+                  bra                    pastscrinto                        ; skip forward
 
 *********************************************************************************************
 
@@ -301,8 +311,6 @@ middleline:       dc.w                   0
 scrintocop:       incbin                 "data/XTOCOPX"
 
 *********************************************************************************************
-
-prot4:            dc.w                   0
 
 fromtile:         dc.l                   0
 fromquartertile:  dc.l                   0
@@ -341,6 +349,7 @@ pastscrinto:
                   move.l                 (a0)+,d4
                   swap                   d4
                   move.w                 d2,d6
+
 ***************************
 ; old version
                   asr.w                  #7,d6
@@ -576,10 +585,6 @@ DivideCurve
                   move.l                 (a7)+,a0
 
                   rts
-
-*********************************************************************************************
-
-prot3:            dc.w                   0
  
 *********************************************************************************************
 
@@ -936,6 +941,7 @@ CalcAndDraw:
 .foundinfront:
                   move.w                 (a1)+,d4
                   move.w                 (a1)+,lbr
+                  
  ; d1=left x, d4=left end, d0=left dist 
  
                   divs                   d0,d1
@@ -1819,8 +1825,8 @@ cantell:
                   tst.w                  6(a5,d2*8)
                   ble.s                  cliptotestsecbehind
                   bra                    pastclip
-cliptotestfirstbehind:
 
+cliptotestfirstbehind:
                   move.l                 (a5,d0*8),d3
                   sub.l                  (a5,d2*8),d3
                   move.w                 6(a5,d0*8),d6
@@ -1838,7 +1844,6 @@ cliptotestfirstbehind:
                   bra                    pastclip
  
 cliptotestsecbehind:
-
                   move.l                 (a5,d2*8),d3
                   sub.l                  (a5,d0*8),d3
                   move.w                 6(a5,d2*8),d6
@@ -1855,7 +1860,6 @@ cliptotestsecbehind:
                   bra                    cant_tell
 
 pastclip:
- 
                   move.w                 (a6,d0*2),d3
                   cmp.w                  #95,d3
                   bgt                    wallfacingaway
@@ -1915,7 +1919,6 @@ cant_tell:
                   movem.l                (a7)+,d7/a0/a5/a6
 
 wallfacingaway:
-
                   rts
 
 *********************************************************************************************
@@ -1937,3 +1940,5 @@ oldzoff:          dc.w                   0
 topclip:          dc.w                   0
 botclip:          dc.w                   0
 seethru:          dc.w                   0
+
+*********************************************************************************************
