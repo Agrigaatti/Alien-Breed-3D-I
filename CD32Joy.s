@@ -14,16 +14,10 @@
 InitLowLevel:
 
             lea        _lowlevel(pc),a1
-            moveq      #1,d0
+            moveq      #0,d0
             move.l     4.w,a6
             jsr        _LVOOpenLibrary(a6)
-            tst.l      d0
-            beq.s      .NoLowLib
             move.l     d0,_LowBase
-            rts
-
-.NoLowLib:
-            moveq      #-1,d0
             rts
 
 *********************************************************************************************
@@ -211,7 +205,7 @@ _ReadJoy1:
             sne        d3
             moveq      #0,d5
             move.b     fire_key,d5
-            btst       #7,$bfe001
+            btst       #7,$bfe001                ; LMB port 2
             seq        (a5,d5.w)
 
             move.b     turn_left_key,d5
@@ -400,7 +394,7 @@ _ReadJoy2:
             sne        d3
             moveq      #0,d5
             move.b     fire_key,d5
-            btst       #7,$bfe001
+            btst       #7,$bfe001                ; LMB port 2
             seq        (a5,d5.w)
 
             move.b     turn_left_key,d5

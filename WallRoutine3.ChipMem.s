@@ -143,7 +143,7 @@ screendividethru:
 
 .scrdrawlop:
                   move.w                 (a0)+,d0
-                  move.l                 frompt,a3
+                  move.l                 frompt,a3                          ; Copper chunky
                   adda.w                 .scrintocop(pc,d0.w*2),a3
                   move.l                 (a0)+,d1
  
@@ -296,7 +296,7 @@ outofcalc:
 
 scrdrawlop:
                   move.w                 (a0)+,d0
-                  move.l                 frompt,a3
+                  move.l                 frompt,a3                          ; Copper chunky
                   adda.w                 scrintocop(pc,d0.w*2),a3
                   move.l                 (a0)+,d1
  
@@ -425,7 +425,6 @@ StripData:        dc.w                   0
 * d4 = left strip
 * d5 = right strip
 
-
 * Routine to draw a wall;
 * pass it X and Z coords of the endpoints
 * and the start and end length, and a number
@@ -449,27 +448,27 @@ store:            ds.l                   500
 * Which bitmap to use for the arc
 
 xmiddle:          dc.w                   0
-zmiddle           SET                    2
+zmiddle:          SET                    2
                   dc.w                   0
-xradius           SET                    4
+xradius:          SET                    4
                   dc.w                   0
-zradius           SET                    6
+zradius:          SET                    6
                   dc.w                   0
-startbitmap       SET                    8
+startbitmap:      SET                    8
                   dc.w                   0
-bitmapcounter     SET                    10
+bitmapcounter:    SET                    10
                   dc.w                   0
-brightmult        SET                    12
+brightmult:       SET                    12
                   dc.w                   0
-angadd            SET                    14
+angadd:           SET                    14
                   dc.l                   0
-xmiddlebig        SET                    18
+xmiddlebig:       SET                    18
                   dc.l                   0
-basebright        SET                    22
+basebright:       SET                    22
                   dc.w                   0
-shift             SET                    24
+shift:            SET                    24
                   dc.w                   0
-count             SET                    26
+count:            SET                    26
                   dc.w                   0
 
 *********************************************************************************************
@@ -484,6 +483,7 @@ subdividevals:
 *********************************************************************************************
 
 CurveDraw:
+; a0 = ThisRoomToDraw+n
 
                   move.w                 (a0)+,d0                           ; centre of rotation
                   move.w                 (a0)+,d1                           ; point on arc
@@ -533,7 +533,8 @@ CurveDraw:
                   moveq                  #0,d0
                   moveq                  #0,d1
                   move.w                 count(a2),d7
-DivideCurve
+
+DivideCurve:
                   move.l                 d0,d2
                   move.w                 shift(a2),d4
                   asr.l                  d4,d2
@@ -592,15 +593,20 @@ curvecalc:
                   move.l                 #databuffer,a1
                   move.w                 count(a2),d7
                   subq                   #1,d7
+
 .findfirstinfront:
                   move.l                 (a1)+,d1
                   move.w                 (a1)+,d0
                   bgt.s                  .foundinfront
+
                   move.w                 (a1)+,d4
                   move.w                 (a1)+,d6
                   dbra                   d7,.findfirstinfront
+
                   SUPERVISOR             SetInstCacheOn
                   rts                                                       ; no two points were in front
+ 
+ *****************************************************************
  
 .foundinfront:
                   move.w                 (a1)+,d4
@@ -631,6 +637,8 @@ curvecalc:
  
                   SUPERVISOR             SetInstCacheOn
                   rts
+
+*****************************************************************
 
 .infront:
                   move.l                 #store,a0
@@ -686,61 +694,6 @@ curvecalc:
 
 *********************************************************************************************
 
-                ;protcheck:
-                ; sub.l #53624,a3
-                ; add.l #2345215,a2
-                ; lea passspace-$30000(pc),a1
-                ; add.l #$30000,a1
-                ; lea startpass(pc),a5
-                ; move.w #endpass-startpass-1,d1
-                ;copypass:
-                ; move.b (a5)+,(a1)+
-                ; dbra d1,copypass
-                ; sub.l a5,a5
-                ; lea passspace-$30000(pc),a1
-                ; add.l #$30000,a1
-                ; jsr (a1)
-                ; lea passspace-$30000(pc),a1
-                ; add.l #$30000,a1
-                ; lea startpass(pc),a5
-                ; move.w #(endpass-startpass)/2-1,d1
-                ;erasepass:
-                ; move.w -(a5),(a1)+
-                ; dbra d1,erasepass
-                ; sub.l a5,a5
-                ; sub.l a1,a1
-                ; eor.l #$af594c72,d0
-                ; sub.l #123453986,a4
-                ; move.l d0,(a4)
-                ; add.l #123453986,a4
-                ; move.l #0,d0
-                ; sub.l #2345215,a2
-                ; jsr (a2)
-                ; sub.l a2,a2
-                ; eor.l #$af594c72,d0
-                ; sub.l #123453986,a4
-                ; move.l (a4),d1
-                ; add.l #123453986,a4
-                ; cmp.l d1,d0
-                ; bne.s notrightt
-                ; add.l #53624,a3
-                ; move.w #9,d7
-                ;sayitsok:
-                ; move.l (a3)+,a2
-                ; add.l #78935450,a2
-                ; st (a2)
-                ; dbra d7,sayitsok
-                ;notrightt:
-                ; sub.l a3,a3
-                ;nullit:
-                ; rts
-                ; 
-                ; incbin "ab3:includes/protroutencoded"
-
-endprot:
-
-*********************************************************************************************
-
 iters:            dc.w                   0
 multcount:        dc.w                   0
 
@@ -757,6 +710,7 @@ walldraw:
 oneinfront1:
                   tst.w                  d3
                   ble.s                  oneinfront
+
 ; Bothinfront!
 
                   nop
@@ -1027,10 +981,8 @@ rightwallbright:  dc.w                   0
 strtop:           dc.w                   0
 strbot:           dc.w                   0
  
-databuffer:
-                  ds.l                   600
-databuffer2:
-                  ds.l                   600
+databuffer:       ds.l                   600
+databuffer2:      ds.l                   600
 
 *********************************************************************************************
 ; Need a routine which takes...?
@@ -1091,6 +1043,9 @@ nocliptop:
 *********************************************************************************************
 
 wlcnt:            dc.w                   0 
+
+*********************************************************************************************
+
                 ; CNOP 0,4
 
 *********************************************************************************************
@@ -1103,7 +1058,7 @@ wlcnt:            dc.w                   0
                 ; move.w (a4,d1.w*2),(a3)
                 ; adda.w d0,a3
                 ; addx.w d2,d4
-                ; dbra d6,drawwallPACK0
+                ; dbra d6,drawwalldimPACK0
                 ; rts
 
 *********************************************************************************************
@@ -1121,11 +1076,14 @@ drawwallPACK0:
                   adda.w                 d0,a3
                   addx.w                 d2,d4
                   dbra                   d6,drawwallPACK0
-
-nostrip:
                   rts
 
+*********************************************************************************************
+
                 ; CNOP 0,4
+
+*********************************************************************************************
+
                 ;drawwalldimPACK1:
                 ; and.w d7,d4
                 ; move.w (a5,d4.w*2),d1
@@ -1171,7 +1129,7 @@ drawwallPACK1:
                 ; move.w (a4,d1.w*2),(a3)
                 ; adda.w d0,a3
                 ; addx.w d2,d4
-                ; dbra d6,drawwallPACK2
+                ; dbra d6,drawwalldimPACK2
                 ; rts
 
 *********************************************************************************************
@@ -1191,6 +1149,8 @@ drawwallPACK2:
                   dbra                   d6,drawwallPACK2
                   rts
 
+*********************************************************************************************
+
 usesimple:
                   mulu                   d3,d4
  
@@ -1200,7 +1160,7 @@ usesimple:
 
 cliptopusesimple
                   move.w                 VALAND,d7
-                  move.w                 #104*4,d0
+                  move.w                 #widthOffset,d0
                   moveq                  #0,d1
 
                 ; cmp.l a4,a2
@@ -1341,7 +1301,7 @@ gotoend:
 cliptop:
                   move.w                 VALAND,d7
                   and.w                  d7,d4
-                  move.w                 #104*4,d0
+                  move.w                 #widthOffset,d0
                   moveq                  #0,d1
 
                   move.l                 d2,d3
@@ -1355,10 +1315,10 @@ cliptop:
 
 timeslarge:
 
-val               SET                    104*4
+val               SET                    widthOffset
                   REPT                   80
                   dc.l                   val
-val               SET                    val+104*4
+val               SET                    val+widthOffset
                   ENDR
 
 nostripqthru:
@@ -1537,7 +1497,7 @@ usesimplethru:
  
 cliptopusesimplethru:
                   moveq                  #63,d7
-                  move.w                 #104*4,d0
+                  move.w                 #widthOffset,d0
                   moveq                  #0,d1
                   cmp.l                  a4,a2
                   blt.s                  usea2thru
@@ -1728,7 +1688,7 @@ gotoendthru:
 
 cliptopthru:
                   moveq                  #63,d7
-                  move.w                 #104*4,d0
+                  move.w                 #widthOffset,d0
                   moveq                  #0,d1
  
                   move.l                 d2,d3
@@ -1745,10 +1705,10 @@ cliptopthru:
 
 timeslargethru:
 
-val               SET                    104*4
+val               SET                    widthOffset
                   REPT                   80
                   dc.l                   val
-val               SET                    val+104*4
+val               SET                    val+widthOffset
                   ENDR
 
 *********************************************************************************************
@@ -1821,6 +1781,7 @@ itsawalldraw:
                   tst.w                  6(a5,d2*8)
                   ble                    wallfacingaway
                   bra                    cliptotestfirstbehind
+
 cantell:
                   tst.w                  6(a5,d2*8)
                   ble.s                  cliptotestsecbehind

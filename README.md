@@ -1,6 +1,6 @@
 # Alien Breed 3D I
 * For VS Code with Amiga Assembly extension (Paul Raingeard)<br>
-* For AGA + 68020 + 2mb CHIP + 2mb FAST + Mass storage<br>
+* For AGA + 68020 + 2mb CHIP + 2mb FAST + KS ROM v3.1 + Mass storage<br>
 * Assembled around the "4000test.s" source code<br>
 * Needs data files from the original game<br>
 <br>

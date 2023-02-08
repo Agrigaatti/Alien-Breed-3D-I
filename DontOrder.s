@@ -1,20 +1,21 @@
 *********************************************************************************************
 
-              opt        P=68020
+             opt       P=68020
 
 *********************************************************************************************
 
 OrderZones:
 
              move.l    ListOfGraphRooms,a0
-; a0=list of rooms to draw.
 
+; a0=list of rooms to draw.
 
              move.l    #ToDrawTab,a1
              move.l    a1,a3
 
              moveq     #99,d0
              moveq     #0,d1
+
 .clrtab:
              move.l    d1,(a1)+
              dbra      d0,.clrtab
@@ -47,18 +48,14 @@ nomoreset:
              move.w    #-1,OrderTab+2
              move.w    #2,d5                  ; off end of list.
  
-             move.w    #7,d7                  ; which ones to look
- 		; at.
+             move.w    #7,d7                  ; which ones to look at.
 
 OrderLoop:
-
-             clr.b     d6                     ; flag for new zones
- 		; added.
+             clr.b     d6                     ; flag for new zones added.
 
              move.l    #OrderTab,a5
  		
 RunThroughList:
-
              tst.w     6(a5)
              bra.s     anewone
 
@@ -69,7 +66,6 @@ RunThroughList:
              bra       RunThroughList
 
 anewone:
-
              move.w    #0,6(a5)
              move.l    #FloorLines,a1
 
@@ -78,6 +74,7 @@ anewone:
              move.l    (a0,d0.w*4),a0
 
              adda.w    #14,a0
+
 findexits:
              move.w    (a0)+,d0
              bge.s     findexits
@@ -92,8 +89,6 @@ findexits:
              bra       RunThroughList
 
 doneallthispass:
-
-
              tst.b     d6
              bne       OrderLoop
 
@@ -112,7 +107,6 @@ showorder:
              bra       showorder
 
 doneorder:
-
              move.l    a0,endoflist
 
              move.w    #-1,(a0)+
@@ -158,7 +152,6 @@ InsertList
 **************************************
 
 PutFurtherAway:
-
              move.l    a5,a4
 
 .lookfurther:
@@ -194,6 +187,7 @@ PutFurtherAway:
              move.w    4(a3),d0
              tst.w     6(a6,d0.w*8)
              beq.s     .nomoreafter
+
 .moreafter:
              move.w    4(a6,d0.w*8),d0
              tst.w     6(a6,d0.w*8)
@@ -232,8 +226,7 @@ PutFurtherAway:
 
              bra       .wasfurther
  
-.append
-
+.append:
              move.w    d0,4(a6)
              move.w    (a5),d0
              move.w    d3,4(a5)
@@ -255,8 +248,8 @@ PutFurtherAway:
              blt.s     .atfarend
              move.l    #OrderTab,a4
              move.w    d5,(a4,d0.w*8)
-.atfarend:
 
+.atfarend:
              move.w    (a5),d0
              move.l    #OrderTab,a4
              lea       (a4,d0.w*8),a4
@@ -271,22 +264,20 @@ PutFurtherAway:
              st        d6
  
 .wasfurther:
-
 PutDone:
-
 notindrawlist:
-
              bra       InsertList
 
 allinlist:
-
              rts
 
 *********************************************************************************************
 
-ToDrawTab:
-             ds.l      100
+ToDrawTab:   ds.l      100
 OrderTab:    ds.l      100
              dc.w      -1
+             
 FinalOrder:  ds.l      100
 doneone:     dc.w      0
+
+*********************************************************************************************

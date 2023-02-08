@@ -74,21 +74,21 @@ NoWorkbench:
             jsr         _LVOOwnBlitter(a6)       
             jsr         _LVOWaitBlit(a6)        
 
-            move.l      #$dff000,a6
+            lea         $dff000,a6 
 
-            move.w      DMACONR(a6),d0
+            move.w      dmaconr(a6),d0
             or.w        #$8000,d0  	
             move.w      d0,olddmareq	
 
-            move.w      INTENAR(a6),d0
+            move.w      intenar(a6),d0
             or.w        #$8000,d0
             move.w      d0,oldintena
 
-            move.w      INTREQR(a6),d0
+            move.w      intreqr(a6),d0
             or.w        #$8000,d0
             move.w      d0,oldintreq
 
-            move.w      ADKCONR(a6),d0
+            move.w      adkconr(a6),d0
             or.w        #$8000,d0
             move.w      d0,oldadkcon
 
@@ -102,12 +102,12 @@ OSFriendlyExit:
 
             SAVEREGS
 
-            move.l      #$dff000,a6
+            lea         $dff000,a6 
       	
-            move.w      oldintena,INTENA(a6)
-            move.w      oldintreq,INTREQ(a6)
-            move.w      olddmareq,DMACON(a6)
-            move.w      oldadkcon,ADKCON(a6)
+            move.w      oldintena,intena(a6)
+            move.w      oldintreq,intreq(a6)
+            move.w      olddmareq,dmacon(a6)
+            move.w      oldadkcon,adkcon(a6)
 
             move.l      oldcopper,cop1lch(a6)
             clr.w       copjmp1(a6)

@@ -73,11 +73,10 @@ ExplodeIntoBits:
                    move.w        #7,d2
 
 .oksplut:
-
                    move.l        NastyShotData,a5
                    move.w        #19,d1
 
-.findeight
+.findeight:
                    move.w        12(a5),d0
                    blt.s         .gotonehere
                    adda.w        #64,a5
@@ -259,6 +258,7 @@ objmoveanim:
 
                    move.l        PLR1_Roompt,a0
                    move.w        (a0),PLR1_Zone
+                   
                    move.l        PLR2_Roompt,a0
                    move.w        (a0),PLR2_Zone
 
@@ -1204,7 +1204,7 @@ notdoneflame:
                    cmp.w         #4,SecTimer(a0)
                    bne.s         .nowhoosh
 
-                   movem.l       d0-d7/a0-a6,-(a7)
+                   SAVEREGS
                    move.l        #ObjRotated,a1
                    move.w        (a0),d0
                    lea           (a1,d0.w*8),a1
@@ -1215,7 +1215,7 @@ notdoneflame:
                    clr.b         notifplaying
                    move.b        1(a0),IDNUM
                    jsr           MakeSomeNoise
-                   movem.l       (a7)+,d0-d7/a0-a6
+                   GETREGS
 
 .nowhoosh:
 
@@ -1327,8 +1327,7 @@ notexploding:
                    bgt.s         nodamage
                    move.b        #0,numlives(a0)
 
-                   movem.l       d0-d7/a0-a6,-(a7)
- 
+                   SAVEREGS
                    move.w        (a0),d0
                    move.l        ObjectPoints,a1
                    move.w        (a1,d0.w*8),Viewerx
@@ -1342,8 +1341,8 @@ notexploding:
                    move.w        #300,Noisevol
                    move.w        #15,Samplenum
                    jsr           MakeSomeNoise
- 
-                   movem.l       (a7)+,d0-d7/a0-a6
+                   GETREGS
+
                    move.w        #8,8(a0)
                    move.w        #0,10(a0)
                    move.w        #$2020,14(a0)
@@ -1758,6 +1757,9 @@ ItsABigGun:
 
 .NotPickedUp:
 .NotSameZone:
+
+************************************************************
+
 GUNPLR2:
                    move.b        PLR2_StoodInTop,d0
                    move.b        ObjInTop(a0),d1
@@ -1843,6 +1845,7 @@ AmmoInGuns:        dc.w          0
 
 ItsAKey:
 ; Pickup key and draw it to the panel
+; Note: Only the master (plr1) can pickup a key in coop mode 
 
                    tst.b         NASTY
                    bne           .yesnas
@@ -1852,6 +1855,8 @@ ItsAKey:
 .yesnas:
                    move.w        12(a0),GraphicRoom(a0)
                    clr.b         worry(a0)
+
+*********************************************************
 
                    move.b        PLR1_StoodInTop,d0
                    move.b        ObjInTop(a0),d1
@@ -1871,6 +1876,8 @@ ItsAKey:
                    move.w        d0,4(a0)
                    cmp.w         12(a0),d7
                    bne           .NotSameZone
+
+*********************************************************
 
                    move.w        (a0),d0
                    move.l        ObjectPoints,a1
@@ -2731,14 +2738,11 @@ ItsABullet:
                    bra.s         infinite 
  
 notdone:
-
                    move.w        TempFrames,d2
                    add.w         d2,shotlife(a0)
  
 infinite:
- 
 noworrylife:
- 
                    move.w        #0,extlen
                    move.b        #$ff,awayfromwall
 
@@ -2767,8 +2771,8 @@ noworrylife:
                    clr.b         shotstatus(a0)
                    move.b        #0,shotanim(a0)
                    rts
-notdonepopping:
 
+notdonepopping:
                    add.b         #1,shotanim(a0)
                    move.w        d2,6(a0)
                    move.l        2(a2,d1.w*8),8(a0)
@@ -2780,7 +2784,6 @@ notdonepopping:
                    rts
 
 notpopping:
-
                    moveq         #0,d1
                    move.b        shotsize(a0),d1
                    move.l        #BulletSizes,a2
@@ -2798,7 +2801,6 @@ notpopping:
                    move.w        #0,d1
 
 notdoneanim:
-
                    move.w        (a2,d1.w*8),6(a0)
                    move.l        2(a2,d1.w*8),8(a0)
                    move.w        6(a2,d1.w*8),d3
@@ -2816,8 +2818,8 @@ notdoneanim:
                    tst.b         ObjInTop(a0)
                    beq.s         .notintop
                    adda.w        #8,a3
+
 .notintop:
- 
                    move.l        6(a3),d0
                    sub.l         accypos(a0),d0
                    cmp.l         #10*128,d0
@@ -2844,12 +2846,11 @@ notdoneanim:
  
                    bra           .nohitroof
 
-.nobounce: 
- 
+.nobounce:
                    move.b        #0,shotanim(a0)
                    move.b        #1,shotstatus(a0)
  
-                   movem.l       d0-d7/a0-a6,-(a7)
+                   SAVEREGS
                    move.l        #HitNoises,a2
                    moveq         #0,d0
                    move.b        shotsize(a0),d0
@@ -2866,7 +2867,6 @@ notdoneanim:
                    jsr           MakeSomeNoise
  
 .nohitnoise:
-
                    moveq         #0,d0
                    move.l        #ExplosiveForce,a2
                    move.b        shotsize(a0),d0
@@ -2882,8 +2882,7 @@ notdoneanim:
                    bsr           ComputeBlast
  
 .noexplosion:
-
-                   movem.l       (a7)+,d0-d7/a0-a6
+                   GETREGS
 
 .nohitroof:
                    move.l        2(a3),d0
@@ -2917,14 +2916,13 @@ notdoneanim:
                    asr.l         #1,d0
                    move.l        d0,shotzvel(a0) 
  
- 
                    bra           .nohitfloor
+
 .nobounceup: 
-
-
                    move.b        #0,shotanim(a0)
                    move.b        #1,shotstatus(a0)
-                   movem.l       d0-d7/a0-a6,-(a7)
+
+                   SAVEREGS
                    move.l        #HitNoises,a2
                    moveq         #0,d0
                    move.b        shotsize(a0),d0
@@ -2939,6 +2937,7 @@ notdoneanim:
                    move.w        d0,Samplenum
                    move.b        d1,IDNUM
                    jsr           MakeSomeNoise
+
 .nohitnoise2:
                    moveq         #0,d0
                    move.l        #ExplosiveForce,a2
@@ -2953,10 +2952,9 @@ notdoneanim:
                    bsr           ComputeBlast
  
 .noexplosion2:
-                   movem.l       (a7)+,d0-d7/a0-a6
-.nohitfloor:
+                   GETREGS
 
- 
+.nohitfloor:
                    move.l        ObjectPoints,a1
                    move.w        (a0),d1
                    lea           (a1,d1.w*8),a1
@@ -3001,6 +2999,7 @@ notdoneanim:
                    move.l        #10*256,d6
                    okgrav        :
                    move.w        d6,shotyvel(a0)
+
 nograv:
                    move.l        accypos(a0),d4 
                    add.l         d3,d4
@@ -3033,6 +3032,7 @@ lalal:
                    movem.l       d0/d7/a0/a1/a2/a4/a5,-(a7)
                    jsr           MoveObject
                    movem.l       (a7)+,d0/d7/a0/a1/a2/a4/a5
+
 nomovebul:
                    move.b        StoodInTop,ObjInTop(a0)
   
@@ -3081,7 +3081,6 @@ nomovebul:
                    bra           .nothitwall
 
 .notabouncything:
-  
                    tst.b         hitwall
                    beq           .nothitwall
  
@@ -3090,12 +3089,12 @@ nomovebul:
                    asr.l         #7,d4
                    move.w        d4,4(a0)
  
-.hitsomething
+.hitsomething:
                    clr.b         timeout
                    move.b        #0,shotanim(a0)
                    move.b        #1,shotstatus(a0)
 
-                   movem.l       d0-d7/a0-a6,-(a7)
+                   SAVEREGS
                    move.l        #HitNoises,a2
                    moveq         #0,d0
                    move.b        shotsize(a0),d0
@@ -3112,7 +3111,6 @@ nomovebul:
                    jsr           MakeSomeNoise
 
 .nohitnoise:
-
                    moveq         #0,d0
                    move.l        #ExplosiveForce,a2
                    move.b        shotsize(a0),d0
@@ -3126,34 +3124,29 @@ nomovebul:
                    bsr           ComputeBlast
  
 .noexplosion:
+                   GETREGS
 
-                   movem.l       (a7)+,d0-d7/a0-a6
-
-; bra doneshot
-
-; rts
+                    ; bra doneshot
+                    ; rts
  
 .nothitwall:
-
                    tst.b         timeout
                    bne           .hitsomething
 
 lab:
-
-
                    move.l        objroom,a3
                    move.w        (a3),12(a0)
                    move.w        (a3),GraphicRoom(a0)
                    move.l        newx,(a1)
                    move.l        newz,4(a1)
-************ 
-* Check if hit a nasty
+
+; Check if hit a nasty
 
                    tst.l         EnemyFlags(a0)
                    bne.s         notasplut
                    rts
-notasplut:
 
+notasplut:
                    move.l        ObjectData,a3
                    move.l        ObjectPoints,a1
                    move.w        newx,d2
@@ -3171,11 +3164,13 @@ notasplut:
                    beq           .oksqr
 
                    move.w        #31,d0
-.findhigh
+
+.findhigh:
                    btst          d0,d2
                    bne           .foundhigh
                    dbra          d0,.findhigh
-.foundhigh
+
+.foundhigh:
                    asr.w         #1,d0
                    clr.l         d3
                    bset          d0,d3
@@ -3189,8 +3184,8 @@ notasplut:
                    sub.w         d1,d0                                                           ; second approx
                    bgt           .stillnot0
                    move.w        #1,d0
-.stillnot0
 
+.stillnot0:
                    move.w        d0,d1
                    muls          d1,d1
                    sub.l         d2,d1
@@ -3199,8 +3194,8 @@ notasplut:
                    sub.w         d1,d0                                                           ; second approx
                    bgt           .stillnot02
                    move.w        #1,d0
-.stillnot02
 
+.stillnot02:
                    move.w        d0,d1
                    muls          d1,d1
                    sub.l         d2,d1
@@ -3209,9 +3204,9 @@ notasplut:
                    sub.w         d1,d0                                                           ; second approx
                    bgt           .stillnot03
                    move.w        #1,d0
-.stillnot03
- 
-.oksqr
+
+.stillnot03:
+.oksqr:
                    move.w        d0,Range
                    add.w         #40,d0
                    muls          d0,d0
@@ -3238,8 +3233,8 @@ notasplut:
                    sub.w         d1,d2
                    bge           .okh
                    neg.w         d2
+
 .okh:
- 
                    cmp.w         2(a6),d2
                    bgt           .notanasty
  
@@ -3259,6 +3254,7 @@ notasplut:
                    sub.l         d7,d6
                    bgt.s         .pos
                    neg.l         d6
+
 .pos:
                    divs          Range,d6
                    cmp.w         (a6),d6
@@ -3282,7 +3278,7 @@ notasplut:
                    move.b        #0,shotanim(a0)
                    move.b        #1,shotstatus(a0)
  
-                   movem.l       d0-d7/a0-a6,-(a7)
+                   SAVEREGS
                    move.l        #HitNoises,a2
                    moveq         #0,d0
                    move.b        shotsize(a0),d0
@@ -3297,6 +3293,7 @@ notasplut:
                    move.w        d0,Samplenum
                    move.b        d1,IDNUM
                    jsr           MakeSomeNoise
+
 .nohitnoise3:
                    moveq         #0,d0
                    move.l        #ExplosiveForce,a2
@@ -3310,19 +3307,18 @@ notasplut:
                    bsr           ComputeBlast
  
 .noexplosion3:
-                   movem.l       (a7)+,d0-d7/a0-a6
- 
+                   GETREGS
  
                    bra           .hitnasty
+
 .stillgoing:
 .notanasty:
                    add.w         #64,a3
                    bra           .checkloop
+
 .hitnasty:
 .checkedall
-
 doneshot:
-
                    rts
 
 *********************************************************************************************
@@ -3332,22 +3328,32 @@ tmpnewz:           dc.l          0
 hithit:            dc.l          0
 sqrnum:            dc.l          0
 tmpangpos:         dc.l          0
-allbars:           dc.l          0
-backrout:          ds.b          800
+
 NUMTOCHECK:        dc.w          0 
 
 *********************************************************************************************
+*********************************************************************************************
+
+allbars:           dc.l          0
+backrout:          ds.b          800
+
+*********************************************************************************************
+; Monkey business!
 
 MAKEBACKROUT:
+
                    move.l        #backrout+256,d0
                    clr.b         d0
                    move.l        d0,allbars
                    move.l        d0,a1
-                   move.l        #fromback,a0
+
+                   lea           fromback,a0
                    move.w        #400,d0
+
 putinback:
                    move.b        (a0)+,(a1)+
                    dbra          d0,putinback
+
                    rts
 
 *********************************************************************************************
@@ -3364,14 +3370,14 @@ putinbackdrop:
 
                    SUPERVISOR    SetInstCacheOn
 
-                   move.l        frompt,a0
-                   adda.w        #104*4,a0
-                   move.l        #EndBackPicture,a3
-                   lea.l         BackPicture,a1
+                   move.l        frompt,a0                                                       ; Copper chunky
+                   adda.w        #widthOffset,a0
+                   lea           EndBackPicture,a3
+                   lea           BackPicture,a1
                    add.l         d5,a1
                    move.w        #2,d4
- 
-                   move.l        allbars(pc),a2
+
+                   move.l        allbars(pc),a2                                                  
                    jmp           (a2)
 
 *********************************************************************************************
@@ -3380,28 +3386,31 @@ fromback:
                    move.w        #31,d3
 onebar:
 vertline:	
+
 val                SET           0
                    REPT          19
                    move.l        (a1)+,d0
-                   move.w        d0,val+104*4(a0)
+                   move.w        d0,(val+widthOffset)(a0)
                    swap          d0
                    move.w        d0,val(a0)
-val                SET           val+104*8
+val                SET           val+(widthOffset*2)
                    ENDR
  
                    cmp.l         a3,a1
                    blt.s         notoffrightend
                    move.l        #BackPicture,a1
+                   
 notoffrightend:
- 
                    addq          #4,a0
                    dbra          d3,onebar
+
                    addq          #4,a0
                    dbra          d4,fromback
  
                    move.l        (a7)+,a0
                    rts
 
+*********************************************************************************************
 *********************************************************************************************
 
 MaxDamage:         dc.w          0
@@ -3577,20 +3586,21 @@ CheckedEmAll:
                    move.w        #19,NUMTOCHECK
  
                    move.w        #3,d6
+
 radiusloop:
                    move.w        #2,d7
  
 DOFLAMES:
-
                    move.w        NUMTOCHECK,d1
-.findonefree
+
+.findonefree:
                    move.w        12(a3),d2
                    blt.s         .foundonefree
                    adda.w        #64,a3
                    dbra          d1,.findonefree
                    rts
-.foundonefree
 
+.foundonefree:
                    move.w        d1,NUMTOCHECK
 
                    add.w         #1,doneflames

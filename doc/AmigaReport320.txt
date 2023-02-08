@@ -1,0 +1,41 @@
+from https://www.amigareport.com/ar320/news11.html
+
+                       Alien Breed 3D Special Edition
+
+       Alien Breed 3D - Full screen 1x1 Pixel Mode!!! Yes it`s true!!
+
+Having caught wind of what other people were up to, Andy (coder behind
+AB3D) has managed to re-write a lot of the original AB3D engine and now
+offers the following features;
+
+NEW ENGINE FEATURES!
+
+* Glass Objects (great effect)
+* Transparent textures (for fences etc)
+* Ability to look up and down (Like, for eg, Dark Forces/Descent)
+
+CHUNKY TO PLANAR SCREEN CONVERSION FOR 030+ BASED AMIGAS!
+
+* 2 screen resolutions 192x128, 320x256
+* 256 or 64 colours for A3000 compatability!
+* Pixel Ratio options 2:2, 2:1, 1:1
+* Support for Graphics cards such as the Picasso II
+
+It is planned that we will offer the new code as part of the AB3D SPECIAL
+EDITION PACK that we are now planning (price & availability to be
+confirmed, but this will be shortly after Xmas).
+
+The pack will also contain the following;
+
+* Level Editor. Fully documented, INTUITIVE editor to all users
+  to define their own levels using existing or completely new graphics.
+* Ability to load in original AB3D levels for inspection, plus
+  information in the manual about the levels (maps, design hints)
+* Ability to design and introduce new aliens
+* Ability to enter own mission text
+* Ability to incorporate new sound fx
+* A set of new levels using all new features to test AB3D stalwarts
+
+ONLY TEAM17 MAKES IT HAPPEN... WATCH OUT FOR MORE NEWS SOON!!!
+
+Email support@team17.com for news and information.

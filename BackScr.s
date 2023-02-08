@@ -4,6 +4,11 @@
 
 *********************************************************************************************
 
+              incdir     "includes"
+              include    "AB3DI.i"
+
+*********************************************************************************************
+
 putinlargescr:
 
   move.l    #$1000000,statskip
@@ -78,8 +83,8 @@ putinlargescr:
 
 **********************************
 
-  adda.w    #104*4,a0
-  adda.w    #104*4,a2
+  adda.w    #widthOffset,a0
+  adda.w    #widthOffset,a2
   dbra      d0,.fillcop
 
   move.w    #$38,fetchstart

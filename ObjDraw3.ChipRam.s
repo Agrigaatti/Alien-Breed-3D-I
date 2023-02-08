@@ -196,7 +196,7 @@ DrawtheObject:
                       bne           BitMapObj
 
                       bsr           PolygonObj
-                      movem.l       (a7)+,d0-d7/a0-a6
+                      GETREGS
                       rts
 
 glassobj:
@@ -327,7 +327,7 @@ glassobj:
 
                       move.l        #ontoscr,a6
                       move.l        (a6,d2.w*4),d2
-                      add.l         frompt,d2
+                      add.l         frompt,d2                                                                     ; Copper chunky
                       move.l        d2,toppt
 
                       move.l        #WorkSpace,a5
@@ -398,7 +398,7 @@ glassobj:
                       add.w         d1,d1
                       swap          d2
 
-                      muls          #104*4,d2
+                      muls          #widthOffset,d2
  
                       move.l        #WorkSpace,a0
 
@@ -424,7 +424,7 @@ glassobj:
                       add.w         d2,a6
                       add.w         d6,d7
                       bcc.s         .noadmore
-                      adda.w        #104*4,a6
+                      adda.w        #widthOffset,a6
 
 .noadmore:
                       dbra          d0,.readintodown
@@ -434,8 +434,8 @@ glassobj:
   
                      ; Want to zoom an area d3*d4 in size up to 64*64 in size.
                      ; move.l #WorkSpace,a0
-                     ; move.l frompt,a2
-                     ; move.w #104*4,d3
+                     ; move.l frompt,a2                             ; Copper chunky
+                     ; move.w #widthOffset,d3
                      ; move.w #1,d6
                      ;.ribl
                      ; move.w #31,d0
@@ -458,7 +458,7 @@ glassobj:
                      ; addq #4,a2
                      ; dbra d6,.ribl
 
-                      movem.l       (a7)+,d0-d7/a0-a6
+                      GETREGS
                       move.l        #darkentab,a2
 
 .drawrightside:
@@ -481,14 +481,14 @@ glassobj:
                       move.w        (a2,d3.w*2),(a6)
 
 .itsbackground:
-                      adda.w        #104*4,a6
+                      adda.w        #widthOffset,a6
                       addx.l        d2,d1
                       dbra          d4,.drawavertstrip
                       swap          d3
                       move.w        (a7)+,d4
 
                       dbra          d3,.drawrightside
-                      movem.l       (a7)+,d0-d7/a0-a6
+                      GETREGS
 
                       rts
 
@@ -689,7 +689,7 @@ objfitsonbot:
 
                       move.l        #ontoscr,a6
                       move.l        (a6,d2.w*4),d2
-                      add.l         frompt,d2
+                      add.l         frompt,d2                                                                     ; Copper chunky
                       move.l        d2,toppt
 
                       cmp.w         leftclipb,d0
@@ -769,7 +769,7 @@ drawrightside:
                       move.w        (a4,d0.w*2),(a6)
 
 .dontplotthisoneitsblack:
-                      adda.w        #104*4,a6
+                      adda.w        #widthOffset,a6
                       add.l         d2,d6
                       addx.w        d2,d1
                       dbra          d4,.drawavertstrip
@@ -792,7 +792,7 @@ SecThird:
                       move.w        (a4,d0.w*2),(a6)
 
 .dontplotthisoneitsblack:
-                      adda.w        #104*4,a6
+                      adda.w        #widthOffset,a6
                       add.l         d2,d6
                       addx.w        d2,d1
                       dbra          d4,.drawavertstrip
@@ -813,7 +813,7 @@ ThirdThird:
                       move.w        (a4,d0.w*2),(a6)
                       
 .dontplotthisoneitsblack:
-                      adda.w        #104*4,a6
+                      adda.w        #widthOffset,a6
                       add.l         d2,d6
                       addx.w        d2,d1
                       dbra          d4,.drawavertstrip
@@ -821,7 +821,7 @@ ThirdThird:
                       dbra          d3,drawrightside
  
 objbehind:
-                      movem.l       (a7)+,d0-d7/a0-a6
+                      GETREGS
                       rts
 
 *********************************************************************************************
@@ -1189,8 +1189,8 @@ usegour:
                       bsr           putingourlines
 
 dontusegour:
-                      move.w        #104*4,linedir
-                      move.l        frompt,a6
+                      move.w        #widthOffset,linedir
+                      move.l        frompt,a6                                                                     ; Copper chunky
 
                       tst.b         drawit(pc)
                       beq           polybehind
@@ -1259,7 +1259,7 @@ toobright:
 
 dopoly:
                       move.w        #0,offtopby
-                      move.l        a6,a3                                                                         ; a3 = copper list
+                      move.l        a6,a3                                                                         ; a3 = Copper chunky
                       adda.w        (a2)+,a3
                       move.w        (a4),d1
                       cmp.w         objclipb,d1
@@ -1363,7 +1363,7 @@ drawpol:
                       and.w         d1,d5
                       move.b        (a0,d5.w*4),d0                                                                ; a0 = TextureMaps
                       move.w        (a1,d0.w*2),(a3)                                                              ; a1 = TexturePal, to copper screen
-                      adda.w        #104*4,a3
+                      adda.w        #widthOffset,a3
                       add.w         a5,d3
                       addx.l        d6,d5
                       dbcs          d2,drawpol2
@@ -1374,7 +1374,7 @@ drawpol2:
                       and.w         d1,d5
                       move.b        (a0,d5.w*4),d0                                                                ; a0 = TextureMaps
                       move.w        (a1,d0.w*2),(a3)                                                              ; a1 = TexturePal, to copper screen
-                      adda.w        #104*4,a3
+                      adda.w        #widthOffset,a3
                       add.w         a5,d3
                       addx.l        d4,d5
                       dbcs          d2,drawpol2
@@ -1390,10 +1390,10 @@ nodl:
 *********************************************************************************************
 
 ontoscr:
-val                   SET           104*4
+val                   SET           widthOffset
                       REPT          90
                       dc.l          val
-val                   SET           val+104*4
+val                   SET           val+widthOffset
                       ENDR
 
 *********************************************************************************************
@@ -1547,10 +1547,10 @@ nocrg:
 *********************************************************************************************
 
 ontoscrg:
-val                   SET           104*4
+val                   SET           widthOffset
                       REPT          90
                       dc.l          val
-val                   SET           val+104*4
+val                   SET           val+widthOffset
                       ENDR
 
 *********************************************************************************************
@@ -1559,7 +1559,7 @@ drawpolg:
                       and.w         #63*256+63,d5                                                                 ; 16191 = %00111111 00111111
                       move.b        (a0,d5.w*4),d0                                                                ; a0 = texturemaps
                       move.w        (a1,d0.w*2),(a3)                                                              ; a1 = texturepal : to copper screen
-                      adda.w        #104*4,a3
+                      adda.w        #widthOffset,a3
                       add.l         d2,d1
                       bcc.s         nonewb
                       add.w         #256,d0                                                                       ; 256 = $100
@@ -1575,7 +1575,7 @@ drawpol2g:
                       and.w         #63*256+63,d5                                                                 ; 16191 = %00111111 00111111
                       move.b        (a0,d5.w*4),d0                                                                ; a0 = texturemaps
                       move.w        (a1,d0.w*2),(a3)                                                              ; a1 = texturepal : to copper screen
-                      adda.w        #104*4,a3
+                      adda.w        #widthOffset,a3
                       add.l         d2,d1
                       bcc.s         nonewb2
                       add.w         #256,d0                                                                       ; 256 = $100
@@ -1691,7 +1691,7 @@ drawpolh:
                       move.w        (a1,d0.w*2),(a3)                                                              ; to copper screen
 
 dontplot:
-                      adda.w        #104*4,a3
+                      adda.w        #widthOffset,a3
                       add.w         a5,d3
                       addx.l        d6,d5
                       dbcs          d2,drawpol2h
@@ -1705,7 +1705,7 @@ drawpol2h:
                       move.w        (a1,d0.w*2),(a3)                                                              ; to copper screen
 
 dontplot2:
-                      adda.w        #104*4,a3
+                      adda.w        #widthOffset,a3
                       add.w         a5,d3
                       addx.l        d4,d5
                       dbcs          d2,drawpol2h
@@ -1724,7 +1724,7 @@ ontoscrh:
 val                   SET           0
                       REPT          90
                       dc.l          val
-val                   SET           val+104*4
+val                   SET           val+widthOffset
                       ENDR
                       EVEN
 
@@ -2552,6 +2552,7 @@ EXPLOSION_PAL         incbin        "pal/explosion.pal"
                       even
 
 *********************************************************************************************
+; Missing ugly monster
 
 UGLYMONSTER_WAD:     ; incbin "uglymonster.wad"
 UGLYMONSTER_PTR:     ; incbin "uglymonster.ptr"

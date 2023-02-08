@@ -5,6 +5,8 @@
 *********************************************************************************************
 
                  incdir              "includes"
+                 include             "exec/memory.i"
+
                  include             "AB3DI.i"
                  include             "macros.i"
                  include             "defs.i"
@@ -78,7 +80,7 @@ loademin:
            tst.l      d0
            beq        ErrorFileSizeZero
 
-           move.l     #1,d1
+           move.l     #MEMF_FAST,d1
            move.l     4.w,a6
            move.l     UNPACKED,d0
            jsr        _LVOAllocMem(a6)

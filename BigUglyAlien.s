@@ -11,10 +11,11 @@ ItsABigNasty:
 
   move.w     12(a0),d2
   bge.s      .stillalive
+
 .notthisone:
   rts
-.stillalive:
 
+.stillalive:
   tst.b      numlives(a0)
   bgt.s      .notdying
 
@@ -24,8 +25,7 @@ ItsABigNasty:
   move.b     #-1,16(a0)
   rts
 
-.notdying: 
-
+.notdying:
   move.l     #3*65536,deadframe
   move.l     #3*65536,8(a0)
   move.w     #8,screamsound
@@ -44,8 +44,7 @@ ItsABigNasty:
   
   bra        .Attack_Player
  
-.cantseeplayer 
- 
+.cantseeplayer:
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      #LEVELDATA,d0
@@ -60,8 +59,7 @@ ItsABigNasty:
 
   bra        .Attack_Player
  
-.keepwandering
-
+.keepwandering:
   jsr        GetRand
   and.w      #8190,d0
   move.w     d0,Facing(a0)
@@ -71,8 +69,7 @@ ItsABigNasty:
   add.w      #20,d0
   move.w     d0,ObjTimer(a0)
 
-.nonewdir
-
+.nonewdir:
   move.w     (a0),d1
   move.l     ObjectPoints,a1
   lea        (a1,d1.w*8),a1
@@ -100,8 +97,8 @@ ItsABigNasty:
   tst.b      hitwall
   beq.s      .nochangedir
   move.w     #-1,ObjTimer(a0)
+
 .nochangedir:
- 
   move.l     objroom,a2
   move.w     (a2),12(a0)
  
@@ -151,8 +148,7 @@ ItsABigNasty:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
  
-.noscream
-
+.noscream:
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
   move.w     newx,oldx
@@ -167,12 +163,10 @@ ItsABigNasty:
   move.b     #1,17(a0)
 
 .carryonprowling:
- 
 .thisonedead:
   rts
 
 .Attack_Player:
-
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      #LEVELDATA,d0
@@ -251,16 +245,17 @@ ItsABigNasty:
   bra        .cantshoot
  
 .noscream2:
-
   tst.w      SecTimer(a0)
   blt.s      .canshoot
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bra        .cantshoot
+
 .canshoot:
   move.l     NastyShotData,a5
   move.w     #19,d1
-.findonefree
+
+.findonefree:
   move.w     12(a5),d0
   blt.s      .foundonefree
   adda.w     #64,a5
@@ -269,7 +264,6 @@ ItsABigNasty:
   bra        .cantshoot
 
 .foundonefree:
-
   move.l     (a6),Noisex
   move.w     #200,Noisevol
   move.w     #9,Samplenum
@@ -326,7 +320,6 @@ ItsABigNasty:
   move.w     d0,SecTimer(a0)
  
 .cantshoot:
- 
   tst.b      GotThere
   beq.s      .noteatyou
 
@@ -347,8 +340,8 @@ ItsABigNasty:
   move.w     TempFrames,d0
   sub.w      d0,Energy
   bra        .carryonattack
-.noteatyou:
 
+.noteatyou:
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
   move.w     newx,oldx
@@ -363,6 +356,5 @@ ItsABigNasty:
   move.b     #0,17(a0)
 
 .carryonattack:
-
   rts
 

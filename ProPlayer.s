@@ -2946,7 +2946,7 @@ _FreeSerial:     movem.l     a5-a6,-(sp)
                  tst.b       serportalloc-DB(a5)
                  beq.s       retfs
 wmb_loop         move.w      $dff018,d0                                                                   ;WAIT until all data sent
-                 btst        #12,d0                                                                       ;test TSRE bit of SERDAT
+                 btst        #12,d0                                                                       ;test TSRE bit of serdat
                  beq.s       wmb_loop
                  move.w      #$0001,$dff09a                                                               ;disable TBE
                  movea.l     4.w,a6
@@ -2984,7 +2984,7 @@ idd_noresetbuff  move.l      a0,(a1)                                            
                  bne.s       idd_exit                                                                     ;yes. Don't initiate new send.
                  clr.b       lastcmdbyte-DB(a5)
                  bsr         StartNewDump
-                 move.w      $dff018,d0                                                                   ;SERDATR
+                 move.w      $dff018,d0                                                                   ;serdatr
                  btst        #13,d0
                  beq.s       idd_exit
                  move.w      #$8001,$dff09c                                                               ;request TBE
@@ -3001,7 +3001,7 @@ SerIntHandler:   move.w      #$4000,$9a(a0)                                     
                  movea.l     readbuffptr-buffptr(a1),a5                                                   ;get buffer read pointer
                  move.w      #$100,d1                                                                     ;Stop bit
                  move.b      (a5)+,d1                                                                     ;get byte
-                 move.w      d1,$30(a0)                                                                   ;and push it to SERDAT
+                 move.w      d1,$30(a0)                                                                   ;and push it to serdat
                  cmpa.l      a1,a5                                                                        ;shall we reset ptr?
                  bne.s       norrbuffptr                                                                  ;not yet..
                  lea         -256(a1),a5
@@ -3014,7 +3014,7 @@ sih_sysx         move.w      #$100,d1
                  movea.l     sysxptr-buffptr(a1),a5                                                       ;data pointer
                  move.b      (a5)+,d1
                  move.l      a5,sysxptr-buffptr(a1)
-                 move.w      d1,$30(a0)                                                                   ;-> SERDAT
+                 move.w      d1,$30(a0)                                                                   ;-> serdat
                  subq.l      #1,sysxleft-buffptr(a1)                                                      ;sub data left length
                  bne.s       exsih                                                                        ;not 0w
                  lea         DB,a5
@@ -3070,7 +3070,7 @@ _AddMIDId        movem.l     a1-a3/a5,-(sp)
                  move.w      #$4000,(a3)                                                                  ;Disable interrupts
                  addq.b      #1,$126(a5)                                                                  ;ExecBase->IDNestCnt
                  lea         buffptr-DB(a6),a2                                                            ;end of buffer (ptr)
-                 move.w      -130(a3),d1                                                                  ;-130(a3) = $dff018 (SERDATR)
+                 move.w      -130(a3),d1                                                                  ;-130(a3) = $dff018 (serdatr)
                  btst        #13,d1
                  beq.s       noTBEreq
                  move.w      #$8001,2(a3)                                                                 ;request TBE [2(a3) = $dff09c]

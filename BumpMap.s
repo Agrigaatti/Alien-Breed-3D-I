@@ -54,8 +54,9 @@ OneBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -71,8 +72,9 @@ OneBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -82,16 +84,17 @@ OneBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -103,6 +106,7 @@ OneBelow:
 *****************************
  
 TwoBelow:
+
   moveq         #0,d0
   dbra          d7,.BumpAcross
  
@@ -110,8 +114,9 @@ TwoBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*8(a3)
+  move.w        (a1,d0.w*2),widthOffset*2(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -127,9 +132,10 @@ TwoBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -139,16 +145,17 @@ TwoBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -156,6 +163,7 @@ TwoBelow:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 ThreeBelow:
@@ -166,10 +174,11 @@ ThreeBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*3(a3)    ; 104*12
+  move.w        a2,widthOffset*2(a3)             ; 104*8
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -185,10 +194,11 @@ ThreeBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -198,16 +208,17 @@ ThreeBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -215,6 +226,7 @@ ThreeBelow:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 FourBelow:
@@ -225,11 +237,12 @@ FourBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -245,11 +258,12 @@ FourBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -259,16 +273,17 @@ FourBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -276,6 +291,7 @@ FourBelow:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 FiveBelow:
@@ -286,12 +302,13 @@ FiveBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -307,12 +324,13 @@ FiveBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -322,16 +340,17 @@ FiveBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -339,6 +358,7 @@ FiveBelow:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 SixBelow:
@@ -349,13 +369,14 @@ SixBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforehigh
-  move.w        (a1,d0.w*2),104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforehigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -371,13 +392,14 @@ SixBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -387,16 +409,17 @@ SixBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -404,6 +427,7 @@ SixBelow:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 SevenBelow:
@@ -414,14 +438,15 @@ SevenBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -437,14 +462,15 @@ SevenBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -454,16 +480,17 @@ SevenBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -471,6 +498,7 @@ SevenBelow:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 EightBelow:
@@ -481,15 +509,16 @@ EightBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -505,15 +534,16 @@ EightBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -523,16 +553,17 @@ EightBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -551,16 +582,17 @@ NineBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*36(a3)
-  move.w        a2,104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*9(a3)
+  move.w        a2,widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -576,16 +608,17 @@ NineBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*36(a3)
-  move.w        a2,104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*9(a3)
+  move.w        a2,widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -595,16 +628,17 @@ NineBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -612,6 +646,7 @@ NineBelow:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 TenBelow:
@@ -622,17 +657,18 @@ TenBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*40(a3)
-  move.w        a2,104*36(a3)
-  move.w        a2,104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-; move.w a2,104*8(a3)
-; move.w a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*10(a3)
+  move.w        a2,widthOffset*9(a3)
+  move.w        a2,widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+; move.w a2,widthOffset*2(a3)
+; move.w a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -648,17 +684,18 @@ TenBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*40(a3)
-  move.w        a2,104*36(a3)
-  move.w        a2,104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-; move.w a2,104*8(a3)
-; move.w a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*10(a3)
+  move.w        a2,widthOffset*9(a3)
+  move.w        a2,widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+; move.w a2,widthOffset*2(a3)
+; move.w a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -668,16 +705,18 @@ TenBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
+
 .notdoneyet:
 
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -685,6 +724,7 @@ TenBelow:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 ElevenBelow:
@@ -695,18 +735,19 @@ ElevenBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*44(a3)
-  move.w        a2,104*40(a3)
-  move.w        a2,104*36(a3)
-  move.w        a2,104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-; move.w a2,104*12(a3)
-; move.w a2,104*8(a3)
-; move.w a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*11(a3)
+  move.w        a2,widthOffset*10(a3)
+  move.w        a2,widthOffset*9(a3)
+  move.w        a2,widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+; move.w a2,widthOffset*3(a3)
+; move.w a2,widthOffset*2(a3)
+; move.w a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -722,18 +763,19 @@ ElevenBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*44(a3)
-  move.w        a2,104*40(a3)
-  move.w        a2,104*36(a3)
-  move.w        a2,104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-; move.w a2,104*12(a3)
-; move.w a2,104*8(a3)
-; move.w a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*11(a3)
+  move.w        a2,widthOffset*10(a3)
+  move.w        a2,widthOffset*9(a3)
+  move.w        a2,widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+; move.w a2,widthOffset*3(a3)
+; move.w a2,widthOffset*2(a3)
+; move.w a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -743,16 +785,17 @@ ElevenBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -760,6 +803,7 @@ ElevenBelow:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 TwelveBelow:
@@ -770,19 +814,20 @@ TwelveBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*48(a3)
-  move.w        a2,104*44(a3)
-  move.w        a2,104*40(a3)
-  move.w        a2,104*36(a3)
-  move.w        a2,104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-; move.w a2,104*16(a3)
-; move.w a2,104*12(a3)
-; move.w a2,104*8(a3)
-; move.w a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*12(a3)
+  move.w        a2,widthOffset*11(a3)
+  move.w        a2,widthOffset*10(a3)
+  move.w        a2,widthOffset*9(a3)
+  move.w        a2,widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+; move.w a2,widthOffset*4(a3)
+; move.w a2,widthOffset*3(a3)
+; move.w a2,widthOffset*2(a3)
+; move.w a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -798,19 +843,20 @@ TwelveBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*48(a3)
-  move.w        a2,104*44(a3)
-  move.w        a2,104*40(a3)
-  move.w        a2,104*36(a3)
-  move.w        a2,104*32(a3)
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
-; move.w a2,104*16(a3)
-; move.w a2,104*12(a3)
-; move.w a2,104*8(a3)
-; move.w a2,104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset*12(a3)
+  move.w        a2,widthOffset*11(a3)
+  move.w        a2,widthOffset*10(a3)
+  move.w        a2,widthOffset*9(a3)
+  move.w        a2,widthOffset*8(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+; move.w a2,widthOffset*4(a3)
+; move.w a2,widthOffset*3(a3)
+; move.w a2,widthOffset*2(a3)
+; move.w a2,widthOffset(a3)
   moveq         #0,d0
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -820,16 +866,17 @@ TwelveBelow:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -838,7 +885,6 @@ TwelveBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
- 
 bumpthefloor:
   move.l        #14*128,d0
   divs          dst,d0
@@ -870,7 +916,7 @@ OneAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset)(a3)
  
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
@@ -887,7 +933,8 @@ OneAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset)(a3)
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -897,16 +944,17 @@ OneAbove:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -925,8 +973,9 @@ TwoAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -942,8 +991,9 @@ TwoAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -953,16 +1003,17 @@ TwoAbove:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -970,6 +1021,7 @@ TwoAbove:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 ThreeAbove:
@@ -980,9 +1032,10 @@ ThreeAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -998,9 +1051,10 @@ ThreeAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1010,16 +1064,17 @@ ThreeAbove:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1027,6 +1082,7 @@ ThreeAbove:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 FourAbove:
@@ -1037,10 +1093,11 @@ FourAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1056,10 +1113,11 @@ FourAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1069,16 +1127,17 @@ FourAbove:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1086,6 +1145,7 @@ FourAbove:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 FiveAbove:
@@ -1096,11 +1156,12 @@ FiveAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),-104*20(a3)
-  move.w        a2,-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*5)(a3)
+  move.w        a2,-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1116,11 +1177,12 @@ FiveAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),-104*20(a3)
-  move.w        a2,-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*5)(a3)
+  move.w        a2,-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1130,16 +1192,17 @@ FiveAbove:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1158,12 +1221,13 @@ SixAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),-104*24(a3)
-  move.w        a2,-104*20(a3)
-  move.w        a2,-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*6)(a3)
+  move.w        a2,-(widthOffset*5)(a3)
+  move.w        a2,-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1179,12 +1243,13 @@ SixAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),-104*24(a3)
-  move.w        a2,-104*20(a3)
-  move.w        a2,-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*6)(a3)
+  move.w        a2,-(widthOffset*5)(a3)
+  move.w        a2,-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1194,16 +1259,17 @@ SixAbove:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1211,6 +1277,7 @@ SixAbove:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 SevenAbove:
@@ -1221,13 +1288,14 @@ SevenAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),-104*28(a3)
-  move.w        a2,-104*24(a3)
-  move.w        a2,-104*20(a3)
-  move.w        a2,-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*7)(a3)
+  move.w        a2,-(widthOffset*6)(a3)
+  move.w        a2,-(widthOffset*5)(a3)
+  move.w        a2,-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1243,13 +1311,14 @@ SevenAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),-104*28(a3)
-  move.w        a2,-104*24(a3)
-  move.w        a2,-104*20(a3)
-  move.w        a2,-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*7)(a3)
+  move.w        a2,-(widthOffset*6)(a3)
+  move.w        a2,-(widthOffset*5)(a3)
+  move.w        a2,-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1259,16 +1328,17 @@ SevenAbove:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1276,6 +1346,7 @@ SevenAbove:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 EightAbove:
@@ -1286,14 +1357,15 @@ EightAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),-104*32(a3)
-  move.w        a2,-104*28(a3)
-  move.w        a2,-104*24(a3)
-  move.w        a2,-104*20(a3)
-  move.w        a2,-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*8)(a3)
+  move.w        a2,-(widthOffset*7)(a3)
+  move.w        a2,-(widthOffset*6)(a3)
+  move.w        a2,-(widthOffset*5)(a3)
+  move.w        a2,-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1309,14 +1381,15 @@ EightAbove:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),-104*32(a3)
-  move.w        a2,-104*28(a3)
-  move.w        a2,-104*24(a3)
-  move.w        a2,-104*20(a3)
-  move.w        a2,-104*16(a3)
-  move.w        a2,-104*12(a3)
-  move.w        a2,-104*8(a3)
-  move.w        a2,-104*4(a3)
+  move.w        (a1,d0.w*2),-(widthOffset*8)(a3)
+  move.w        a2,-(widthOffset*7)(a3)
+  move.w        a2,-(widthOffset*6)(a3)
+  move.w        a2,-(widthOffset*5)(a3)
+  move.w        a2,-(widthOffset*4)(a3)
+  move.w        a2,-(widthOffset*3)(a3)
+  move.w        a2,-(widthOffset*2)(a3)
+  move.w        a2,-(widthOffset)(a3)
+
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
@@ -1326,16 +1399,17 @@ EightAbove:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1345,7 +1419,6 @@ EightAbove:
   rts
 
 SmoothMap:
-
   move.w        #0,a2
 
   tst.w         above
@@ -1378,7 +1451,7 @@ OneBelowS:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset(a3)
   
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),(a3)
@@ -1395,7 +1468,7 @@ OneBelowS:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpAcrossHigh
-  move.w        (a1,d0.w*2),104*4(a3)
+  move.w        (a1,d0.w*2),widthOffset(a3)
  
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),(a3)
@@ -1406,16 +1479,17 @@ OneBelowS:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1439,13 +1513,13 @@ TwoBelowS:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BBHH
-  move.w        a2,104*8(a3)
+  move.w        a2,widthOffset*2(a3)
 
-.BBHH 
-  move.w        a2,104*4(a3)
+.BBHH:
+  move.w        a2,widthOffset(a3)
  
 .BumpBeforeHigh:
-.BBbumped
+.BBbumped:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
   add.w         a4,d3
@@ -1463,12 +1537,13 @@ TwoBelowS:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BAHH
-  move.w        a2,104*8(a3)
+  move.w        a2,widthOffset*2(a3)
 
-.BAHH 
-  move.w        a2,104*4(a3)
+.BAHH: 
+  move.w        a2,widthOffset(a3)
+
 .BumpAcrossHigh:
-.BAbumped
+.BAbumped:
   move.w        (a1,d0.w*2),(a3)
   addq          #4,a3
   add.w         a4,d3
@@ -1476,17 +1551,18 @@ TwoBelowS:
   dbcs          d7,.BumpAcross
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
-  add.w         #256,d5 
-.Bumppast1:
+  add.w         #256,d5
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1494,6 +1570,7 @@ TwoBelowS:
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
 *****************************
  
 ThreeBelowS:
@@ -1508,18 +1585,18 @@ ThreeBelowS:
   lsr.b         #1,d0
   bcc.s         .BBL
  
-  move.w        a2,104*12(a3)
+  move.w        a2,widthOffset*3(a3)
 
 .BBL:
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BBB
 
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BBB
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset(a3)
  
 .BBB:
   move.w        a2,(a3)
@@ -1541,18 +1618,18 @@ ThreeBelowS:
   lsr.b         #1,d0
   bcc.s         .BAL
  
-  move.w        a2,104*12(a3)
+  move.w        a2,widthOffset*3(a3)
 
 .BAL:
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BAB
 
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BAB
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset(a3)
  
 .BAB:
   move.w        a2,(a3)
@@ -1564,16 +1641,17 @@ ThreeBelowS:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1596,19 +1674,19 @@ FourBelowS:
   lsr.b         #1,d0
   bcc.s         .BBL
  
-  move.w        a2,104*16(a3)
+  move.w        a2,widthOffset*4(a3)
 
 .BBL:
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BBB
 
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BBB
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset(a3)
  
 .BBB:
   move.w        a2,(a3)
@@ -1630,19 +1708,19 @@ FourBelowS:
   lsr.b         #1,d0
   bcc.s         .BAL
  
-  move.w        a2,104*16(a3)
+  move.w        a2,widthOffset*4(a3)
 
 .BAL:
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BAB
 
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BAB
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset(a3)
  
 .BAB:
   move.w        a2,(a3)
@@ -1654,16 +1732,17 @@ FourBelowS:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1686,21 +1765,21 @@ FiveBelowS:
   lsr.b         #1,d0
   bcc.s         .BBL
  
-  move.w        a2,104*20(a3)
+  move.w        a2,widthOffset*5(a3)
 
 .BBL:
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BBB
 
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BBB
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
  
 .BBB:
   move.w        a2,(a3)
@@ -1722,21 +1801,21 @@ FiveBelowS:
   lsr.b         #1,d0
   bcc.s         .BAL
  
-  move.w        a2,104*20(a3)
+  move.w        a2,widthOffset*5(a3)
 
 .BAL:
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BAB
 
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BAB
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
  
 .BAB:
   move.w        a2,(a3)
@@ -1748,21 +1827,23 @@ FiveBelowS:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
  
   dbra          d7,.BumpAcross
+
 tstend:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
@@ -1781,22 +1862,22 @@ SixBelowS:
   lsr.b         #1,d0
   bcc.s         .BBL
  
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
 
 .BBL:
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BBB
 
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BBB
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
  
 .BBB:
   move.w        a2,(a3)
@@ -1818,21 +1899,22 @@ SixBelowS:
   lsr.b         #1,d0
   bcc.s         .BAL
  
-  move.w        a2,104*24(a3)
-  move.w        a2,104*20(a3)
+  move.w        a2,widthOffset*6(a3)
+  move.w        a2,widthOffset*5(a3)
+
 .BAL:
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BAB
 
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BAB
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
  
 .BAB:
   move.w        a2,(a3)
@@ -1844,16 +1926,17 @@ SixBelowS:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1874,22 +1957,23 @@ SevenBelowS:
   lsr.b         #1,d0
   bcc.s         .BBL
  
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
+
 .BBL:
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BBB
 
 .BumpBeforeHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BBB
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
  
 .BBB:
   move.w        a2,(a3)
@@ -1911,23 +1995,23 @@ SevenBelowS:
   lsr.b         #1,d0
   bcc.s         .BAL
  
-  move.w        a2,104*28(a3)
-  move.w        a2,104*24(a3)
+  move.w        a2,widthOffset*7(a3)
+  move.w        a2,widthOffset*6(a3)
 
 .BAL:
-  move.w        a2,104*20(a3)
-  move.w        a2,104*16(a3)
-  move.w        a2,104*12(a3)
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*5(a3)
+  move.w        a2,widthOffset*4(a3)
+  move.w        a2,widthOffset*3(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
   bra.s         .BAB
 
 .BumpAcrossHigh:
   move.w        (a1,d0.w*2),a2
   lsr.b         #1,d0
   bcc.s         .BAB
-  move.w        a2,104*8(a3)
-  move.w        a2,104*4(a3)
+  move.w        a2,widthOffset*2(a3)
+  move.w        a2,widthOffset(a3)
  
 .BAB:
   move.w        a2,(a3)
@@ -1939,16 +2023,17 @@ SevenBelowS:
   dbcc          d7,.BumpBefore
   bcc.s         .Bumppast1
   add.w         #256,d5 
-.Bumppast1:
 
+.Bumppast1:
   move.w        d4,d7
   bne.s         .notdoneyet
   rts
-.notdoneyet:
 
+.notdoneyet:
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
+
 .notoowide
   sub.w         d7,d4  
   addq          #4,a3
@@ -1957,7 +2042,6 @@ SevenBelowS:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
- 
 smooththefloor:
   move.l        #14*128,d0
   divs          dst,d0
@@ -1978,3 +2062,5 @@ smooththefloor:
 
   moveq         #0,d0
   rts
+
+*********************************************************************************************

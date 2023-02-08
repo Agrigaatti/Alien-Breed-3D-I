@@ -1,0 +1,13 @@
+WinUAE-serial:
+
+RTS/CTS checked: 
+PC serial port hardware handles the RTS/CTS handshaking transparently. Emulated Amiga only sees serial data, no handshakes, RTS/CTS inside the emulation should be disabled. This is the most safe way of transferring serial data.
+
+RTS/CTS unchecked: 
+Handshake lines are passed to emulated Amiga serial port. RTS/CTS must be enabled in Amiga software if RTS/CTS is used.
+
+Shared: 
+WinUAE only keeps the PC serial port open when DTR-line (Data Terminal Ready) is active.
+
+Direct: 
+"Link game"-mode. Uses 115200 bps (keeps latency low) to transfer data between two PCs running WinUAE, also supports Amiga's special 9-bit mode. Most link games only work when using this mode.

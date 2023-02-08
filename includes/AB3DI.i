@@ -1,36 +1,36 @@
-******************************************************************
+*********************************************************************************************
 
   IFND       AB3DI_i
 AB3DI_i                  EQU 1
 
-******************************************************************
+*********************************************************************************************
 
   incdir     "includes"
 
-******************************************************************
+*********************************************************************************************
 ; Exec
 
   include    "exec/FUNCDEF.i"
   include    "exec/exec_lib.i"
 
-******************************************************************
+*********************************************************************************************
 ; Dos
 
   include    "dos/dos_lib.i"
 
 _LVOExamineFH            EQU -390
 
-******************************************************************
+*********************************************************************************************
 ; Graphics
   
   include    "graphics/graphics_lib.i"
 
-******************************************************************
+*********************************************************************************************
 ; Intuition
 
   include    "intuition/intuition_lib.i"
 
-******************************************************************
+*********************************************************************************************
  ; lowlevel.library
 
   include    "libraries/lowlevel.i"
@@ -51,77 +51,27 @@ _LVOSetJoyPortAttrsA     EQU -132
 _LVOAddVBlankInt         EQU -108
 _LVORemVBlankInt         EQU -114
 
-******************************************************************
-; Hardware 
- 
-vhposr                   equ $006
-vhposrl                  equ $007
-ADKCONR                  equ $010
-dmaconr                  equ $012
-DMACONR                  equ $012
-POTINP                   equ $016
-SERDATR                  equ $018 
-INTENAR                  equ $01C
-intenar                  equ $01C
-intreqr                  equ $01e
-INTREQR                  equ $01e
-intreqrl                 equ $01f
-SERDAT                   equ $030
-SERPER                   equ $032
-potgo                    equ $034
+*********************************************************************************************
+; Custom chips 
+
+  include    "hardware/custom.i"
+
+vhposrl                  EQU $007
+
+serdatrl                 EQU $019 
+
+intreqrl                 EQU $01F 
+
 cop1lch                  equ $080
 cop1lcl                  equ $082
 cop2lch                  equ $084
 cop2lcl                  equ $086
-COPJMP1                  equ $088
-copjmp1                  equ $088
-COPJMP2                  equ $08a
-copjmp2                  equ $08a
-DIWSTRT                  equ $08E
-diwstrt                  equ $08e           ; Screen hardware registers.
-diwstart                 equ $08e
-DIWSTOP                  equ $090	
-diwstop                  equ $090
-ddfstrt                  equ $092
-ddfstart                 equ $092
-ddfstop                  equ $094
-DMACON                   equ $096
-dmacon                   equ $096
-INTENA                   equ $09A
-intena                   equ $09A
-intreq                   equ $09C
-INTREQ                   equ $09C
-adkcon                   equ $09E
-ADKCON                   equ $09e
+
 aud0vol                  equ $0a8
 aud1vol                  equ $0b8
 aud2vol                  equ $0c8
 aud3vol                  equ $0d8
-bpl1pth                  equ $0e0
-bpl1ptl                  equ $0e2
-bpl2pth                  equ $0e4
-bpl2ptl                  equ $0e6
-bpl3pth                  equ $0e8
-bpl3ptl                  equ $0ea
-bpl4pth                  equ $0ec
-bpl4ptl                  equ $0ee
-bpl5pth                  equ $0f0
-bpl5ptl                  equ $0f2
-bpl6pth                  equ $0f4
-bpl6ptl                  equ $0f6
-bpl7pth                  equ $0f8
-bpl7ptl                  equ $0fa
-bpl8pth                  equ $0fc
-bpl8ptl                  equ $0fe
-bplcon0                  equ $100
-bplcon1                  equ $102
-BPLCON3                  equ $106
-bplcon3                  equ $106
-BPL1MOD                  equ $108
-bpl1mod                  equ $108
-BPL2MOD                  equ $10a
-bpl2mod                  equ $10a
-bplcon4                  equ $10c
+
 spr0pth                  equ $120
 spr0ptl                  equ $122
 spr1pth                  equ $124
@@ -155,6 +105,23 @@ spr5pos                  equ $168
 spr6pos                  equ $170
 spr7pos                  equ $178
 
+bpl1pth                  equ $0e0
+bpl1ptl                  equ $0e2
+bpl2pth                  equ $0e4
+bpl2ptl                  equ $0e6
+bpl3pth                  equ $0e8
+bpl3ptl                  equ $0ea
+bpl4pth                  equ $0ec
+bpl4ptl                  equ $0ee
+bpl5pth                  equ $0f0
+bpl5ptl                  equ $0f2
+bpl6pth                  equ $0f4
+bpl6ptl                  equ $0f6
+bpl7pth                  equ $0f8
+bpl7ptl                  equ $0fa
+bpl8pth                  equ $0fc
+bpl8ptl                  equ $0fe
+
 ; +--------+-------------+-------------+-------------+-------------+
 ; | BIT#   | 15,14,13,12 | 11,10,09,08 | 07,06,05,04 | 03,02,01,00 |
 ; +--------+-------------+-------------+-------------+-------------+
@@ -186,9 +153,33 @@ color12                  equ $198
 color13                  equ $19a
 color14                  equ $19c
 color15                  equ $19e
-beamcon0                 equ $1dc
-fmode                    equ $1fc
+
+*********************************************************************************************
+; AB3DI Game constants
+; k/j/m
+; 4/8
+; s/x
+; b/n
+
+maxscrdiv                EQU 8
+max3ddiv                 EQU 5
+
+scrwidth                 EQU 104                                                                                          
+scrheight                EQU 80 
+
+fromptOffset             EQU 10
+widthOffset              EQU 104*4                                                                                          
+midOffset                EQU 104*4*40 
+
+copperNOP                EQU $01fe0000
+
+playerheight             EQU 12*1024
+playercrouched           EQU 8*1024
 
 ******************************************************************
+
+GUNDATASIZE              EQU (PLR1_GunDataEnd-PLR1_GunData) ; 32
+
+*********************************************************************************************
 
   endc  

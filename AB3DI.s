@@ -1,7 +1,7 @@
 *********************************************************************************************
 * Alien Breed 3D I / Code by Team 17 
 * - For VS Code with Amiga Assembly extension (Paul Raingeard)
-* - For AGA + 68020 + 2mb CHIP + 2mb FAST
+* - For AGA + 68020 + 2mb CHIP + 2mb FAST + KS ROM v3.1 (A1200 rev 40.68)
 * - Assembled around the "4000test.s" source code
 *
 * Original Team 17 sources : https://github.com/videogamepreservation/alienbreed3dii.git
@@ -15,67 +15,51 @@
 *   12/2022 : Builds & runs & can play : Crom / Extend 
 *   01/2023 : Added exit, wasd-control ('n'-key) and revealed few tech-tests : Crom / Extend 
 *   01/2023 : Added auto save of level passwords on exit (use 'TAB'-key on main menu to change levels) : Crom / Extend
+*   02/2023 : Added experimental co-op mode for the multiplayer game : Crom / Extend
 *
 *********************************************************************************************
 
-                          opt           P=68020                                                              ;,OW+
+VERSION             EQU "1.00"                                                                                    ; 4 chars
+LABEL               EQU "EXTE"                                                                                    ; 4 chars
 
 *********************************************************************************************
 
-                          incdir        "includes"
+                          opt                P=68020                                                              ;,OW+
+
+*********************************************************************************************
+
+                          incdir             "includes"
+                          include            "hardware/intbits.i"
+                          include            "exec/memory.i"
+                          
+                          include            "AB3DI.i"
+                          include            "macros.i"
+                          include            "defs.i"
 
 *********************************************************************************************
 
 ; Trainer
-STARTLEVEL       EQU 0                                                                                       ; 0 = 1
-MULTIPASS        EQU 0                                                                                        
-UNLIMITEDAMMO    EQU 0
-UNLIMITEDHITS    EQU 0
+STARTLEVEL          EQU 0                                                                                         ; 0 => 1 level
+MULTIPASS           EQU 0                                                                                        
+UNLIMITEDAMMO       EQU 0
+UNLIMITEDHITS       EQU 0
 
 ; Features
-ENABLETITLEMUSIC EQU 0
-ENABLEBGMUSIC    EQU 0
-ENABLETIMER      EQU 0
-ENABLEFACES      EQU 0
-ENABLEGLASSBALL  EQU 0
-ENABLEPATH       EQU 0
-ENABLESEEWALL    EQU 0
+ENABLETITLEMUSIC    EQU 0
+ENABLEBGMUSIC       EQU 0
+ENABLETIMER         EQU 0
+ENABLEFACES         EQU 0
+ENABLEGLASSBALL     EQU 0
+ENABLEPATH          EQU 0
+ENABLESEEWALL       EQU 0
+ENABLEADVSERIAL     EQU 0                                                                                         ; Note: Not tested!
+ENABLECOOP          EQU 0                                                                                         ; Note: Only the master (plr1) can pickup a key (etc) in the coop mode 
+ENABLEENDSCROLLTEST EQU 0
 
 *********************************************************************************************
 
-GUNDATASIZE      EQU (PLR1_GunDataEnd-PLR1_GunData)                                                          ; 32
+                          SECTION            MainCode,CODE_F
 
-*********************************************************************************************
-
-maxscrdiv        EQU 8
-max3ddiv         EQU 5
-
-playerheight     EQU 12*1024
-playercrouched   EQU 8*1024
-
-scrwidth         EQU 104
-scrheight        EQU 80
-
-; k/j/m
-; 4/8
-; s/x
-; b/n
-midOffset        EQU 104*4*40
-
-*********************************************************************************************
-
-                          SECTION       Main,CODE
-
-*********************************************************************************************
-
-                          incdir        "includes"
-                          include       "hardware/intbits.i"
-                          
-                          include       "AB3DI.i"
-                          include       "macros.i"
-                          include       "defs.i"
-
-*********************************************************************************************
 *********************************************************************************************
 
 Main:
@@ -84,14 +68,14 @@ Main:
 
                           SAVEREGS
 
-                          jsr           OSFriendlyStartup
-                          jsr           SetupGame
-                          jsr           PlayGame
-                          jsr           TearDownGame
-                          jsr           OSFriendlyExit
+                          jsr                OSFriendlyStartup
+                          jsr                SetupGame
+                          jsr                PlayGame
+                          jsr                TearDownGame
+                          jsr                OSFriendlyExit
 
                           GETREGS
-                          move.l        #0,d0
+                          move.l             #0,d0
                           rts
 
 *********************************************************************************************
@@ -100,100 +84,107 @@ Main:
 SetupGame:
 ; a0 = dosCmdBuf
 
-                          move.w        (a0)+,mors                                                           ; Save menu state from cmd args
-                          move.l        #$dff000,a6                                                          ; NB V. IMPORTANT: A6=CUSTOM BASE
+                          lea                $dff000,a6                                                           
                           
-*******************************************************************
-
-                          SUPERVISOR    SetDataCacheOff
-                          move.w        #13,SERPER(a6)                                                       ; 19200 baud, 8 bits, no parity
+                          SUPERVISOR         SetDataCacheOff
 
 *******************************************************************
+; Multi player
+; 19200 baud, 8 bits, no parity = 13
+; 9600 baud, 8 bits, no parity = 372
+; 1 / ((N+1) * 0.2794 microseconds) 
 
-                          st            GOURSEL
+                          move.w             #13,serper(a6)
 
-                          st            PLR1KEYS
-                          clr.b         PLR1PATH
-                          clr.b         PLR1MOUSE
-                          clr.b         PLR1JOY
+*******************************************************************
+
+                          st                 GOURSEL
+
+                          clr.b              PLR1KEYS
+                          clr.b              PLR1PATH
+                          clr.b              PLR1MOUSE
+                          clr.b              PLR1JOY
+                          st                 PLR1MOUSEKBD        
+
+                          clr.b              PLR2KEYS
+                          clr.b              PLR2PATH
+                          clr.b              PLR2MOUSE
+                          clr.b              PLR2JOY
+                          st                 PLR2MOUSEKBD  
+
+*******************************************************************
+
+                          move.l             4.w,a6
+                          move.l             #doslibname,a1
+                          moveq              #0,d0
+                          jsr                _LVOOpenLibrary(a6)
+                          move.l             d0,doslib
                           
-                          st            PLR2KEYS
-                          clr.b         PLR2PATH
-                          clr.b         PLR2MOUSE
-                          clr.b         PLR2JOY
+                          jsr                InitLowLevel                                                         ; CD32Joy
 
 *******************************************************************
 
-                          move.l        4.w,a6
-                          move.l        #doslibname,a1
-                          moveq         #0,d0
-                          jsr           _LVOOpenLibrary(a6)
-                          move.l        d0,doslib
+                          moveq              #MEMF_CHIP,d1	
+                          move.l             #10240*4,d0                                                          ; *2 => EndScroll *4
+                          move.l             4.w,a6
+                          jsr                _LVOAllocMem(a6)
+                          move.l             d0,TEXTSCRN
 
-                          jsr           InitLowLevel                                                         ; CD32Joy
-
-*******************************************************************
-
-                          moveq         #2,d1	
-                          move.l        #10240*4,d0                                                          ; *2 => EndScroll *4
-                          move.l        4.w,a6
-                          jsr           _LVOAllocMem(a6)
-                          move.l        d0,TEXTSCRN
-
-                          moveq         #1,d1	
-                          move.l        #120000,d0
-                          move.l        4.w,a6
-                          jsr           _LVOAllocMem(a6)
-                          move.l        d0,LEVELDATA
+                          moveq              #MEMF_FAST,d1	
+                          move.l             #120000,d0
+                          move.l             4.w,a6
+                          jsr                _LVOAllocMem(a6)
+                          move.l             d0,LEVELDATA
 
 *******************************************************************
 
-                          move.l        TEXTSCRN,d0
-                          move.w        d0,TSPTl
-                          swap          d0
-                          move.w        d0,TSPTh
+                          move.l             TEXTSCRN,d0
+                          move.w             d0,TSPTl
+                          swap               d0
+                          move.w             d0,TSPTh
 
 *******************************************************************
 
-                          move.l        #nullspr,d0
-                          move.w        d0,txs0l
-                          move.w        d0,txs1l
-                          move.w        d0,txs2l
-                          move.w        d0,txs3l
-                          move.w        d0,txs4l
-                          move.w        d0,txs5l
-                          move.w        d0,txs6l
-                          move.w        d0,txs7l
-                          swap          d0
-                          move.w        d0,txs0h
-                          move.w        d0,txs1h
-                          move.w        d0,txs2h
-                          move.w        d0,txs3h
-                          move.w        d0,txs4h
-                          move.w        d0,txs5h
-                          move.w        d0,txs6h
-                          move.w        d0,txs7h
+                          move.l             #nullspr,d0
+                          move.w             d0,txs0l
+                          move.w             d0,txs1l
+                          move.w             d0,txs2l
+                          move.w             d0,txs3l
+                          move.w             d0,txs4l
+                          move.w             d0,txs5l
+                          move.w             d0,txs6l
+                          move.w             d0,txs7l
+                          swap               d0
+                          move.w             d0,txs0h
+                          move.w             d0,txs1h
+                          move.w             d0,txs2h
+                          move.w             d0,txs3h
+                          move.w             d0,txs4h
+                          move.w             d0,txs5h
+                          move.w             d0,txs6h
+                          move.w             d0,txs7h
 
 *******************************************************************
 
-                          move.l        4.w,a6
-                          lea           VBLANKInt(pc),a1
-                          moveq         #INTB_COPER,d0
-                          jsr           _LVOAddIntServer(a6)
+                          move.l             4.w,a6
+                          lea                CopInt(pc),a1
+                          moveq              #INTB_COPER,d0
+                          jsr                _LVOAddIntServer(a6)
 
 *******************************************************************
 
-                          move.l        4.w,a6
-                          lea           KEYInt(pc),a1
-                          moveq         #INTB_PORTS,d0
-                          jsr           _LVOAddIntServer(a6)
+                          move.l             4.w,a6
+                          lea                KeyInt(pc),a1
+                          moveq              #INTB_PORTS,d0
+                          jsr                _LVOAddIntServer(a6)
 
 *******************************************************************
 
-                          jsr           LoadPasswords
+                          jsr                LoadPasswords
 
 *******************************************************************
-
+                          
+                          move.l             #0,d0
                           rts
 
 *********************************************************************************************
@@ -201,64 +192,60 @@ SetupGame:
 
 TearDownGame:
 
-                          jsr           mt_end                                                               ; Audio disabled, same as below
+                          lea                $dff000,a6
 
 *******************************************************************
 
-                          move.l        #$dff000,a6
-
-                          move.l        #nullcop,d0                                                          ; Dummy placeholder copper
-                          move.l        d0,cop1lch(a6)                                                           
-                          move.w        d0,ocl
-                          swap          d0
-                          move.w        d0,och
+                          jsr                mt_end                                                               ; Disable audio and volume down
 
 *******************************************************************
 
-                          clr.w         aud0vol(a6) 
-                          clr.w         aud1vol(a6)
-                          clr.w         aud2vol(a6)
-                          clr.w         aud3vol(a6)
-                          move.w        #$0f,dmacon(a6)                                                      ; Audio DMA disabled
+                          move.l             #nullcop,d0                                                          ; Dummy placeholder copper
+                          move.l             d0,cop1lch(a6)                                                           
+                          move.w             d0,ocl
+                          swap               d0
+                          move.w             d0,och
 
 *******************************************************************
 
-                          move.l        4.w,a6
-                          lea           VBLANKInt,a1
-                          moveq         #INTB_COPER,d0
-                          jsr           _LVORemIntServer(a6)
-
-                          move.l        4.w,a6
-                          lea           KEYInt,a1
-                          moveq         #INTB_PORTS,d0
-                          jsr           _LVORemIntServer(a6)
+                          move.l             4.w,a6
+                          lea                CopInt(pc),a1
+                          moveq              #INTB_COPER,d0
+                          jsr                _LVORemIntServer(a6)
 
 *******************************************************************
 
-                          jsr           SavePasswords                                                        ; LoadFromDisks
+                          move.l             4.w,a6
+                          lea                KeyInt(pc),a1
+                          moveq              #INTB_PORTS,d0
+                          jsr                _LVORemIntServer(a6)
 
 *******************************************************************
 
-                          jsr           CloseLowLevel                                                        ; CD32Joy
-
-                          move.l        doslib,d0
-                          move.l        4.w,a6
-                          jsr           _LVOCloseLibrary(a6)
+                          jsr                SavePasswords                                                        ; LoadFromDisks
 
 *******************************************************************
 
-                          jsr           RELEASETEXTSCRN                                                      ; AB3DI
-                          jsr           RELEASELEVELDATA                                                     ; AB3DI
-                          jsr           RELEASELEVELMEM                                                      ; AB3DI
+                          jsr                CloseLowLevel                                                        ; CD32Joy
 
-                          jsr           RELEASEFLOORMEM                                                      ; LoadFromDisks
-                          jsr           RELEASEOBJMEM                                                        ; LoadFromDisks
-                          jsr           RELEASESAMPMEM                                                       ; LoadFromDisks
-                          jsr           RELEASECOPSCRNMEM                                                    ; LoadFromDisks
+                          move.l             doslib,d0
+                          move.l             4.w,a6
+                          jsr                _LVOCloseLibrary(a6)
 
-                          jsr           RELEASEWALLMEM                                                       ; WallChunk
+*******************************************************************
 
-                          jsr           RELEASETITLEMEM                                                      ; ControlLoop
+                          jsr                RELEASETEXTSCRN                                                      ; AB3DI
+                          jsr                RELEASELEVELDATA                                                     ; AB3DI
+                          jsr                RELEASELEVELMEM                                                      ; AB3DI
+
+                          jsr                RELEASEFLOORMEM                                                      ; LoadFromDisks
+                          jsr                RELEASEOBJMEM                                                        ; LoadFromDisks
+                          jsr                RELEASESAMPMEM                                                       ; LoadFromDisks
+                          jsr                RELEASECOPSCRNMEM                                                    ; LoadFromDisks
+
+                          jsr                RELEASEWALLMEM                                                       ; WallChunk
+
+                          jsr                RELEASETITLEMEM                                                      ; ControlLoop
 
                           rts
 
@@ -266,856 +253,918 @@ TearDownGame:
 *********************************************************************************************
 ; Supervisor mode cache commands
 
-                          include       "CacheControl.s"
+                          include            "CacheControl.s"
 
 *********************************************************************************************
 *********************************************************************************************
 ; OS friendly
 
-                          include       "OSFriendly.s"
+                          include            "OSFriendly.s"
 
 *********************************************************************************************
 *********************************************************************************************
 ; Very simple debug log function
 
-                          include       "debug/WriteLog.s"
-
-; For debug use, increased when lookback key is pressed
-DebugValue:               dc.l          0
+;                          include            "debug/WriteLog.s"
 
 *********************************************************************************************
 *********************************************************************************************
 
-TWEENTEXT:
-; DRAW TEXT SCREEN
+DrawLevelText:
 
-                          move.l        #LEVELTEXT,a0
-                          move.w        PLOPT,d0
-                          muls          #82*16,d0
-                          add.l         d0,a0
+                          move.l             #LEVELTEXT,a0
+                          move.w             PLOPT,d0
+                          muls               #82*16,d0
+                          add.l              d0,a0
  
-                          move.w        #14,d7
-                          move.w        #0,d0
+                          move.w             #14,d7
+                          move.w             #0,d0
 
 DOWNTEXT:
-                          move.l        TEXTSCRN,a1
-                          jsr           DRAWLINEOFTEXT
-                          addq          #1,d0
-                          lea           82(a0),a0
-                          dbra          d7,DOWNTEXT
+                          move.l             TEXTSCRN,a1
+                          jsr                DRAWLINEOFTEXT
+                          addq               #1,d0
+                          lea                82(a0),a0
+                          dbra               d7,DOWNTEXT
+                          rts
+
+*********************************************************************************************
+
+DrawMasterText:
+
+                          lea                MpMasterText(pc),a0
+                          move.w             #14,d7
+                          move.w             #0,d0
+
+DownMasterText:
+                          move.l             TEXTSCRN,a1
+                          jsr                DRAWLINEOFTEXT
+                          addq               #1,d0
+                          lea                82(a0),a0
+                          dbra               d7,DownMasterText
+                          rts
+
+*********************************************************************************************
+
+DrawSlaveText:
+
+                          lea                MpSlaveText(pc),a0
+                          move.w             #14,d7
+                          move.w             #0,d0
+
+DownSlaveText:
+                          move.l             TEXTSCRN,a1
+                          jsr                DRAWLINEOFTEXT
+                          addq               #1,d0
+                          lea                82(a0),a0
+                          dbra               d7,DownSlaveText
                           rts
 
 *********************************************************************************************
 
 FONTADDRS:
-                          dc.l          ENDFONT0,CHARWIDTHS0
-                          dc.l          ENDFONT1,CHARWIDTHS1
-                          dc.l          ENDFONT2,CHARWIDTHS2
+                          dc.l               ENDFONT0,CHARWIDTHS0
+                          dc.l               ENDFONT1,CHARWIDTHS1
+                          dc.l               ENDFONT2,CHARWIDTHS2
 
 *********************************************************************************************						  
  
-ENDFONT0:                 incbin        "data/endfont0"
-CHARWIDTHS0:              incbin        "data/charwidths0"
-ENDFONT1:                 incbin        "data/endfont1"
-CHARWIDTHS1:              incbin        "data/charwidths1"
-ENDFONT2:                 incbin        "data/endfont2"
-CHARWIDTHS2:              incbin        "data/charwidths2"
+ENDFONT0:                 incbin             "data/endfont0"
+CHARWIDTHS0:              incbin             "data/charwidths0"
+ENDFONT1:                 incbin             "data/endfont1"
+CHARWIDTHS1:              incbin             "data/charwidths1"
+ENDFONT2:                 incbin             "data/endfont2"
+CHARWIDTHS2:              incbin             "data/charwidths2"
                           even
 
 *********************************************************************************************
 
 DRAWLINEOFTEXT:
-                          movem.l       d0/a0/d7,-(a7)
+; a1 = screen pointer
+; a0 = text
+; d0 = text line
+                          movem.l            d0/a0/d7,-(a7)
 
-                          muls          #80*16,d0
-                          add.l         d0,a1                                                                ; screen pointer
+                          muls               #80*16,d0
+                          add.l              d0,a1                                                                ; screen pointer
  
-                          move.l        #FONTADDRS,a3
-                          moveq         #0,d0
-                          move.b        (a0)+,d0
-                          move.l        (a3,d0.w*8),a2
-                          move.l        4(a3,d0.w*8),a3
+                          move.l             #FONTADDRS,a3
+                          moveq              #0,d0
+                          move.b             (a0)+,d0
+                          move.l             (a3,d0.w*8),a2
+                          move.l             4(a3,d0.w*8),a3
  
-                          moveq         #0,d1                                                                ; width counter:
-                          move.w        #79,d6
-                          tst.b         (a0)+
-                          beq.s         NOTCENTRED
-                          moveq         #-1,d5
-                          move.l        a0,a4
-                          moveq         #0,d2
-                          moveq         #0,d3
-                          move.w        #79,d0                                                               ; number of chars
+                          moveq              #0,d1                                                                ; width counter:
+                          move.w             #79,d6
+                          tst.b              (a0)+
+                          beq.s              NOTCENTRED
+                          moveq              #-1,d5
+                          move.l             a0,a4
+                          moveq              #0,d2
+                          moveq              #0,d3
+                          move.w             #79,d0                                                               ; number of chars
 
 .addup:
-                          addq          #1,d5
-                          move.b        (a4)+,d2
-                          move.b        -32(a3,d2.w),d4
-                          add.w         d4,d3
-                          cmp.b         #32,d2
-                          beq.s         .DONTPUTIN
-                          move.w        d5,d6
-                          move.w        d3,d1
+                          addq               #1,d5
+                          move.b             (a4)+,d2
+                          move.b             -32(a3,d2.w),d4
+                          add.w              d4,d3
+                          cmp.b              #32,d2
+                          beq.s              .DONTPUTIN
+                          move.w             d5,d6
+                          move.w             d3,d1
 
 .DONTPUTIN:
-                          dbra          d0,.addup
-                          asr.w         #1,d1
-                          neg.w         d1
-                          add.w         #320,d1                                                              ; horiz pos of start x
+                          dbra               d0,.addup
+                          asr.w              #1,d1
+                          neg.w              d1
+                          add.w              #320,d1                                                              ; horiz pos of start x
 
 NOTCENTRED:
-                          move.w        d6,d7
+                          move.w             d6,d7
 
 DOACHAR:
-                          moveq         #0,d2
-                          move.b        (a0)+,d2
-                          sub.w         #32,d2
-                          moveq         #0,d6
-                          move.b        (a3,d2.w),d6
-                          asl.w         #5,d2
-                          lea           (a2,d2.w),a4                                                         ; char font
+                          moveq              #0,d2
+                          move.b             (a0)+,d2
+                          sub.w              #32,d2
+                          moveq              #0,d6
+                          move.b             (a3,d2.w),d6
+                          asl.w              #5,d2
+                          lea                (a2,d2.w),a4                                                         ; char font
 
-val                       SET           0
-                          REPT          16
-                          move.w        (a4)+,d0
-                          bfins         d0,val(a1){d1:d6}
-val                       SET           val+80
+val                       SET                0
+                          REPT               16
+                          move.w             (a4)+,d0
+                          bfins              d0,val(a1){d1:d6}
+val                       SET                val+80
                           ENDR
 
-                          add.w         d6,d1
-                          dbra          d7,DOACHAR
-                          movem.l       (a7)+,d0/a0/d7
+                          add.w              d6,d1
+                          dbra               d7,DOACHAR
+                          movem.l            (a7)+,d0/a0/d7
                           rts 
  
 *********************************************************************************************
 
 CLRTWEENSCRN:
-                          move.l        TEXTSCRN,a0
-                          move.w        #(10240/16)-1,d0
-                          moveq         #$0,d1
+                          move.l             TEXTSCRN,a0
+                          move.w             #(10240/16)-1,d0
+                          moveq              #$0,d1
 
 .lll:
-                          move.l        d1,(a0)+
-                          move.l        d1,(a0)+
-                          move.l        d1,(a0)+
-                          move.l        d1,(a0)+
-                          move.l        d1,(a0)+
-                          move.l        d1,(a0)+
-                          move.l        d1,(a0)+
-                          move.l        d1,(a0)+
-                          dbra          d0,.lll
+                          move.l             d1,(a0)+
+                          move.l             d1,(a0)+
+                          move.l             d1,(a0)+
+                          move.l             d1,(a0)+
+                          move.l             d1,(a0)+
+                          move.l             d1,(a0)+
+                          move.l             d1,(a0)+
+                          move.l             d1,(a0)+
+                          dbra               d0,.lll
 
                           rts
 
 *********************************************************************************************
 
-PLAYTHEGAME:
+PlayTheGame:
 
-                          move.w        #0,TXTCOLL
+********************************************************************
+; Clear text
 
-                          bsr.b         CLRTWEENSCRN
+                          move.w             #0,TXTCOLL
+                          bsr.b              CLRTWEENSCRN
 
-                          cmp.b         #'n',mors
-                          bne.s         .notext
-                          bsr           TWEENTEXT
+********************************************************************
+; Select text
 
-.notext
-                          move.l        #TEXTCOP,$dff000+cop1lch
+                          cmp.b              #'n',mors
+                          bne.s              .noLevelText
 
-                          move.w        #$10,d0
-                          move.w        #7,d1
+                          bsr                DrawLevelText
+                          bra                .noText
+
+.noLevelText: 
+                          cmp.b              #'m',mors
+                          bne.s              .noMasterText
+
+                          bsr                DrawMasterText
+                          bra                .noText
+
+.noMasterText: 
+                          cmp.b              #'s',mors
+                          bne.s              .noText
+
+                          bsr                DrawSlaveText
+
+.noText: 
+
+********************************************************************
+
+                          lea                $dff000,a6
+                          move.l             #TEXTCOP,cop1lch(a6)
+
+********************************************************************
+; Fadeup text
+
+                          move.w             #$10,d0
+                          move.w             #7,d1
  
-.fdup
-                          move.w        d0,TXTCOLL
-                          add.w         #$121,d0
+fdup:
+                          move.w             d0,TXTCOLL
+                          add.w              #$121,d0
+                          
+                          WAITFORVERTBREQ
 
-.wtframe:
-                          btst          #5,$dff000+intreqrl
-                          beq.s         .wtframe
+                          dbra               d1,fdup
 
-                          move.w        #$0020,$dff000+intreq
-                          dbra          d1,.fdup
+********************************************************************
 
-                          jsr           INITCOPPERSCRN
+                          jsr                INITCOPPERSCRN
+
+********************************************************************
+; Get level memory
  
-; Get level memory.
- 
-                          moveq         #1,d1
-                          move.l        #50000,d0
-                          move.l        4.w,a6
-                          jsr           _LVOAllocMem(a6)
-                          move.l        d0,LEVELGRAPHICS
+                          moveq              #MEMF_FAST,d1
+                          move.l             #50000,d0
+                          move.l             4.w,a6
+                          jsr                _LVOAllocMem(a6)
+                          move.l             d0,LEVELGRAPHICS
 
-                          moveq         #1,d1
-                          move.l        #40000,d0
-                          move.l        4.w,a6
-                          jsr           _LVOAllocMem(a6)
-                          move.l        d0,LEVELCLIPS
+                          moveq              #MEMF_FAST,d1
+                          move.l             #40000,d0
+                          move.l             4.w,a6
+                          jsr                _LVOAllocMem(a6)
+                          move.l             d0,LEVELCLIPS
 
-                          move.l        #$dff000,a6
-                          jsr           SETPLAYERS
+********************************************************************
+; Setup player (MP: Send level number) 
 
-*********************************************************************************************
+                          lea                $dff000,a6
+                          jsr                SETPLAYERS
 
-                        ; move.l #LEVELDATAD,LEVELDATA
-                        ; move.l #LEVELGRAPHICSD,LEVELGRAPHICS
-                        ; move.l #LEVELCLIPSD,LEVELCLIPS
-                        ; bra noload
+********************************************************************
 
-*********************************************************************************************
+                          move.l             doslib,a6
+                          move.l             #LDname,d1
+                          move.l             #1005,d2
+                          jsr                _LVOOpen(a6)
+                          move.l             d0,LDhandle
 
-                          move.l        doslib,a6
-                          move.l        #LDname,d1
-                          move.l        #1005,d2
-                          jsr           _LVOOpen(a6)
-                          move.l        d0,LDhandle
+                          move.l             doslib,a6
+                          move.l             d0,d1
+                          move.l             LEVELCLIPS,d2
+                          move.l             #40000,d3
+                          jsr                _LVORead(a6)
 
-                          move.l        doslib,a6
-                          move.l        d0,d1
-                          move.l        LEVELCLIPS,d2
-                          move.l        #40000,d3
-                          jsr           _LVORead(a6)
+                          move.l             doslib,a6
+                          move.l             LDhandle,d1
+                          jsr                _LVOClose(a6)
 
-                          move.l        doslib,a6
-                          move.l        LDhandle,d1
-                          jsr           _LVOClose(a6)
+********************************************************************
 
-*********************************************************************************************
+                          move.l             LEVELCLIPS,d0
+                          moveq              #0,d1
+                          move.l             LEVELDATA,a0
+                          lea                WorkSpace,a1
+                          lea                $0.w,a2
+                          jsr                unLHA
 
-                          move.l        LEVELCLIPS,d0
-                          moveq         #0,d1
-                          move.l        LEVELDATA,a0
-                          lea           WorkSpace,a1
-                          lea           $0.w,a2
-                          jsr           unLHA
+********************************************************************
 
-*********************************************************************************************
+                          move.l             doslib,a6
+                          move.l             #LGname,d1
+                          move.l             #1005,d2
+                          jsr                _LVOOpen(a6)
+                          move.l             d0,LGhandle
 
-                          move.l        doslib,a6
-                          move.l        #LGname,d1
-                          move.l        #1005,d2
-                          jsr           _LVOOpen(a6)
-                          move.l        d0,LGhandle
+                          move.l             doslib,a6
+                          move.l             d0,d1
+                          move.l             LEVELCLIPS,d2
+                          move.l             #40000,d3
+                          jsr                _LVORead(a6)
 
-                          move.l        doslib,a6
-                          move.l        d0,d1
-                          move.l        LEVELCLIPS,d2
-                          move.l        #40000,d3
-                          jsr           _LVORead(a6)
+                          move.l             doslib,a6
+                          move.l             LGhandle,d1
+                          jsr                _LVOClose(a6)
 
-                          move.l        doslib,a6
-                          move.l        LGhandle,d1
-                          jsr           _LVOClose(a6)
+********************************************************************
 
-*********************************************************************************************
+                          move.l             LEVELCLIPS,d0
+                          moveq              #0,d1
+                          move.l             LEVELGRAPHICS,a0
+                          lea                WorkSpace,a1
+                          lea                $0.w,a2
+                          jsr                unLHA
 
-                          move.l        LEVELCLIPS,d0
-                          moveq         #0,d1
-                          move.l        LEVELGRAPHICS,a0
-                          lea           WorkSpace,a1
-                          lea           $0.w,a2
-                          jsr           unLHA
+********************************************************************
 
-*********************************************************************************************
+                          move.l             doslib,a6
+                          move.l             #LCname,d1
+                          move.l             #1005,d2
+                          jsr                _LVOOpen(a6)
+                          move.l             d0,LChandle
 
-                          move.l        doslib,a6
-                          move.l        #LCname,d1
-                          move.l        #1005,d2
-                          jsr           _LVOOpen(a6)
-                          move.l        d0,LChandle
+                          move.l             doslib,a6
+                          move.l             d0,d1
+                          move.l             #WorkSpace+16384,d2
+                          move.l             #16000,d3
+                          jsr                _LVORead(a6)
 
-                          move.l        doslib,a6
-                          move.l        d0,d1
-                          move.l        #WorkSpace+16384,d2
-                          move.l        #16000,d3
-                          jsr           _LVORead(a6)
+                          move.l             doslib,a6
+                          move.l             LChandle,d1
+                          jsr                _LVOClose(a6)
 
-                          move.l        doslib,a6
-                          move.l        LChandle,d1
-                          jsr           _LVOClose(a6)
+********************************************************************
 
-*********************************************************************************************
+                          move.l             #WorkSpace+16384,d0
+                          moveq              #0,d1
+                          move.l             LEVELCLIPS,a0
+                          lea                WorkSpace,a1
+                          lea                $0,a2
+                          jsr                unLHA
 
-                          move.l        #WorkSpace+16384,d0
-                          moveq         #0,d1
-                          move.l        LEVELCLIPS,a0
-                          lea           WorkSpace,a1
-                          lea           $0,a2
-                          jsr           unLHA
+********************************************************************
 
-*********************************************************************************************
+                          move.l             doslib,a6
+                          move.l             #Prefsname,d1
+                          move.l             #1005,d2
+                          jsr                _LVOOpen(a6)
+                          tst.l              d0
+                          beq                skipPrefs
+                          move.l             d0,Prefshandle
 
-noload:
+                          move.l             doslib,a6
+                          move.l             d0,d1
+                          move.l             #Prefsfile,d2
+                          move.l             #50,d3
+                          jsr                _LVORead(a6)
 
-                          move.l        doslib,a6
-                          move.l        #Prefsname,d1
-                          move.l        #1005,d2
-                          jsr           _LVOOpen(a6)
-                          tst.l         d0
-                          beq           skipPrefs
-                          move.l        d0,Prefshandle
-
-                          move.l        doslib,a6
-                          move.l        d0,d1
-                          move.l        #Prefsfile,d2
-                          move.l        #50,d3
-                          jsr           _LVORead(a6)
-
-                          move.l        doslib,a6
-                          move.l        Prefshandle,d1
-                          jsr           _LVOClose(a6)
+                          move.l             doslib,a6
+                          move.l             Prefshandle,d1
+                          jsr                _LVOClose(a6)
 
 skipPrefs:
 
-*********************************************************************************************
+********************************************************************
 
-                          cmp.b         #'s',Prefsfile+2
-                          seq           STEREO
+                          cmp.b              #'s',Prefsfile+2
+                          seq                STEREO
 
-*********************************************************************************************
+********************************************************************
 
-                          move.l        #$dff000,a6
+                          lea                $dff000,a6
 
-                          move.w        #$87c0,dmacon(a6)
-                          move.w        #$8020,dmacon(a6)
+                          move.w             #%0000010001010000,dmacon(a6)                                        ; $87c0 : 10=BLTPRI,6=BLTEN,4=DSKEN
+                          move.w             #%0011100001101111,intena(a6)                                        ; $002f : 12=DSKSYNC,11=RBF,6=BLT,5=VERTE,3=PORTS,2=SOFT,1=DSKBLK,0=TBE
+                          move.w             #$00ff,adkcon(a6)                                                    ; Audio modulos
 
-                          move.w        #$002f,intena(a6)
-                          move.w        #$00ff,adkcon(a6)
-
-                          bra           blag
+                          bra                blag
 
                           rts
 
 *********************************************************************************************
 
-saveit:                   ds.l          10
+saveit:                   ds.l               10
 
 *********************************************************************************************
 
-doslibname:               dc.b          'dos.library',0
-                          cnop          0,32
+doslibname:               dc.b               'dos.library',0
+                          cnop               0,32
 
-doslib:                   dc.l          0
+doslib:                   dc.l               0
 
 *********************************************************************************************
 ; Menu status
 
-mors:                     dc.w          0
+mors:                     dc.w               0
 
 *********************************************************************************************
 
-LDname:                   dc.b          'disk/levels/level_'
-LEVA:
-                          dc.b          'a/twolev.bin',0
-                          cnop          0,32
+LDname:                   dc.b               'disk/levels/level_'
+LEVA:                     dc.b               'a/twolev.bin',0
+                          cnop               0,32
 
-LDhandle:                 dc.l          0
-LGname:                   dc.b          'disk/levels/level_'
-LEVB:
-                          dc.b          'a/twolev.graph.bin',0
-                          cnop          0,32
+LDhandle:                 dc.l               0
+LGname:                   dc.b               'disk/levels/level_'
+LEVB:                     dc.b               'a/twolev.graph.bin',0
+                          cnop               0,32
 
-LGhandle:                 dc.l          0
-LCname:                   dc.b          'disk/levels/level_'
-LEVC:
-                          dc.b          'a/twolev.clips',0
-                          cnop          0,32
+LGhandle:                 dc.l               0
+LCname:                   dc.b               'disk/levels/level_'
+LEVC:                     dc.b               'a/twolev.clips',0
+                          cnop               0,32
 
-LChandle:                 dc.l          0
-                          cnop          0,32
+LChandle:                 dc.l               0
+                          cnop               0,32
 
 *********************************************************************************************
 
-Prefsname:                dc.b          'prefs',0
-                          cnop          0,32
+Prefsname:                dc.b               'prefs',0
+                          cnop               0,32
 
-Prefshandle:              dc.l          0
+Prefshandle:              dc.l               0
 
-Prefsfile:                dc.b          'k4nx'
-                          ds.b          50
-                          cnop          0,32
-
-*********************************************************************************************
-
-VBLANKInt:
-                          dc.l          0,0
-                          dc.b          NT_INTERRUPT,100
-                          dc.l          VBlankIntName
-                          dc.l          0
-                          dc.l          Chan0inter
-
-VBlankIntName:            dc.b          "AB3D VBlankInt",0
-                          cnop          0,32
+Prefsfile:                dc.b               'k4nx'
+                          ds.b               50
+                          cnop               0,32
 
 *********************************************************************************************
 
-KEYInt
-                          dc.l          0,0
-                          dc.b          NT_INTERRUPT,127
-                          dc.l          KeyIntName
-                          dc.l          0
-                          dc.l          key_interrupt
+CopInt:
+                          dc.l               0,0
+                          dc.b               NT_INTERRUPT,100
+                          dc.l               CopIntName
+                          dc.l               0
+                          dc.l               cop_interrupt
 
-KeyIntName:               dc.b          "AB3D KeyInt",0
-                          cnop          0,32
+CopIntName:               dc.b               "AB3D CopInt",0
+                          cnop               0,32
+
+*********************************************************************************************
+
+KeyInt:
+                          dc.l               0,0
+                          dc.b               NT_INTERRUPT,127
+                          dc.l               KeyIntName
+                          dc.l               0
+                          dc.l               key_interrupt
+
+KeyIntName:               dc.b               "AB3D KeyInt",0
+                          cnop               0,32
 
 *********************************************************************************************
 
 blag:
-; Initialize level
-; Poke all clip offsets into
-; correct bit of level data.
+; Initialize level 
+; Poke all clip offsets into correct bit of level data
 
-                          move.l        LEVELGRAPHICS,a0
-                          move.l        12(a0),a1
-                          add.l         a0,a1
-                          move.l        a1,ZoneGraphAdds
-                          move.l        (a0),a1
-                          add.l         a0,a1
-                          move.l        a1,DoorData
-                          move.l        4(a0),a1
-                          add.l         a0,a1
-                          move.l        a1,LiftData
-                          move.l        8(a0),a1
-                          add.l         a0,a1
-                          move.l        a1,SwitchData
-                          adda.w        #16,a0
-                          move.l        a0,ZoneAdds
+                          move.l             LEVELGRAPHICS,a0
 
-                          move.l        LEVELDATA,a1
-                          move.l        16+6(a1),a2
-                          add.l         a1,a2
-                          move.l        a2,Points
-                          move.w        8+6(a1),d0
-                          lea           4(a2,d0.w*4),a2
-                          move.l        a2,PointBrights
+                          move.l             12(a0),a1
+                          add.l              a0,a1
+                          move.l             a1,ZoneGraphAdds
+
+                          move.l             (a0),a1
+                          add.l              a0,a1
+                          move.l             a1,DoorData
+
+                          move.l             4(a0),a1
+                          add.l              a0,a1
+                          move.l             a1,LiftData
+
+                          move.l             8(a0),a1
+                          add.l              a0,a1
+                          move.l             a1,SwitchData
+
+                          adda.w             #16,a0
+                          move.l             a0,ZoneAdds
+
+                          move.l             LEVELDATA,a1
+
+                          move.l             16+6(a1),a2
+                          add.l              a1,a2
+                          move.l             a2,Points
+
+                          move.w             8+6(a1),d0
+                          lea                4(a2,d0.w*4),a2
+                          move.l             a2,PointBrights
  
-                          move.l        20+6(a1),a2
-                          add.l         a1,a2
-                          move.l        a2,FloorLines
-                          move.l        24+6(a1),a2
-                          add.l         a1,a2
-                          move.l        a2,ObjectData
+                          move.l             20+6(a1),a2
+                          add.l              a1,a2
+                          move.l             a2,FloorLines
+
+                          move.l             24+6(a1),a2
+                          add.l              a1,a2
+                          move.l             a2,ObjectData
 
 *****************************************
 ; Just for charles
-
                           ; move.w #$6060,6(a2)
                           ; move.l #$d0000,8(a2)
                           ; sub.w #40,4(a2)
                           ; move.w #45*256+45,14(a2)
 ****************************************
 
-                          move.l        28+6(a1),a2
-                          add.l         a1,a2
-                          move.l        a2,PlayerShotData
-                          move.l        32+6(a1),a2
-                          add.l         a1,a2
-                          move.l        a2,NastyShotData
+                          move.l             28+6(a1),a2
+                          add.l              a1,a2
+                          move.l             a2,PlayerShotData
+
+                          move.l             32+6(a1),a2
+                          add.l              a1,a2
+                          move.l             a2,NastyShotData
  
-                          lea           64*20(a2),a2
-                          move.l        a2,OtherNastyData
+                          lea                64*20(a2),a2
+                          move.l             a2,OtherNastyData
  
-                          move.l        36+6(a1),a2
-                          add.l         a1,a2
-                          move.l        a2,ObjectPoints  
-                          move.l        40+6(a1),a2
-                          add.l         a1,a2
-                          move.l        a2,PLR1_Obj
-                          move.l        44+6(a1),a2
-                          add.l         a1,a2
-                          move.l        a2,PLR2_Obj
-                          move.w        14+6(a1),NumObjectPoints
+                          move.l             36+6(a1),a2
+                          add.l              a1,a2
+                          move.l             a2,ObjectPoints
+
+                          move.l             40+6(a1),a2
+                          add.l              a1,a2
+                          move.l             a2,PLR1_Obj
+
+                          move.l             44+6(a1),a2
+                          add.l              a1,a2
+                          move.l             a2,PLR2_Obj
+
+                          move.w             14+6(a1),NumObjectPoints
 
                           ; bra noclips
   
-                          move.l        LEVELCLIPS,a2
-                          moveq         #0,d0
-                          move.w        10+6(a1),d7                                                          ; numzones
+                          move.l             LEVELCLIPS,a2
+                          moveq              #0,d0
+                          move.w             10+6(a1),d7                                                          ; numzones
 
 assignclips:
-                          move.l        (a0)+,a3
-                          add.l         a1,a3                                                                ; pointer to a zone
-                          adda.w        #ToListOfGraph,a3                                                    ; pointer to zonelist
+                          move.l             (a0)+,a3
+                          add.l              a1,a3                                                                ; pointer to a zone
+                          adda.w             #ToListOfGraph,a3                                                    ; pointer to zonelist
 
 dowholezone:
-                          tst.w         (a3)
-                          blt.s         nomorethiszone
-                          tst.w         2(a3)
-                          blt.s         thisonenull
+                          tst.w              (a3)
+                          blt.s              nomorethiszone
+                          tst.w              2(a3)
+                          blt.s              thisonenull
 
-                          move.l        d0,d1
-                          asr.l         #1,d1
-                          move.w        d1,2(a3)
+                          move.l             d0,d1
+                          asr.l              #1,d1
+                          move.w             d1,2(a3)
 
 findnextclip:
-                          cmp.w         #-2,(a2,d0.l)
-                          beq.s         foundnextclip
-                          addq.l        #2,d0
-                          bra.s         findnextclip
+                          cmp.w              #-2,(a2,d0.l)
+                          beq.s              foundnextclip
+                          addq.l             #2,d0
+                          bra.s              findnextclip
 
 foundnextclip:
-                          addq.l        #2,d0
+                          addq.l             #2,d0
 
 thisonenull:
-                          addq          #8,a3 
-                          bra.s         dowholezone
+                          addq               #8,a3 
+                          bra.s              dowholezone
 
 nomorethiszone:
-                          dbra          d7,assignclips
+                          dbra               d7,assignclips
  
-                          lea           (a2,d0.l),a2
-                          move.l        a2,CONNECT_TABLE
+                          lea                (a2,d0.l),a2
+                          move.l             a2,CONNECT_TABLE
  
 noclips:
 
 *********************************************************************
 ; Put in addresses of glowything
  
-                          cmp.b         #'k',Prefsfile
-                          bne.s         nkb
-                          st            PLR1KEYS
-                          clr.b         PLR1PATH
-                          clr.b         PLR1MOUSE
-                          clr.b         PLR1JOY
-                          clr.b         PLR1MOUSEKBD
+                          cmp.b              #'k',Prefsfile
+                          bne.s              nkb
+                          st                 PLR1KEYS
+                          clr.b              PLR1PATH
+                          clr.b              PLR1MOUSE
+                          clr.b              PLR1JOY
+                          clr.b              PLR1MOUSEKBD
 
 nkb:
-                          cmp.b         #'m',Prefsfile
-                          bne.s         nmc
-                          clr.b         PLR1KEYS
-                          clr.b         PLR1PATH
-                          st            PLR1MOUSE
-                          clr.b         PLR1JOY
-                          clr.b         PLR1MOUSEKBD
+                          cmp.b              #'m',Prefsfile
+                          bne.s              nmc
+                          clr.b              PLR1KEYS
+                          clr.b              PLR1PATH
+                          st                 PLR1MOUSE
+                          clr.b              PLR1JOY
+                          clr.b              PLR1MOUSEKBD
 
 nmc:
-                          cmp.b         #'n',Prefsfile
-                          bne.s         nmkbd
-                          clr.b         PLR1KEYS
-                          clr.b         PLR1PATH
-                          clr.b         PLR1MOUSE
-                          clr.b         PLR1JOY
-                          st            PLR1MOUSEKBD
+                          cmp.b              #'n',Prefsfile
+                          bne.s              nmkbd
+                          clr.b              PLR1KEYS
+                          clr.b              PLR1PATH
+                          clr.b              PLR1MOUSE
+                          clr.b              PLR1JOY
+                          st                 PLR1MOUSEKBD
 
 nmkbd:
-                          cmp.b         #'j',Prefsfile
-                          bne.s         njc
-                          clr.b         PLR1KEYS
-                          clr.b         PLR1PATH
-                          clr.b         PLR1MOUSE
-                          st            PLR1JOY
-                          clr.b         PLR1MOUSEKBD
+                          cmp.b              #'j',Prefsfile
+                          bne.s              njc
+                          clr.b              PLR1KEYS
+                          clr.b              PLR1PATH
+                          clr.b              PLR1MOUSE
+                          st                 PLR1JOY
+                          clr.b              PLR1MOUSEKBD
 
 njc:
-                          cmp.b         #'p',Prefsfile                                                       
-                          bne.s         nfp
-                          clr.b         PLR1KEYS
-                          st            PLR1PATH
-                          clr.b         PLR1MOUSE
-                          clr.b         PLR1JOY
-                          clr.b         PLR1MOUSEKBD
+                          cmp.b              #'p',Prefsfile                                                       
+                          bne.s              nfp
+                          clr.b              PLR1KEYS
+                          st                 PLR1PATH
+                          clr.b              PLR1MOUSE
+                          clr.b              PLR1JOY
+                          clr.b              PLR1MOUSEKBD
 
 nfp:
 
 *********************************************************************
 
-                          clr.b         PLR1_StoodInTop
-                          move.l        #playerheight,PLR1s_height
+                          clr.b              PLR1_StoodInTop
+                          move.l             #playerheight,PLR1s_height
  
-                          move.l        #empty,pos1LEFT
-                          move.l        #empty,pos2LEFT
-                          move.l        #empty,pos1RIGHT
-                          move.l        #empty,pos2RIGHT
-                          move.l        #emptyend,Samp0endLEFT
-                          move.l        #emptyend,Samp1endLEFT
-                          move.l        #emptyend,Samp0endRIGHT
-                          move.l        #emptyend,Samp1endRIGHT
+                          move.l             #empty,pos1LEFT
+                          move.l             #empty,pos2LEFT
+                          move.l             #empty,pos1RIGHT
+                          move.l             #empty,pos2RIGHT
+                          move.l             #emptyend,Samp0endLEFT
+                          move.l             #emptyend,Samp1endLEFT
+                          move.l             #emptyend,Samp0endRIGHT
+                          move.l             #emptyend,Samp1endRIGHT
  
-                          move.l        #nullspr,d0
-                          move.w        d0,s4l
-                          move.w        d0,s5l
-                          move.w        d0,s6l
-                          move.w        d0,s7l
-                          swap          d0
-                          move.w        d0,s4h
-                          move.w        d0,s5h
-                          move.w        d0,s6h
-                          move.w        d0,s7h 
+                          move.l             #nullspr,d0
+                          move.w             d0,s4l
+                          move.w             d0,s5l
+                          move.w             d0,s6l
+                          move.w             d0,s7l
+                          swap               d0
+                          move.w             d0,s4h
+                          move.w             d0,s5h
+                          move.w             d0,s6h
+                          move.w             d0,s7h 
  
-                          move.l        #nullline,d0
-                          move.w        d0,n1l
-                          swap          d0
-                          move.w        d0,n1h
+                          move.l             #nullline,d0
+                          move.w             d0,n1l
+                          swap               d0
+                          move.w             d0,n1h
  
-                          move.l        Panel,d0
-                          move.w        d0,p1l
-                          swap          d0
-                          move.w        d0,p1h
-                          swap          d0
-                          add.l         #40,d0
-                          move.w        d0,p2l
-                          swap          d0
-                          move.w        d0,p2h
-                          swap          d0
-                          add.l         #40,d0
-                          move.w        d0,p3l
-                          swap          d0
-                          move.w        d0,p3h
-                          swap          d0
-                          add.l         #40,d0
-                          move.w        d0,p4l
-                          swap          d0
-                          move.w        d0,p4h
-                          swap          d0
-                          add.l         #40,d0
-                          move.w        d0,p5l
-                          swap          d0
-                          move.w        d0,p5h
-                          swap          d0
-                          add.l         #40,d0
-                          move.w        d0,p6l
-                          swap          d0
-                          move.w        d0,p6h
-                          swap          d0
-                          add.l         #40,d0
-                          move.w        d0,p7l
-                          swap          d0
-                          move.w        d0,p7h
-                          swap          d0
-                          add.l         #40,d0
-                          move.w        d0,p8l
-                          swap          d0
-                          move.w        d0,p8h
+                          move.l             Panel,d0
+                          move.w             d0,p1l
+                          swap               d0
+                          move.w             d0,p1h
+                          swap               d0
+                          add.l              #40,d0
+                          move.w             d0,p2l
+                          swap               d0
+                          move.w             d0,p2h
+                          swap               d0
+                          add.l              #40,d0
+                          move.w             d0,p3l
+                          swap               d0
+                          move.w             d0,p3h
+                          swap               d0
+                          add.l              #40,d0
+                          move.w             d0,p4l
+                          swap               d0
+                          move.w             d0,p4h
+                          swap               d0
+                          add.l              #40,d0
+                          move.w             d0,p5l
+                          swap               d0
+                          move.w             d0,p5h
+                          swap               d0
+                          add.l              #40,d0
+                          move.w             d0,p6l
+                          swap               d0
+                          move.w             d0,p6h
+                          swap               d0
+                          add.l              #40,d0
+                          move.w             d0,p7l
+                          swap               d0
+                          move.w             d0,p7h
+                          swap               d0
+                          add.l              #40,d0
+                          move.w             d0,p8l
+                          swap               d0
+                          move.w             d0,p8h
  
 *********************************************************************************************
 ; TIMER SCREEN SETUP
 
-                          IFNE          ENABLETIMER
-                          move.l        #TimerScr,d0
-                          move.w        d0,p1l
-                          swap          d0
-                          move.w        d0,p1h
+                          IFNE               ENABLETIMER
+                          move.l             #TimerScr,d0
+                          move.w             d0,p1l
+                          swap               d0
+                          move.w             d0,p1h
                           
-                          clr.l         d0
-                          move.w        #-24,d0
-                          move.w        d0,pMod1
-                          move.w        d0,pMod2
+                          clr.l              d0
+                          move.w             #-24,d0
+                          move.w             d0,pMod1
+                          move.w             d0,pMod2
 
-                          move.w        #$9201,Panelcon
+                          move.w             #$9201,Panelcon
                           ENDC 
 
 *********************************************************************************************
 
-                          move.l        #borders,d0
-                          move.w        d0,s0l
-                          swap          d0
-                          move.w        d0,s0h
-                          move.l        #borders+2592,d0
-                          move.w        d0,s1l
-                          swap          d0
-                          move.w        d0,s1h
-                          move.l        #borders+2592*2,d0
-                          move.w        d0,s2l
-                          swap          d0
-                          move.w        d0,s2h
-                          move.l        #borders+2592*3,d0
-                          move.w        d0,s3l
-                          swap          d0
-                          move.w        d0,s3h
+                          move.l             #borders,d0
+                          move.w             d0,s0l
+                          swap               d0
+                          move.w             d0,s0h
+                          move.l             #borders+2592,d0
+                          move.w             d0,s1l
+                          swap               d0
+                          move.w             d0,s1h
+                          move.l             #borders+2592*2,d0
+                          move.w             d0,s2l
+                          swap               d0
+                          move.w             d0,s2h
+                          move.l             #borders+2592*3,d0
+                          move.w             d0,s3l
+                          swap               d0
+                          move.w             d0,s3h
  
-                          move.w        #52*256+64,borders
-                          move.w        #212*256+0,borders+8
-                          move.w        #52*256+64,borders+2592
-                          move.w        #212*256+128,borders+8+2592
-                          move.w        #52*256+192,borders+2592*2
-                          move.w        #212*256+0,borders+8+2592*2
-                          move.w        #52*256+192,borders+2592*3
-                          move.w        #212*256+128,borders+8+2592*3
+                          move.w             #52*256+64,borders
+                          move.w             #212*256+0,borders+8
+                          move.w             #52*256+64,borders+2592
+                          move.w             #212*256+128,borders+8+2592
+                          move.w             #52*256+192,borders+2592*2
+                          move.w             #212*256+0,borders+8+2592*2
+                          move.w             #52*256+192,borders+2592*3
+                          move.w             #212*256+128,borders+8+2592*3
  
  *********************************************************************************************
 ; Faces
 
-                          IFNE          ENABLEFACES
-                          move.l        #$01fe0000,doSkipFaces
+                          IFNE               ENABLEFACES
+                          move.l             #$01fe0000,doSkipFaces
 
-                          move.l        #FacePlace,d0
-                          move.w        d0,f1l
-                          swap          d0
-                          move.w        d0,f1h
-                          move.l        #FacePlace+32*24,d0
-                          move.w        d0,f2l
-                          swap          d0
-                          move.w        d0,f2h
-                          move.l        #FacePlace+32*24*2,d0
-                          move.w        d0,f3l
-                          swap          d0
-                          move.w        d0,f3h
-                          move.l        #FacePlace+32*24*3,d0
-                          move.w        d0,f4l
-                          swap          d0
-                          move.w        d0,f4h
-                          move.l        #FacePlace+32*24*4,d0
-                          move.w        d0,f5l
-                          swap          d0
-                          move.w        d0,f5h
+                          move.l             #FacePlace,d0
+                          move.w             d0,f1l
+                          swap               d0
+                          move.w             d0,f1h
+                          move.l             #FacePlace+32*24,d0
+                          move.w             d0,f2l
+                          swap               d0
+                          move.w             d0,f2h
+                          move.l             #FacePlace+32*24*2,d0
+                          move.w             d0,f3l
+                          swap               d0
+                          move.w             d0,f3h
+                          move.l             #FacePlace+32*24*3,d0
+                          move.w             d0,f4l
+                          swap               d0
+                          move.w             d0,f4h
+                          move.l             #FacePlace+32*24*4,d0
+                          move.w             d0,f5l
+                          swap               d0
+                          move.w             d0,f5h
                           ENDC
 
  *********************************************************************************************
 
-                          move.l        #bigfield,d0
-                          move.w        d0,ocl
-                          swap          d0
-                          move.w        d0,och
+                          move.l             #bigfield,d0
+                          move.w             d0,ocl
+                          swap               d0
+                          move.w             d0,och
+                          
+                          bset.b             #1,$bfe001                                                           ; LED / Filter
 
-                          bset.b        #1,$bfe001
-                          move.w        #$00ff,$dff09e
+                          lea                $dff000,a6
 
-                          ; move.l #Blurbfield,$dff080
+                          move.w             #$00ff,adkcon(a6)
+                          ;move.l             #Blurbfield,cop1lch(a6)
 
-                          move.w        #0,d0
+                          move.l             #scrn,d0
+                          move.w             d0,pl1l
+                          swap               d0
+                          move.w             d0,pl1h
 
-                          move.l        #scrn,d0
-                          move.w        d0,pl1l
-                          swap          d0
-                          move.w        d0,pl1h
+                          move.l             #scrn+40,d0
+                          move.w             d0,pl2l
+                          swap               d0
+                          move.w             d0,pl2h
 
-                          move.l        #scrn+40,d0
-                          move.w        d0,pl2l
-                          swap          d0
-                          move.w        d0,pl2h
+                          move.l             #scrn+80,d0
+                          move.w             d0,pl3l
+                          swap               d0
+                          move.w             d0,pl3h
 
-                          move.l        #scrn+80,d0
-                          move.w        d0,pl3l
-                          swap          d0
-                          move.w        d0,pl3h
+                          move.l             #scrn+120,d0
+                          move.w             d0,pl4l
+                          swap               d0
+                          move.w             d0,pl4h
 
-                          move.l        #scrn+120,d0
-                          move.w        d0,pl4l
-                          swap          d0
-                          move.w        d0,pl4h
+                          move.l             #scrn+160,d0
+                          move.w             d0,pl5l
+                          swap               d0
+                          move.w             d0,pl5h
 
-                          move.l        #scrn+160,d0
-                          move.w        d0,pl5l
-                          swap          d0
-                          move.w        d0,pl5h
+                          move.l             #scrn+200,d0
+                          move.w             d0,pl6l
+                          swap               d0
+                          move.w             d0,pl6h
 
-                          move.l        #scrn+200,d0
-                          move.w        d0,pl6l
-                          swap          d0
-                          move.w        d0,pl6h
-
-                          move.l        #scrn+240,d0
-                          move.w        d0,pl7l
-                          swap          d0
-                          move.w        d0,pl7h
+                          move.l             #scrn+240,d0
+                          move.w             d0,pl7l
+                          swap               d0
+                          move.w             d0,pl7h
 
 *********************************************************************************************
 
-                          jsr           INITPLAYER
-                          ; bsr initobjpos
+                          jsr                INITPLAYER
+
+                          ; bsr                initobjpos
 
 *********************************************************************************************
  
-                          move.l        #$dff000,a6
+                          lea                $dff000,a6
  
-                          move.l        #null,$dff0a0
-                          move.w        #100,$dff0a4
-                          move.w        #443,$dff0a6
-                          move.w        #63,$dff0a8
+                          move.l             #null,$dff0a0
+                          move.w             #100,$dff0a4
+                          move.w             #443,$dff0a6
+                          move.w             #63,$dff0a8
 
-                          move.l        #null2,$dff0b0
-                          move.w        #100,$dff0b4
-                          move.w        #443,$dff0b6
-                          move.w        #63,$dff0b8
+                          move.l             #null2,$dff0b0
+                          move.w             #100,$dff0b4
+                          move.w             #443,$dff0b6
+                          move.w             #63,$dff0b8
 
-                          move.l        #null4,$dff0c0
-                          move.w        #100,$dff0c4
-                          move.w        #443,$dff0c6
-                          move.w        #63,$dff0c8
+                          move.l             #null4,$dff0c0
+                          move.w             #100,$dff0c4
+                          move.w             #443,$dff0c6
+                          move.w             #63,$dff0c8
 
-                          move.l        #null3,$dff0d0
-                          move.w        #100,$dff0d4
-                          move.w        #443,$dff0d6
-                          move.w        #63,$dff0d8
+                          move.l             #null3,$dff0d0
+                          move.w             #100,$dff0d4
+                          move.w             #443,$dff0d6
+                          move.w             #63,$dff0d8
 
 *********************************************************************************************
 
-                          move.l        #tab,a1
-                          move.w        #64,d7
-                          move.w        #0,d6
+                          move.l             #tab,a1
+                          move.w             #64,d7
+                          move.w             #0,d6
 
 outerlop:
-                          move.l        #pretab,a0
-                          move.w        #255,d5
+                          move.l             #pretab,a0
+                          move.w             #255,d5
 
 scaledownlop:
-                          move.b        (a0)+,d0
-                          ext.w         d0
-                          ext.l         d0
-                          muls          d6,d0
-                          asr.l         #6,d0
-                          move.b        d0,(a1)+
-                          dbra          d5,scaledownlop
-                          addq          #1,d6
-                          dbra          d7,outerlop
+                          move.b             (a0)+,d0
+                          ext.w              d0
+                          ext.l              d0
+                          muls               d6,d0
+                          asr.l              #6,d0
+                          move.b             d0,(a1)+
+                          dbra               d5,scaledownlop
+                          addq               #1,d6
+                          dbra               d7,outerlop
  
 *********************************************************************************************
 
-                          move.l        #$dff000,a6
+                          lea                $dff000,a6
 
-                          move.w        #$c018,intena(a6)
- 
-                          move.w        #$f,dmacon(a6)
-                          move.w        #$820f,dmacon(a6)
- 
-                          ; bsr protinit
-                          ; move.w #$20,$1dc(a6)
- 
-                          move.w        #$0,potgo(a6)                                                        
+                          move.w             #%1100000000011000,intena(a6)                                        ; $c018 : 14=MASTER,4=COPER,3=PORTS
+                          move.w             #%1000000110101111,dmacon(a6)                                        ; $820f : 8=BPLEN,7=COPEN,5=SPREN,0-3=AUDEN
+                          move.w             #$0020,beamcon0(a6)                                                  ; 5=PAL
+                          move.w             #$0,potgo(a6)                                                        
 
-                          IFEQ          MULTIPASS
-                          move.w        #0,Conditions              
+                          IFEQ               MULTIPASS
+                          move.w             #0,Conditions              
                           ENDC
-                          IFNE          MULTIPASS
-                          move.w        #%111111111111,Conditions              
+                          IFNE               MULTIPASS
+                          move.w             #%111111111111,Conditions              
                           ENDC
 
-                          cmp.b         #'n',mors
-                          beq.s         .nokeys
-                          move.w        #%111111111111,Conditions
+                          IFEQ               ENABLECOOP
+                          cmp.b              #'n',mors
+                          beq.s              .nokeys
+
+                          move.w             #%111111111111,Conditions                                            ; Multi player game
 
 .nokeys:
-                          move.l        #KeyMap,a5
-                          clr.b         $45(a5)                                                              ; Esc
- 
-                          clr.b         UseAllChannels 
+                          ENDC
+
+****************************************************************
+
+                          move.l             #KeyMap,a5
+                          clr.b              $45(a5)                                                              ; Esc
+                          clr.b              $19(a5)                                                              ; Pause
+
+****************************************************************
+
+                          clr.b              UseAllChannels 
 
 ****************************************************************
 ; BG music
 
-                          IFEQ          ENABLEBGMUSIC
-                          cmp.b         #'b',Prefsfile+3
-                          bne.s         .noback1
+                          IFEQ               ENABLEBGMUSIC
+                          cmp.b              #'b',Prefsfile+3
+                          bne.s              .noback1
                           ENDC
-                          move.l        #ingame,mt_data                         
-                          jsr           mt_init
+                          move.l             #ingame,mt_data                         
+                          jsr                mt_init
 
-                          st            CHANNELDATA
-                          st            CHANNELDATA+8
-                          st            CHANNELDATA+16
-                          st            CHANNELDATA+24
+                          st                 CHANNELDATA
+                          st                 CHANNELDATA+8
+                          st                 CHANNELDATA+16
+                          st                 CHANNELDATA+24
 
 .noback1:
  
  ****************************************************************
 
-                          move.l        SampleList+6*8,pos0LEFT
-                          move.l        SampleList+6*8+4,Samp0endLEFT
+                          move.l             SampleList+6*8,pos0LEFT
+                          move.l             SampleList+6*8+4,Samp0endLEFT
 
-                          move.l        #playerheight,PLR1s_targheight
-                          move.l        #playerheight,PLR1s_height
-                          move.l        #playerheight,PLR2s_targheight
-                          move.l        #playerheight,PLR2s_height
+                          move.l             #playerheight,PLR1s_targheight
+                          move.l             #playerheight,PLR1s_height
+                          move.l             #playerheight,PLR2s_targheight
+                          move.l             #playerheight,PLR2s_height
 
                           ; cmp.b #'n',mors
                           ; beq.s nohandshake
@@ -1128,1065 +1177,1022 @@ scaledownlop:
                           ; move.b #%11000000,$bfd200
                           
                           ;wtmouse:
-                          ; btst #6,$bfe001
+                          ; btst #6,$bfe001 ; LMB port 1
                           ; bne.s wtmouse
                           
                           ;nohandshake:
                           
                           ; jmp end
  
-                          move.l        COPSCRN1,drawpt
-                          move.l        COPSCRN2,olddrawpt
+                          move.l             COPSCRN1,drawpt
+                          move.l             COPSCRN2,olddrawpt
 
-                          jsr           CLEARKEYBOARD
-                          jsr           MAKEBACKROUT
+                          jsr                CLEARKEYBOARD
+                          jsr                MAKEBACKROUT
 
-                          clr.b         MASTERQUITTING
+****************************************************************
+
+                          SUPERVISOR         SetInstCacheFreezeOff 
+                          SUPERVISOR         SetDataCacheOn
+
+****************************************************************
+
+                          move.w             #0,hitcol
+                          move.w             #0,hitcol2
+
+***************************************************************
+; Single- / Multiplayer
+
+                          clr.b              MASTERQUITTING
+                          cmp.b              #'n',mors
+                          seq                SLAVEQUITTING                                                        
+
+                          cmp.b              #'n',mors
+                          beq.s              skipPlrEnergy
+                          move.w             #127,PLR1_energy
+
+skipPlrEnergy:                       
+                          move.w             #127,PLR2_energy
+
+                          cmp.b              #'n',mors
+                          bne.s              NOCLTXT
+
+***************************************************************
+; Wait single player
  
-                          cmp.b         #'n',mors
-                          seq           SLAVEQUITTING
+                          move.b             #0,lastpressed
 
-                          move.w        #127,PLR2_energy
+.wtpress:
+                          btst               #6,$bfe001                                                           ; LMB port 1
+                          beq.s              CLOSETXT
 
-*********************************************************************************************
-
-                          SUPERVISOR    SetInstCacheFreezeOff 
-                          SUPERVISOR    SetDataCacheOn
-
-*********************************************************************************************
-
-                          move.w        #0,hitcol
-                          move.w        #0,hitcol2
-
-*********************************************************************************************
-; Wait user
-
-                          cmp.b         #'n',mors
-                          bne.s         NOCLTXT
- 
-                          move.b        #0,lastpressed
-
-.wtpress
-                          btst          #6,$bfe001
-                          beq.s         CLOSETXT
-                          btst          #7,$bfe001
-                          beq.s         CLOSETXT
-                          tst.b         lastpressed
-                          beq.s         .wtpress
+                          btst               #7,$bfe001                                                           ; LMB port 2
+                          beq.s              CLOSETXT
+                          
+                          tst.b              lastpressed
+                          beq.s              .wtpress
 
 CLOSETXT:
 
 *********************************************************************************************
 ; Fade text
 
-                          move.w        #$8f8,d0
-                          move.w        #7,d1
+                          lea                $dff000,a6
+                          move.w             #$8f8,d0
+                          move.w             #7,d1
  
-.fdup
-                          move.w        d0,TXTCOLL
-                          sub.w         #$121,d0
+fdup1:
+                          move.w             d0,TXTCOLL
+                          sub.w              #$121,d0
 
-.wtframe:
-                          move.l        #$dff000,a6
-                          btst          #5,intreqrl(a6)
-                          beq.s         .wtframe
-                          move.w        #$0020,intreq(a6)
-                          dbra          d1,.fdup
+                          WAITFORVERTBREQ
 
-                          move.w        #0,TXTCOLL
- 
-NOCLTXT:
- 
+                          dbra               d1,fdup1
+
+                          move.w             #0,TXTCOLL
+
 *********************************************************************************************
 
-                          move.l        #$dff000,a6
+NOCLTXT:
+                          lea                $dff000,a6
+                          move.l             #bigfield,cop1lch(a6)                                                ; Point the copper at our copperlist.
+
+                          clr.b              PLR1_Ducked
+                          clr.b              PLR2_Ducked
+                          clr.b              p1_ducked
+                          clr.b              p2_ducked
+
+****************************************************************************
+; Test end scroll text
                           
-                          move.l        #bigfield,cop1lch(a6)                                                ; Point the copper at our copperlist.
-
-                          clr.b         PLR1_Ducked
-                          clr.b         PLR2_Ducked
-                          clr.b         p1_ducked
-                          clr.b         p2_ducked
-
-****************************************************************************
-; Test
-                        ; jmp  ENDGAMESCROLL
+                          IFNE               ENABLEENDSCROLLTEST
+                          jmp                testEndScroll
+                          ENDC
 
 ****************************************************************************
 
-                          st            doanything
+                          st                 doAnything
 
+*********************************************************************************************
 *********************************************************************************************
 ; Main loop
+; mors (multi or single): m = master, s = slave, n = single, q = quit/exit
 
 mainLoop:
-                          move.l        #$dff000,a6
+                          lea                $dff000,a6
 
-                          btst          #6,$bfe001
-                          bne.b         .nocop
-                          move.l        #bigfield,cop1lch(a6)                                                ; Point the copper at our copperlist.
+****************************************************************
+; SP pause
+                          cmp.b              #'n',mors
+                          bne.b              .skipSpPause
 
-.nocop:
-                          cmp.b         #'n',mors
-                          bne.b         .nopause
-
-                          move.l        #KeyMap,a5
-                          tst.b         $19(a5)                                                              ; Pause key
-                          beq.s         .nopause
-                          clr.b         doanything
+                          lea                KeyMap,a5
  
-.waitrel:
-                          tst.b         PLR1JOY
-                          beq.s         .NOJOY
-                          jsr           _ReadJoy1
+                          tst.b              $19(a5)                                                              ; Pause key (down)
+                          beq.s              .skipSpPause
+                          clr.b              doAnything
+ 
+.waitSpPauseRel:
+                          tst.b              PLR1JOY
+                          beq.s              .noSpJoy
+                          jsr                _ReadJoy1
 
-.NOJOY:
-                          tst.b         $19(a5)                                                              ; Pause key
-                          bne.s         .waitrel
-                          bsr           PAUSEOPTS 
-                          st            doanything
+.noSpJoy:
+                          tst.b              $19(a5)                                                              ; Pause key (up)
+                          bne.s              .waitSpPauseRel
+                          
+                          bsr                PAUSEOPTS 
+                          st                 doAnything
 
-.nopause: 
-                          st            READCONTROLS
+.skipSpPause:
 
-                          move.w        hitcol,d0
-                          beq.s         nofadedownhc
-                          sub.w         #$100,d0
-                          move.w        d0,hitcol
-                          move.w        d0,hitcol2
+****************************************************************
+
+                          st                 READCONTROLS
+
+                          move.w             hitcol,d0
+                          beq.s              nofadedownhc
+
+                          sub.w              #$100,d0
+                          move.w             d0,hitcol
+                          move.w             d0,hitcol2
 
 nofadedownhc:
-                          cmp.b         #'n',mors
-                          beq.b         .nopause
 
-                          move.b        SLAVEPAUSE,d0
-                          or.b          MASTERPAUSE,d0
-                          beq.s         .nopause
-                          clr.b         doanything
+****************************************************************
+;  Multi player pause
+
+                          cmp.b              #'n',mors
+                          beq                skipMpPause
+
+                          move.b             SLAVEPAUSE,d0
+                          or.b               MASTERPAUSE,d0
+                          beq                skipMpPause
+
+                          clr.b              doAnything
  
-                          move.l        #KeyMap,a5
+.waitMpPauseRel:
 
-.waitrel:
-                          cmp.b         #'s',mors
-                          beq.s         .RE2
-                          tst.b         PLR1JOY
-                          beq.s         .NOJOY
-                          jsr           _ReadJoy1
-                          bra.b         .RE1
+                          cmp.b              #'m',mors
+                          bne.s              .notMasterJoy
 
-.RE2:
-                          tst.b         PLR2JOY
-                          beq.s         .NOJOY
-                          jsr           _ReadJoy2
+                          tst.b              PLR1JOY
+                          beq.s              .notMasterJoy
+                          jsr                _ReadJoy1
 
-.RE1
-.NOJOY:
-                          tst.b         $19(a5)                                                              ; Pause key
-                          bne.s         .waitrel
-                          bsr           PAUSEOPTS
+.notMasterJoy:
+                          cmp.b              #'s',mors
+                          bne.s              .notSlaveJoy
+
+                          tst.b              PLR2JOY
+                          beq.s              .notSlaveJoy
+                          jsr                _ReadJoy2
+
+.notSlaveJoy:
+                          lea                KeyMap,a5
+
+                          tst.b              $19(a5)                                                              ; Pause key
+                          bne.s              .waitMpPauseRel
+
+                          bsr                PAUSEOPTS
  
-                          cmp.b         #'m',mors
-                          bne.s         .slavelast
-                          Jsr           SENDFIRST
-                          bra.b         .masfirst
+                          cmp.b              #'m',mors
+                          bne.s              .notMasterSync
 
-.slavelast:
-                          Jsr           RECFIRST
+                          IFNE               ENABLEADVSERIAL
+                          jsr                INITSEND                                                             ; Sync slave
+                          jsr                SENDLONG
+                          jsr                SENDLAST
+                          ENDC
 
-.masfirst:
-                          clr.b         SLAVEPAUSE
-                          clr.b         MASTERPAUSE
-                          st            doanything
+                          IFEQ               ENABLEADVSERIAL
+                          jsr                SENDFIRST
+                          ENDC
+                         
+.notMasterSync:
+                          cmp.b              #'s',mors
+                          bne.s              .notSlaveSync
 
-.nopause: 
-                          move.l        #$dff000,a6
+                          IFNE               ENABLEADVSERIAL
+                          jsr                INITREC                                                              ; Wait master
+                          jsr                RECEIVE
+                          ENDC
 
-                          move.l        drawpt,d0
-                          move.l        olddrawpt,drawpt
-                          move.l        d0,olddrawpt
-                          move.l        d0,cop2lch(a6)
+                          IFEQ               ENABLEADVSERIAL
+                          jsr                RECFIRST
+                          ENDC
+                    
+.notSlaveSync:
+                          clr.b              SLAVEPAUSE
+                          clr.b              MASTERPAUSE
 
-                          move.l        drawpt,a3
+                          st                 doAnything
 
-                          tst.l         USECOPBUFFER
-                          bpl.s         notBuffered                 
-                          move.l        COPSCRNBUFF,a3
+skipMpPause: 
+
+****************************************************************
+; Sync to copper
+
+                          lea                $dff000,a6
+                          WAITFORVERTBREQ
+
+****************************************************************
+; Update chunky screen (copper list)
+
+                          move.l             drawpt,d0
+                          move.l             olddrawpt,drawpt
+                          move.l             d0,olddrawpt
+                          move.l             d0,cop2lch(a6)
+
+                          move.l             drawpt,a3
+                          tst.l              USECOPBUFFER
+                          bpl.s              notBuffered
+                          move.l             COPSCRNBUFF,a3
                           
 notBuffered:
-                          adda.w        #10,a3                                                               ; Skip to first bplcon3 value
-                          move.l        a3,frompt
+                          lea                fromptOffset(a3),a3                                                  ; Skip to first bplcon3 value
+                          move.l             a3,frompt                                                            ; Copper chunky
 
-                          lea           midOffset(a3),a3     
-                          move.l        a3,midpt
+                          lea                midOffset(a3),a3     
+                          move.l             a3,midpt
 
-                          cmp.b         #'s',mors
-                          beq.s         nowaitslave
+****************************************************************
+; Handle selected gun for slave, master or single 
 
-waitfortop:
-                          move.l        #$dff000,a6
+                          cmp.b              #'s',mors
+                          bne.b              notSlavePlr2Gun
 
-                          btst.b        #0,intreqrl(a6)
-                          beq.b         waitfortop
+                          move.l             #PLR2_GunData,GunData
+                          move.b             PLR2_GunSelected,GunSelected
+                          
+                          bra.b              donePlrGun
 
-                          move.w        #$1,intreq(a6)
-                          move.l        #PLR1_GunData,GunData
-                          move.b        PLR1_GunSelected,GunSelected
-                          bra.b         waitmaster
- 
-nowaitslave:
-                          move.l        #PLR2_GunData,GunData
-                          move.b        PLR2_GunSelected,GunSelected
+notSlavePlr2Gun:
+                          move.l             #PLR1_GunData,GunData
+                          move.b             PLR1_GunSelected,GunSelected
 
-waitmaster:
+donePlrGun:
 
-****************************************************************************
+****************************************************************
 ; Anim water waves (watertouse)
 
-                          move.l        waterpt,a0
-                          move.l        (a0)+,watertouse
-                          cmp.l         #endwaterlist,a0
-                          blt.s         okwat
-                          move.l        #waterlist,a0
+                          move.l             waterpt,a0
+                          move.l             (a0)+,watertouse
+                          cmp.l              #endwaterlist,a0
+                          blt.s              okwat
+                          move.l             #waterlist,a0
 
 okwat:
-                          move.l        a0,waterpt
+                          move.l             a0,waterpt
 
-                          add.w         #640,wtan
-                          and.w         #8191,wtan
-                          addq.w        #1,wateroff
-                          and.w         #63,wateroff
+                          add.w              #640,wtan
+                          and.w              #8191,wtan
+                          addq.w             #1,wateroff
+                          and.w              #63,wateroff
 
-****************************************************************************
+****************************************************************
 ; Face
 
-                          IFNE          ENABLEFACES
-                          bsr           PlaceFace
+                          IFNE               ENABLEFACES
+                          bsr                PlaceFace
                           ENDC
 
-****************************************************************************
+****************************************************************
 ; Timer
-                          IFNE          ENABLETIMER
-                          jsr           INITTIMER
+                          IFNE               ENABLETIMER
+                          jsr                INITTIMER
                           ENDC
 
-****************************************************************************
+****************************************************************
 ; Gun ammo
 
-                          move.l        GunData,a6
-                          moveq         #0,d0
-                          move.b        GunSelected,d0
-                          lsl.w         #2,d0
-                          lea           (a6,d0.w*8),a6
-                          move.w        (a6),d0
-                          asr.w         #3,d0
+                          move.l             GunData,a6
+                          moveq              #0,d0
+                          move.b             GunSelected,d0
+                          lsl.w              #2,d0
+                          lea                (a6,d0.w*8),a6
+                          move.w             (a6),d0
+                          asr.w              #3,d0
 
-                          IFNE          UNLIMITEDAMMO
-                          move.l        #63,d0
-                          move.w        d0,(a6)
+                          IFNE               UNLIMITEDAMMO
+                          move.l             #63,d0
+                          move.w             d0,(a6)
                           ENDC
                           
-                          move.w        d0,Ammo
+                          move.w             d0,Ammo
 
-****************************************************************************
+****************************************************************
 
-                          move.l        PLR1_xoff,OLDX1
-                          move.l        PLR1_zoff,OLDZ1
-                          move.l        PLR2_xoff,OLDX2
-                          move.l        PLR2_zoff,OLDZ2
+                          move.l             PLR1_xoff,OLDX1
+                          move.l             PLR1_zoff,OLDZ1
 
-****************************************************************************
+                          move.l             PLR2_xoff,OLDX2
+                          move.l             PLR2_zoff,OLDZ2
 
-                          move.l        #$dff000,a6
+****************************************************************
+; Multi player
 
-                          cmp.b         #'s',mors
-                          beq           ASlaveShouldWaitOnHisMaster
+                          lea                $dff000,a6
 
-                          cmp.b         #'n',mors
-                          bne           NotOnePlayer
- 
-                          move.w        PLR1_energy,Energy
-                          move.w        FramesToDraw,TempFrames
-                          cmp.w         #15,TempFrames
-                          blt.s         .okframe
-                          move.w        #15,TempFrames
+                          cmp.b              #'m',mors
+                          beq                handleMaster
+
+                          cmp.b              #'s',mors
+                          beq                handleSlave
+
+****************************************************************
+; Single player 
+
+                          move.w             FramesToDraw,TempFrames
+                          cmp.w              #15,TempFrames
+                          blt.s              .okframe
+                          move.w             #15,TempFrames
 
 .okframe:
-                          move.w        #0,FramesToDraw
+                          move.w             #0,FramesToDraw
 
-****************************************************************************
+****************************************************************
 ; Cheat with player energy (JACKIE)
 
-                          move.l        CHEATPTR,a4
-                          add.l         #200000,a4
-                          moveq         #0,d0
-                          move.b        (a4),d0
+                          move.l             CHEATPTR,a4
+                          add.l              #200000,a4
+                          moveq              #0,d0
+                          move.b             (a4),d0
 
-                          move.l        #KeyMap,a5
-                          tst.b         (a5,d0.w)                                                            ; Current cheat key
-                          beq.s         .nocheat
+                          move.l             #KeyMap,a5
+                          tst.b              (a5,d0.w)                                                            ; Current cheat key
+                          beq.s              .nocheat
  
-                          addq          #1,a4
-                          cmp.l         #ENDCHEAT,a4
-                          blt.s         .nocheat
+                          addq               #1,a4
+                          cmp.l              #ENDCHEAT,a4
+                          blt.s              .nocheat
 
-                          cmp.w         #0,CHEATNUM
-                          beq.s         .nocheat
+                          cmp.w              #0,CHEATNUM
+                          beq.s              .nocheat
 
-                          subq.w        #1,CHEATNUM
-                          move.l        #CHEATFRAME,a4
-                          move.w        #127,PLR1_energy
-                          bsr           EnergyBar
+                          subq.w             #1,CHEATNUM
+                          move.l             #CHEATFRAME,a4
+                          move.w             #127,PLR1_energy
+                          bsr                EnergyBar
 
 .nocheat:
-                          sub.l         #200000,a4
-                          move.l        a4,CHEATPTR
+                          sub.l              #200000,a4
+                          move.l             a4,CHEATPTR
 
-****************************************************************************
+****************************************************************
 
-                          move.l        PLR1s_xoff,p1_xoff
-                          move.l        PLR1s_zoff,p1_zoff
-                          move.l        PLR1s_yoff,p1_yoff
-                          move.l        PLR1s_height,p1_height
-                          move.w        PLR1s_angpos,p1_angpos
-                          move.w        PLR1_bobble,p1_bobble
-                          move.b        PLR1_clicked,p1_clicked
-                          move.b        PLR1_fire,p1_fire
-                          clr.b         PLR1_clicked
-                          move.b        PLR1_SPCTAP,p1_spctap
-                          clr.b         PLR1_SPCTAP
-                          move.b        PLR1_Ducked,p1_ducked
-                          move.b        PLR1_GunSelected,p1_gunselected
+                          move.w             PLR1_energy,Energy
+                          move.l             PLR1s_xoff,p1_xoff
+                          move.l             PLR1s_zoff,p1_zoff
+                          move.l             PLR1s_yoff,p1_yoff
+                          move.l             PLR1s_height,p1_height
+                          move.w             PLR1s_angpos,p1_angpos
+                          move.w             PLR1_bobble,p1_bobble
+                          move.b             PLR1_clicked,p1_clicked
+                          move.b             PLR1_fire,p1_fire
+                          clr.b              PLR1_clicked
+                          move.b             PLR1_SPCTAP,p1_spctap
+                          clr.b              PLR1_SPCTAP
+                          move.b             PLR1_Ducked,p1_ducked
+                          move.b             PLR1_GunSelected,p1_gunselected
 
-                          bsr           PLR1_Control
+                          bsr                PLR1_Control
 
-                          move.l        PLR1_Roompt,a0
-                          move.l        ToZoneRoof(a0),SplitHeight
-                          move.w        p1_xoff,THISPLRxoff
-                          move.w        p1_zoff,THISPLRzoff
+                          move.l             PLR1_Roompt,a0
+                          move.l             ToZoneRoof(a0),SplitHeight
+                          move.w             p1_xoff,THISPLRxoff
+                          move.w             p1_zoff,THISPLRzoff
  
-                          move.l        #$60000,p2_yoff
-                          move.l        PLR2_Obj,a0
-                          move.w        #-1,GraphicRoom(a0)
-                          move.w        #-1,12(a0)
-                          move.b        #0,17(a0)
-                          move.l        #BollocksRoom,PLR2_Roompt
+                          move.l             #$60000,p2_yoff
+                          move.l             PLR2_Obj,a0
+                          move.w             #-1,GraphicRoom(a0)
+                          move.w             #-1,12(a0)
+                          move.b             #0,17(a0)
+                          move.l             #BollocksRoom,PLR2_Roompt
  
-                          bra           donetalking
- 
-NotOnePlayer:
-                          move.l        #KeyMap,a5
-                          tst.b         $19(a5)                                                              ; Pause key
-                          sne           MASTERPAUSE
+                          bra                doneTalking
 
-****************************************************************************
-                          move.w        PLR1_energy,Energy                                                   ; change this back
-****************************************************************************
+****************************************************************
+; Multi player - master
 
-                          jsr           SENDFIRST
+handleMaster:
 
-                          move.w        FramesToDraw,TempFrames
-                          cmp.w         #15,TempFrames
-                          blt.s         .okframe
-                          move.w        #15,TempFrames
+                          move.l             #KeyMap,a5
+                          tst.b              $19(a5)                                                              ; 'p' Pause key
+                          sne                MASTERPAUSE                                               
 
-.okframe:
-                          move.w        #0,FramesToDraw
- 
-                          move.l        PLR1s_xoff,p1_xoff
-                          move.l        PLR1s_zoff,p1_zoff
-                          move.l        PLR1s_yoff,p1_yoff
-                          move.l        PLR1s_height,p1_height
-                          move.w        PLR1s_angpos,p1_angpos
-                          move.w        PLR1_bobble,p1_bobble
+                          move.w             FramesToDraw,TempFrames
+                          cmp.w              #15,TempFrames
+                          blt.s              .okMasterFrame
+                          move.w             #15,TempFrames
 
-                          move.b        PLR1_clicked,p1_clicked
-                          clr.b         PLR1_clicked
+.okMasterFrame:
+                          move.w             #0,FramesToDraw
 
-                          move.b        PLR1_fire,p1_fire
+                          move.w             PLR1_energy,Energy   
+                          move.l             PLR1s_xoff,p1_xoff
+                          move.l             PLR1s_zoff,p1_zoff
+                          move.l             PLR1s_yoff,p1_yoff
+                          move.l             PLR1s_height,p1_height
+                          move.w             PLR1s_angpos,p1_angpos
+                          move.w             PLR1_bobble,p1_bobble
+                          move.b             PLR1_clicked,p1_clicked
+                          clr.b              PLR1_clicked
+                          move.b             PLR1_fire,p1_fire
+                          move.b             PLR1_SPCTAP,p1_spctap
+                          clr.b              PLR1_SPCTAP
+                          move.b             PLR1_Ducked,p1_ducked
+                          move.b             PLR1_GunSelected,p1_gunselected
 
-                          move.b        PLR1_SPCTAP,p1_spctap
-                          clr.b         PLR1_SPCTAP
+                          IFNE               ENABLEADVSERIAL
+                          jsr                AdvSyncMaster
+                          ENDC
 
-                          move.b        PLR1_Ducked,p1_ducked
-                          move.b        PLR1_GunSelected,p1_gunselected
- 
-                          move.l        p1_xoff,d0
-                          jsr           SENDFIRST
-                          move.l        d0,p2_xoff
- 
-                          move.l        p1_zoff,d0
-                          jsr           SENDFIRST
-                          move.l        d0,p2_zoff 
- 
-                          move.l        p1_yoff,d0
-                          jsr           SENDFIRST
-                          move.l        d0,p2_yoff
-  
-                          move.l        p1_height,d0
-                          jsr           SENDFIRST
-                          move.l        d0,p2_height
- 
-                          move.w        p1_angpos,d0
-                          swap          d0
-                          move.w        p1_bobble,d0
-                          jsr           SENDFIRST
-                          move.w        d0,p2_bobble
-                          swap          d0
-                          move.w        d0,p2_angpos
- 
- 
-                          move.w        TempFrames,d0
-                          swap          d0
-                          move.b        p1_spctap,d0
-                          lsl.w         #8,d0
-                          move.b        p1_clicked,d0
-                          jsr           SENDFIRST
-                          move.b        d0,p2_clicked
-                          lsr.w         #8,d0
-                          move.b        d0,p2_spctap
- 
- 
-                          move.w        Rand1,d0
-                          swap          d0
-                          move.b        p1_ducked,d0
-                          lsl.w         #8,d0
-                          move.b        p1_gunselected,d0
-                          jsr           SENDFIRST
-                          move.b        d0,p2_gunselected
-                          lsr.w         #8,d0
-                          move.b        d0,p2_ducked
- 
-                          move.b        p1_fire,d0
-                          lsl.w         #8,d0
-                          move.b        MASTERQUITTING,d0
-                          or.b          d0,SLAVEQUITTING
-                          swap          d0
-                          move.b        MASTERPAUSE,d0
-                          or.b          d0,SLAVEPAUSE
-                          jsr           SENDFIRST
-                          or.b          d0,MASTERPAUSE
-                          or.b          d0,SLAVEPAUSE
-                          swap          d0
-                          or.b          d0,SLAVEQUITTING
-                          or.b          d0,MASTERQUITTING
-                          lsr.w         #8,d0
-                          move.b        d0,p2_fire
- 
-                          bsr           PLR1_Control
-                          bsr           PLR2_Control
-                          move.l        PLR1_Roompt,a0
-                          move.l        ToZoneRoof(a0),SplitHeight
-                          move.w        p1_xoff,THISPLRxoff
-                          move.w        p1_zoff,THISPLRzoff
- 
-                          bra           donetalking
+                          IFEQ               ENABLEADVSERIAL
+                          jsr                SyncMaster
+                          ENDC
 
-ASlaveShouldWaitOnHisMaster:
-                          move.l        #KeyMap,a5
-                          tst.b         $19(a5)                                                              ; Pause key
-                          sne           SLAVEPAUSE
+                          bsr                PLR1_Control
+                          bsr                PLR2_Control
 
-                          move.w        PLR2_energy,Energy
+                          move.l             PLR1_Roompt,a0
+                          move.l             ToZoneRoof(a0),SplitHeight
+                          
+                          move.w             p1_xoff,THISPLRxoff
+                          move.w             p1_zoff,THISPLRzoff
+ 
+                          bra                doneTalking
 
-                          jsr           RECFIRST
+; End of Multi player - master
+****************************************************************
 
-                          move.l        PLR2s_xoff,p2_xoff
-                          move.l        PLR2s_zoff,p2_zoff
-                          move.l        PLR2s_yoff,p2_yoff
-                          move.l        PLR2s_height,p2_height
-                          move.w        PLR2s_angpos,p2_angpos
-                          move.w        PLR2_bobble,p2_bobble
-                          move.b        PLR2_clicked,p2_clicked
-                          clr.b         PLR2_clicked
-                          move.b        PLR2_fire,p2_fire
-                          move.b        PLR2_SPCTAP,p2_spctap
-                          clr.b         PLR2_SPCTAP
-                          move.b        PLR2_Ducked,p2_ducked
-                          move.b        PLR2_GunSelected,p2_gunselected
+****************************************************************
+; Multi player - slave
 
-                          move.l        p2_xoff,d0
-                          jsr           RECFIRST
-                          move.l        d0,p1_xoff
- 
-                          move.l        p2_zoff,d0
-                          jsr           RECFIRST
-                          move.l        d0,p1_zoff
- 
-                          move.l        p2_yoff,d0
-                          jsr           RECFIRST
-                          move.l        d0,p1_yoff
- 
-                          move.l        p2_height,d0
-                          jsr           RECFIRST
-                          move.l        d0,p1_height
- 
-                          move.w        p2_angpos,d0
-                          swap          d0
-                          move.w        p2_bobble,d0
-                          jsr           RECFIRST
-                          move.w        d0,p1_bobble
-                          swap          d0
-                          move.w        d0,p1_angpos
- 
- 
-                          move.b        p2_spctap,d0
-                          lsl.w         #8,d0
-                          move.b        p2_clicked,d0
-                          jsr           RECFIRST
-                          move.b        d0,p1_clicked
-                          lsr.w         #8,d0
-                          move.b        d0,p1_spctap
-                          swap          d0
-                          move.w        d0,TempFrames
- 
- 
-                          move.b        p2_ducked,d0
-                          lsl.w         #8,d0
-                          move.b        p2_gunselected,d0
-                          jsr           RECFIRST
-                          move.b        d0,p1_gunselected
-                          lsr.w         #8,d0
-                          move.b        d0,p1_ducked
-                          swap          d0
-                          move.w        d0,Rand1
- 
-                          move.b        p2_fire,d0
-                          lsl.w         #8,d0
-                          move.b        SLAVEQUITTING,d0
-                          or.b          d0,MASTERQUITTING
-                          swap          d0
-                          move.b        SLAVEPAUSE,d0
-                          or.b          d0,MASTERPAUSE
-                          jsr           RECFIRST
-                          or.b          d0,MASTERPAUSE
-                          or.b          d0,SLAVEPAUSE
-                          swap          d0
-                          or.b          d0,SLAVEQUITTING
-                          or.b          d0,MASTERQUITTING
-                          lsr.w         #8,d0
-                          move.b        d0,p1_fire
+handleSlave:
 
-                          bsr           PLR1_Control
-                          bsr           PLR2_Control
-                          move.w        p2_xoff,THISPLRxoff
-                          move.w        p2_zoff,THISPLRzoff
-                          move.l        PLR2_Roompt,a0
-                          move.l        ToZoneRoof(a0),SplitHeight
+                          move.l             #KeyMap,a5
+                          tst.b              $19(a5)                                                              ; 'p' Pause key
+                          sne                SLAVEPAUSE
 
-donetalking:
-                          move.l        #ZoneBrightTable,a1
-                          move.l        ZoneAdds,a2
-                          move.l        PLR2_ListOfGraphRooms,a0
-                          move.l        PLR2_PointsToRotatePtr,a5
-                          cmp.b         #'s',mors
-                          beq.s         doallz
-                          move.l        PLR1_ListOfGraphRooms,a0
-                          move.l        PLR1_PointsToRotatePtr,a5
+                          move.w             PLR2_energy,Energy
+                          move.l             PLR2s_xoff,p2_xoff
+                          move.l             PLR2s_zoff,p2_zoff
+                          move.l             PLR2s_yoff,p2_yoff
+                          move.l             PLR2s_height,p2_height
+                          move.w             PLR2s_angpos,p2_angpos
+                          move.w             PLR2_bobble,p2_bobble
+                          move.b             PLR2_clicked,p2_clicked
+                          clr.b              PLR2_clicked
+                          move.b             PLR2_fire,p2_fire
+                          move.b             PLR2_SPCTAP,p2_spctap
+                          clr.b              PLR2_SPCTAP
+                          move.b             PLR2_Ducked,p2_ducked
+                          move.b             PLR2_GunSelected,p2_gunselected
+
+                          IFNE               ENABLEADVSERIAL
+                          jsr                AdvSyncSlave
+                          ENDC
+
+                          IFEQ               ENABLEADVSERIAL
+                          jsr                SyncSlave
+                          ENDC
+
+                          bsr                PLR1_Control
+                          bsr                PLR2_Control
+
+                          move.l             PLR2_Roompt,a0
+                          move.l             ToZoneRoof(a0),SplitHeight
+
+                          move.w             p2_xoff,THISPLRxoff
+                          move.w             p2_zoff,THISPLRzoff
+
+
+; End of Multi player - slave
+****************************************************************
+
+doneTalking:
+                          lea                ZoneBrightTable,a1
+                          move.l             ZoneAdds,a2
+
+                          move.l             PLR2_ListOfGraphRooms,a0                                             ; Slave
+                          move.l             PLR2_PointsToRotatePtr,a5                                            ; Slave
+                          
+                          cmp.b              #'s',mors
+                          beq.s              doallz
+
+                          move.l             PLR1_ListOfGraphRooms,a0                                             ; Master / Single
+                          move.l             PLR1_PointsToRotatePtr,a5                                            ; Master / Single
  
 doallz:
-                          move.w        (a0),d0
-                          blt.s         doneallz
-                          addq.w        #8,a0
+                          move.w             (a0),d0
+                          blt.s              doneallz
+                          addq.w             #8,a0
  
-                          move.l        (a2,d0.w*4),a3
-                          add.l         LEVELDATA,a3
-                          move.w        ToZoneBrightness(a3),d2
+                          move.l             (a2,d0.w*4),a3
+                          add.l              LEVELDATA,a3
+                          move.w             ToZoneBrightness(a3),d2
 
-                          blt.s         justbright
-                          move.w        d2,d3
-                          lsr.w         #8,d3
-                          tst.b         d3
-                          beq.s         justbright
+                          blt.s              justbright
+                          move.w             d2,d3
+                          lsr.w              #8,d3
+                          tst.b              d3
+                          beq.s              justbright
 
-                          move.l        #BrightAnimTable,a4
-                          move.w        -2(a4,d3.w*2),d2
+                          lea                BrightAnimTable,a4
+                          move.w             -2(a4,d3.w*2),d2
  
 justbright:
-                          move.w        d2,(a1,d0.w*4)
+                          move.w             d2,(a1,d0.w*4)
 
-                          move.w        ToUpperBrightness(a3),d2
+                          move.w             ToUpperBrightness(a3),d2
 
-                          blt.s         justbright2
-                          move.w        d2,d3
-                          lsr.w         #8,d3
-                          tst.b         d3
-                          beq.s         justbright2
+                          blt.s              justbright2
+                          move.w             d2,d3
+                          lsr.w              #8,d3
+                          tst.b              d3
+                          beq.s              justbright2
 
-                          move.l        #BrightAnimTable,a4
-                          move.w        -2(a4,d3.w*2),d2
+                          lea                BrightAnimTable,a4
+                          move.w             -2(a4,d3.w*2),d2
  
 justbright2:
-                          move.w        d2,2(a1,d0.w*4)
+                          move.w             d2,2(a1,d0.w*4)
 
-                          bra.b         doallz
+                          bra.b              doallz
 
 doneallz:
- 
-                          move.l        PointBrights,a2
-                          move.l        #CurrentPointBrights,a3
+                          move.l             PointBrights,a2
+                          lea                CurrentPointBrights,a3
 
 justtheone:
-                          move.w        (a5)+,d0
-                          blt.s         whythehell
-                          move.w        (a2,d0.w*4),d2
+                          move.w             (a5)+,d0
+                          blt.s              whythehell
+                          move.w             (a2,d0.w*4),d2
 
-                          tst.b         d2
-                          blt.s         .justbright
-                          move.w        d2,d3
-                          lsr.w         #8,d3
-                          tst.b         d3
-                          beq.s         .justbright
+                          tst.b              d2
+                          blt.s              .justbright
+                          move.w             d2,d3
+                          lsr.w              #8,d3
+                          tst.b              d3
+                          beq.s              .justbright
 
-                          move.w        d3,d4
-                          and.w         #$f,d3
-                          lsr.w         #4,d4
-                          addq.w        #1,d4
+                          move.w             d3,d4
+                          and.w              #$f,d3
+                          lsr.w              #4,d4
+                          addq.w             #1,d4
 
-                          move.l        #BrightAnimTable,a0
-                          move.w        -2(a0,d3.w*2),d3
-                          ext.w         d2
-                          sub.w         d2,d3
-                          muls          d4,d3
-                          asr.w         #4,d3
-                          add.w         d3,d2
+                          lea                BrightAnimTable,a0
+                          move.w             -2(a0,d3.w*2),d3
+                          ext.w              d2
+                          sub.w              d2,d3
+                          muls               d4,d3
+                          asr.w              #4,d3
+                          add.w              d3,d2
 
 .justbright:
-                          ext.w         d2
+                          ext.w              d2
 
-                          move.w        d2,(a3,d0.w*4)
-                          move.w        2(a2,d0.w*4),d2
+                          move.w             d2,(a3,d0.w*4)
+                          move.w             2(a2,d0.w*4),d2
 
-                          tst.b         d2
-                          blt.s         .justbright2
-                          move.w        d2,d3
-                          lsr.w         #8,d3
-                          tst.b         d3
-                          beq.s         .justbright2
+                          tst.b              d2
+                          blt.s              .justbright2
+                          move.w             d2,d3
+                          lsr.w              #8,d3
+                          tst.b              d3
+                          beq.s              .justbright2
 
-                          move.w        d3,d4
-                          and.w         #$f,d3
-                          lsr.w         #4,d4
-                          addq.w        #1,d4
+                          move.w             d3,d4
+                          and.w              #$f,d3
+                          lsr.w              #4,d4
+                          addq.w             #1,d4
 
-                          move.l        #BrightAnimTable,a0
-                          move.w        -2(a0,d3.w*2),d3
-                          ext.w         d2
-                          sub.w         d2,d3
-                          muls          d4,d3
-                          asr.w         #4,d3
-                          add.w         d3,d2
+                          lea                BrightAnimTable,a0
+                          move.w             -2(a0,d3.w*2),d3
+                          ext.w              d2
+                          sub.w              d2,d3
+                          muls               d4,d3
+                          asr.w              #4,d3
+                          add.w              d3,d2
 
 .justbright2:
-                          ext.w         d2
-
-                          move.w        d2,2(a3,d0.w*4)
-
-                          bra.s         justtheone
+                          ext.w              d2
+                          move.w             d2,2(a3,d0.w*4)
+                          bra.s              justtheone
  
 whythehell:
-                          cmp.b         #'n',mors
-                          beq           nosee
+                          cmp.b              #'n',mors
+                          beq                nosee
 
-                          move.l        PLR1_Roompt,FromRoom
-                          move.l        PLR2_Roompt,ToRoom
-                          move.w        p1_xoff,Viewerx
-                          move.w        p1_zoff,Viewerz
-                          move.l        p1_yoff,d0
-                          asr.l         #7,d0
-                          move.w        d0,Viewery
-                          move.w        p2_xoff,Targetx
-                          move.w        p2_zoff,Targetz
-                          move.l        p2_yoff,d0
-                          asr.l         #7,d0
-                          move.w        d0,Targety
-                          move.b        PLR1_StoodInTop,ViewerTop
-                          move.b        PLR2_StoodInTop,TargetTop
-                          jsr           CanItBeSeen
+****************************************************************
+; Multi player 
+
+                          move.l             PLR1_Roompt,FromRoom
+                          move.l             PLR2_Roompt,ToRoom
+                          move.w             p1_xoff,Viewerx
+                          move.w             p1_zoff,Viewerz
+                          move.l             p1_yoff,d0
+                          asr.l              #7,d0
+                          move.w             d0,Viewery
+                          
+                          move.w             p2_xoff,Targetx
+                          move.w             p2_zoff,Targetz
+                          move.l             p2_yoff,d0
+                          asr.l              #7,d0
+                          move.w             d0,Targety
+
+                          move.b             PLR1_StoodInTop,ViewerTop
+                          move.b             PLR2_StoodInTop,TargetTop
+                          jsr                CanItBeSeen
  
-                          move.l        PLR1_Obj,a0
-                          move.b        CanSee,d0
-                          and.b         #2,d0
-                          move.b        d0,17(a0)
-                          move.l        PLR2_Obj,a0
-                          move.b        CanSee,d0
-                          and.b         #1,d0
-                          move.b        d0,17(a0)
+                          move.l             PLR1_Obj,a0
+                          move.b             CanSee,d0
+                          and.b              #2,d0
+                          move.b             d0,17(a0)
+
+                          move.l             PLR2_Obj,a0
+                          move.b             CanSee,d0
+                          and.b              #1,d0
+                          move.b             d0,17(a0)
+
+****************************************************************
 
 nosee:
-                          move.l        PLR1_Obj,a0
-                          move.b        #5,16(a0)
-                          move.l        PLR2_Obj,a0
-                          move.b        #11,16(a0)
+                          move.l             PLR1_Obj,a0
+                          move.b             #5,16(a0)
+                          move.l             PLR2_Obj,a0
+                          move.b             #11,16(a0)
 
-                          move.w        TempFrames,d0
-                          add.w         d0,p1_holddown
-                          cmp.w         #30,p1_holddown
-                          blt.s         oklength
-                          move.w        #30,p1_holddown
+                          move.w             TempFrames,d0
+                          add.w              d0,p1_holddown
+                          cmp.w              #30,p1_holddown
+                          blt.s              oklength
+                          move.w             #30,p1_holddown
 
 oklength:
-                          tst.b         p1_fire
-                          bne.s         okstillheld
-                          sub.w         d0,p1_holddown
-                          bge.s         okstillheld
-                          move.w        #0,p1_holddown
+                          tst.b              p1_fire
+                          bne.s              okstillheld
+                          sub.w              d0,p1_holddown
+                          bge.s              okstillheld
+                          move.w             #0,p1_holddown
  
 okstillheld:
-                          move.w        TempFrames,d0
-                          add.w         d0,p2_holddown
+                          move.w             TempFrames,d0
+                          add.w              d0,p2_holddown
  
-                          cmp.w         #30,p2_holddown
-                          blt.s         oklength2
-                          move.w        #30,p2_holddown
+                          cmp.w              #30,p2_holddown
+                          blt.s              oklength2
+                          move.w             #30,p2_holddown
 
 oklength2:
-                          tst.b         p2_fire
-                          bne.s         okstillheld2
-                          sub.w         d0,p2_holddown
-                          bge.s         okstillheld2
-                          move.w        #0,p2_holddown
+                          tst.b              p2_fire
+                          bne.s              okstillheld2
+                          sub.w              d0,p2_holddown
+                          bge.s              okstillheld2
+                          move.w             #0,p2_holddown
 
 okstillheld2:
 
-****************************************************************************
+****************************************************************
                           ; move.l #PLR1_GunData,a1
                           ; move.w p1_holddown,d0
                           ; move.w #50,10+32*3(a1)
+                          ;
                           ; move.l #PLR2_GunData,a1
                           ; move.w p2_holddown,d0
                           ; move.w #50,10+32*3(a1)
-****************************************************************************
+****************************************************************
  
-                          move.w        TempFrames,d1
-                          bgt.s         noze
-                          moveq         #1,d1
+                          move.w             TempFrames,d1
+                          bgt.s              noze
+                          moveq              #1,d1
 
 noze:
-                          move.w        PLR1_xoff,d0
-                          sub.w         OLDX1,d0
-                          asl.w         #4,d0
-                          ext.l         d0
-                          divs          d1,d0
-                          move.w        d0,XDIFF1
-                          move.w        PLR2_xoff,d0
-                          sub.w         OLDX2,d0
-                          asl.w         #4,d0
-                          ext.l         d0
-                          divs          d1,d0
-                          move.w        d0,XDIFF2
-                          move.w        PLR1_zoff,d0
-                          sub.w         OLDZ1,d0
-                          asl.w         #4,d0
-                          ext.l         d0
-                          divs          d1,d0
-                          move.w        d0,ZDIFF1
-                          move.w        PLR2_zoff,d0
-                          sub.w         OLDZ2,d0
-                          asl.w         #4,d0
-                          ext.l         d0
-                          divs          d1,d0
-                          move.w        d0,ZDIFF2
+                          move.w             PLR1_xoff,d0
+                          sub.w              OLDX1,d0
+                          asl.w              #4,d0
+                          ext.l              d0
+                          divs               d1,d0
+                          move.w             d0,XDIFF1
+                          move.w             PLR2_xoff,d0
+                          sub.w              OLDX2,d0
+                          asl.w              #4,d0
+                          ext.l              d0
+                          divs               d1,d0
+                          move.w             d0,XDIFF2
+                          move.w             PLR1_zoff,d0
+                          sub.w              OLDZ1,d0
+                          asl.w              #4,d0
+                          ext.l              d0
+                          divs               d1,d0
+                          move.w             d0,ZDIFF1
+                          move.w             PLR2_zoff,d0
+                          sub.w              OLDZ2,d0
+                          asl.w              #4,d0
+                          ext.l              d0
+                          divs               d1,d0
+                          move.w             d0,ZDIFF2
 
-                          cmp.b         #'s',mors
-                          beq.s         ImPlayer2OhYesIAm
-                          bsr           USEPLR1
-                          bra.b         IWasPlayer1
+                          cmp.b              #'s',mors
+                          beq                drawSlavePlr2
 
-****************************************************************************
+****************************************************************
+; Single player / Multi player - master 
 
-ImPlayer2OhYesIAm:
-                          bsr           USEPLR2
-
-IWasPlayer1:
-                          cmp.b         #'s',mors
-                          beq           drawplayer2
+                          bsr                USEPLR1
  
-                          move.w        #0,scaleval
+                          move.w             #0,scaleval
  
-                          move.l        PLR1_xoff,xoff
-                          move.l        PLR1_yoff,yoff
-                          move.l        PLR1_zoff,zoff
-                          move.w        PLR1_angpos,angpos
-                          move.w        PLR1_cosval,cosval
-                          move.w        PLR1_sinval,sinval
+                          move.l             PLR1_xoff,xoff
+                          move.l             PLR1_yoff,yoff
+                          move.l             PLR1_zoff,zoff
+                          move.w             PLR1_angpos,angpos
+                          move.w             PLR1_cosval,cosval
+                          move.w             PLR1_sinval,sinval
  
+                          move.l             PLR1_ListOfGraphRooms,ListOfGraphRooms
+                          move.l             PLR1_PointsToRotatePtr,PointsToRotatePtr
+                          move.l             PLR1_Roompt,Roompt
+
+                          bsr                OrderZones
+                          jsr                objmoveanim
+
+                          bsr                EnergyBar
+                          bsr                AmmoBar
+
+                          move.w             #0,leftclip
+                          move.w             #96,rightclip
+                          move.w             #0,deftopclip
  
-                          move.l        PLR1_ListOfGraphRooms,ListOfGraphRooms
-                          move.l        PLR1_PointsToRotatePtr,PointsToRotatePtr
-                          move.l        PLR1_Roompt,Roompt
+                          move.w             #79,defbotclip
+                          move.w             #0,topclip
+                          move.w             #79,botclip
 
-                          bsr           OrderZones
-                          jsr           objmoveanim
-                          bsr           EnergyBar
-                          bsr           AmmoBar
+                          bsr                DrawDisplay 
 
-                          move.w        #0,leftclip
-                          move.w        #96,rightclip
-                          move.w        #0,deftopclip
- 
-                          move.w        #79,defbotclip
-                          move.w        #0,topclip
-                          move.w        #79,botclip
+****************************************************************
+; - Test glass routine:
 
-                        ; sub.l #10*104*4,frompt
-                        ; sub.l #10*104*4,midpt
-
-; Subroom loop
-                          bsr           DrawDisplay 
-
-****************************************************************************
-; Test glass routine:
-
-                          IFNE          ENABLEGLASSBALL
-                          move.l        #WorkSpace,a0
-                          move.l        frompt,a2
-                          move.w        #104*4,d3
-                          move.w        #1,d6
+                          IFNE               ENABLEGLASSBALL
+                          move.l             #WorkSpace,a0
+                          move.l             frompt,a2                                                            ; Copper chunky
+                          move.w             #widthOffset,d3
+                          move.w             #1,d6
 
 ribl:
-                          move.w        #31,d0
+                          move.w             #31,d0
 
 readinto:
-                          move.w        #15,d1
-                          move.l        a2,a1
+                          move.w             #15,d1
+                          move.l             a2,a1
 
 readintodown:
-                          move.w        (a1),(a0)+
-                          adda.w        d3,a1
-                          move.w        (a1),(a0)+
-                          adda.w        d3,a1
-                          move.w        (a1),(a0)+
-                          adda.w        d3,a1
-                          move.w        (a1),(a0)+
-                          adda.w        d3,a1
-                          dbra          d1,readintodown
+                          move.w             (a1),(a0)+
+                          adda.w             d3,a1
+                          move.w             (a1),(a0)+
+                          adda.w             d3,a1
+                          move.w             (a1),(a0)+
+                          adda.w             d3,a1
+                          move.w             (a1),(a0)+
+                          adda.w             d3,a1
+                          dbra               d1,readintodown
                         ; add.w #256-128,a0
-                          addq          #4,a2
-                          dbra          d0,readinto
-                          addq          #4,a2
-                          dbra          d6,ribl
+                          addq               #4,a2
+                          dbra               d0,readinto
+                          addq               #4,a2
+                          dbra               d6,ribl
  
 ; We now have the screen in a buffer for squidging.
 
-                          move.l        frompt,a2
-                          move.l        #WorkSpace,a0
-                          move.l        glassballpt,a3
-                          move.w        #$fff,d7
-                          move.w        #1,d6
+                          move.l             frompt,a2                                                            ; Copper chunky
+                          move.l             #WorkSpace,a0
+                          move.l             glassballpt,a3
+                          move.w             #$fff,d7
+                          move.w             #1,d6
 
 rfbl:
-                          move.w        #31,d0
+                          move.w             #31,d0
 
 readoutfrom:
-                          move.w        #15,d1
-                          move.l        a2,a1
-                          move.w        #0,d5
+                          move.w             #15,d1
+                          move.l             a2,a1
+                          move.w             #0,d5
 
 readoutfromdown:
-                          move.w        (a3)+,d2
-                          beq.s         nono1
+                          move.w             (a3)+,d2
+                          beq.s              nono1
                         ; add.w d5,d2
-                          move.w        (a0,d2.w*2),d2
-                          and.w         d7,d2
-                          move.w        d2,(a1)
+                          move.w             (a0,d2.w*2),d2
+                          and.w              d7,d2
+                          move.w             d2,(a1)
 
 nono1:
-                          addq          #1,d5
-                          add.w         d3,a1
-                          move.w        (a3)+,d2
-                          beq.s         nono2
+                          addq               #1,d5
+                          add.w              d3,a1
+                          move.w             (a3)+,d2
+                          beq.s              nono2
                         ; add.w d5,d2
-                          move.w        (a0,d2.w*2),d2
-                          and.w         d7,d2
-                          move.w        d2,(a1)
+                          move.w             (a0,d2.w*2),d2
+                          and.w              d7,d2
+                          move.w             d2,(a1)
 
 nono2:
-                          addq          #1,d5
-                          add.w         d3,a1
-                          move.w        (a3)+,d2
-                          beq.s         nono3
+                          addq               #1,d5
+                          add.w              d3,a1
+                          move.w             (a3)+,d2
+                          beq.s              nono3
                         ; add.w d5,d2
-                          move.w        (a0,d2.w*2),d2
-                          and.w         d7,d2
-                          move.w        d2,(a1)
+                          move.w             (a0,d2.w*2),d2
+                          and.w              d7,d2
+                          move.w             d2,(a1)
 
 nono3:
-                          addq          #1,d5
-                          add.w         d3,a1
-                          move.w        (a3)+,d2
-                          beq.s         nono4
+                          addq               #1,d5
+                          add.w              d3,a1
+                          move.w             (a3)+,d2
+                          beq.s              nono4
                         ; add.w d5,d2
-                          move.w        (a0,d2.w*2),d2
-                          and.w         d7,d2
-                          move.w        d2,(a1)
+                          move.w             (a0,d2.w*2),d2
+                          and.w              d7,d2
+                          move.w             d2,(a1)
 
 nono4:
-                          addq          #1,d5
-                          add.w         d3,a1
-                          dbra          d1,readoutfromdown
-                          addq          #4,a2
+                          addq               #1,d5
+                          add.w              d3,a1
+                          dbra               d1,readoutfromdown
+                          addq               #4,a2
                         ; adda.w #128,a0
-                          dbra          d0,readoutfrom
-                          addq          #4,a2
-                          dbra          d6,rfbl
+                          dbra               d0,readoutfrom
+                          addq               #4,a2
+                          dbra               d6,rfbl
  
-                          move.l        glassballpt,d0
-                          add.l         #64*64*2,d0
-                          cmp.l         #endglass,d0
-                          blt           notoffglass
-                          move.l        #glassball,d0
+                          move.l             glassballpt,d0
+                          add.l              #64*64*2,d0
+                          cmp.l              #endglass,d0
+                          blt                notoffglass
+                          move.l             #glassball,d0
 
 notoffglass:
-                          move.l        d0,glassballpt
+                          move.l             d0,glassballpt
  
 noglass:
                           ENDC
 
-****************************************************************************
-
-                          bra           nodrawp2
+                          bra                copyCopBuff
 
 ****************************************************************************
+; Multiplayer - slave
 
-drawplayer2:
-                          move.w        #0,scaleval
-                          move.l        PLR2_xoff,xoff
-                          move.l        PLR2_yoff,yoff
-                          move.l        PLR2_zoff,zoff
-                          move.w        PLR2_angpos,angpos
-                          move.w        PLR2_cosval,cosval
-                          move.w        PLR2_sinval,sinval 
+drawSlavePlr2:
+                          bsr                USEPLR2
 
-                          move.l        PLR2_ListOfGraphRooms,ListOfGraphRooms
-                          move.l        PLR2_PointsToRotatePtr,PointsToRotatePtr
-                          move.l        PLR2_Roompt,Roompt
+                          move.w             #0,scaleval
+                          
+                          move.l             PLR2_xoff,xoff
+                          move.l             PLR2_yoff,yoff
+                          move.l             PLR2_zoff,zoff
+                          move.w             PLR2_angpos,angpos
+                          move.w             PLR2_cosval,cosval
+                          move.w             PLR2_sinval,sinval 
 
-                          bsr           OrderZones
-                          jsr           objmoveanim
-                          bsr           EnergyBar
-                          bsr           AmmoBar
+                          move.l             PLR2_ListOfGraphRooms,ListOfGraphRooms
+                          move.l             PLR2_PointsToRotatePtr,PointsToRotatePtr
+                          move.l             PLR2_Roompt,Roompt
 
-                          move.w        #0,leftclip
-                          move.w        #96,rightclip
-                          move.w        #0,deftopclip
-                          move.w        #79,defbotclip
-                          move.w        #0,topclip
-                          move.w        #79,botclip
+                          bsr                OrderZones
+                          jsr                objmoveanim
+                          bsr                EnergyBar
+                          bsr                AmmoBar
 
-                          bsr           DrawDisplay
+                          move.w             #0,leftclip
+                          move.w             #96,rightclip
+                          move.w             #0,deftopclip
+                          move.w             #79,defbotclip
+                          move.w             #0,topclip
+                          move.w             #79,botclip
 
-nodrawp2:
- 
+                          bsr                DrawDisplay
+
 **************************************************************************** 
 ; Copy from copbuff to chip ram
-                          
-                          tst.l         USECOPBUFFER
-                          bpl           noFastBufferCpy                          
-                          move.l        drawpt,a3
-                          adda.w        #10,a3
-                          move.l        COPSCRNBUFF,a2
-                          move.w        #2,d6
-                          adda.w        #10,a2
+
+copyCopBuff:
+                          lea                $dff000,a6
+
+                          tst.l              USECOPBUFFER
+                          bpl                noFastBufferCpy
+
+                          move.l             drawpt,a3
+                          lea                fromptOffset(a3),a3
+
+                          move.l             COPSCRNBUFF,a2
+                          lea                fromptOffset(a2),a2
+
+                          move.w             #2,d6
 
 COPYOUT:
-                          move.w        #31,d0
+                          move.w             #31,d0
 
 COPYDOWN1:
-                          move.w        #3,d1
-                          move.l        a2,a4
-                          move.l        a3,a5
+                          move.w             #3,d1
+                          move.l             a2,a4
+                          move.l             a3,a5
+
 .inlop1:
 
-val                       SET           0
-                          REPT          20
-                          move.w        val(a4),val(a5)
-val                       SET           val+104*4
+val                       SET                0
+                          REPT               20
+                          move.w             val(a4),val(a5)
+val                       SET                val+widthOffset
                           ENDR
 
-                          adda.l        #104*4*20,a4
-                          adda.l        #104*4*20,a5
-                          dbra          d1,.inlop1
-                          addq          #4,a2
-                          addq          #4,a3
-                          dbra          d0,COPYDOWN1
-                          addq          #4,a2
-                          addq          #4,a3
-                          dbra          d6,COPYOUT 
+                          adda.l             #widthOffset*20,a4
+                          adda.l             #widthOffset*20,a5
+                          dbra               d1,.inlop1
+
+                          addq               #4,a2
+                          addq               #4,a3
+                          dbra               d0,COPYDOWN1
+
+                          addq               #4,a2
+                          addq               #4,a3
+                          dbra               d6,COPYOUT 
 
 noFastBufferCpy:                          
 
 **************************************************************************** 
 
-                          move.l        PLR2_Roompt,a0
-                          move.l        #WorkSpace,a1
-                          clr.l         (a1)
-                          clr.l         4(a1)
-                          clr.l         8(a1)
-                          clr.l         12(a1)
-                          clr.l         16(a1)
-                          clr.l         20(a1)
-                          clr.l         24(a1)
-                          clr.l         28(a1)
+                          move.l             PLR2_Roompt,a0
+                          move.l             #WorkSpace,a1
+                          clr.l              (a1)
+                          clr.l              4(a1)
+                          clr.l              8(a1)
+                          clr.l              12(a1)
+                          clr.l              16(a1)
+                          clr.l              20(a1)
+                          clr.l              24(a1)
+                          clr.l              28(a1)
  
-                          cmp.b         #'n',mors
-                          beq.s         plr1only
+                          cmp.b              #'n',mors
+                          beq.s              plr1only
  
-                          lea           ToListOfGraph(a0),a0
+                          lea                ToListOfGraph(a0),a0
 
 .doallrooms:
-                          move.w        (a0),d0
-                          blt.s         .allroomsdone
-                          addq          #8,a0
-                          move.w        d0,d1
-                          asr.w         #3,d0
-                          bset          d1,(a1,d0.w)
-                          bra.b         .doallrooms
+                          move.w             (a0),d0
+                          blt.s              .allroomsdone
+                          addq               #8,a0
+                          move.w             d0,d1
+                          asr.w              #3,d0
+                          bset               d1,(a1,d0.w)
+                          bra.b              .doallrooms
 
 .allroomsdone:
 plr1only:
-                          move.l        PLR1_Roompt,a0
-                          lea           ToListOfGraph(a0),a0
+                          move.l             PLR1_Roompt,a0
+                          lea                ToListOfGraph(a0),a0
 
 .doallrooms2:
-                          move.w        (a0),d0
-                          blt.s         .allroomsdone2
-                          addq          #8,a0
-                          move.w        d0,d1
-                          asr.w         #3,d0
-                          bset          d1,(a1,d0.w)
-                          bra.b         .doallrooms2
+                          move.w             (a0),d0
+                          blt.s              .allroomsdone2
+                          addq               #8,a0
+                          move.w             d0,d1
+                          asr.w              #3,d0
+                          bset               d1,(a1,d0.w)
+                          bra.b              .doallrooms2
 
 .allroomsdone2:
 
 ****************************************************************************
 ; Through all objects to set worry flag
 
-                          move.l        ObjectData,a0
-                          lea           -64(a0),a0
+                          move.l             ObjectData,a0
+                          lea                -64(a0),a0
 
 .doallobs:
-                          lea           64(a0),a0
-                          move.w        (a0),d0
-                          blt.s         .allobsdone
+                          lea                64(a0),a0
+                          move.w             (a0),d0
+                          blt.s              .allobsdone
 
-                          move.w        12(a0),d0
-                          blt.s         .doallobs
+                          move.w             12(a0),d0
+                          blt.s              .doallobs
 
-                          move.w        d0,d1
-                          asr.w         #3,d0
-                          btst          d1,(a1,d0.w)                                                         ; a1 = WorkSpace
-                          beq.s         .doallobs
+                          move.w             d0,d1
+                          asr.w              #3,d0
+                          btst               d1,(a1,d0.w)                                                         ; a1 = WorkSpace
+                          beq.s              .doallobs
 
-                          or.b          #127,worry(a0)
-                          bra.s         .doallobs
+                          or.b               #127,worry(a0)
+                          bra.s              .doallobs
 
 .allobsdone:
 
 ****************************************************************************
 
                           ; move.l #oldbrightentab,a0
-                          ; move.l frompt,a3
-                          ; adda.w #(4*33)+(104*4*20),a3
+                          ; move.l frompt,a3                    ; Copper chunky
+                          ; adda.w #(4*33)+(widthOffset*20),a3
                           ; move.w #20,d7
                           ; move.w #20,d6
                           ;horl:
@@ -2197,177 +2203,207 @@ plr1only:
                           ; move.w (a0,d0.w*2),(a1)
                           ; addq #4,a1
                           ; dbra d5,vertl
-                          ; adda.w #104*4,a3
+                          ; adda.w #widthOffset,a3
                           ; dbra d7,horl
 
-                          move.l        #$dff000,a6
-
+                          lea                $dff000,a6
                           ; move.w #$300,col0(a6)
 
-                          move.l        #KeyMap,a5
-                          tst.b         $45(a5)                                                              ; Quit key
-                          beq.s         noend
+*******************************************************************
+
+                          move.l             #KeyMap,a5                                                           
+                          tst.b              $45(a5)                                                              ; (esc) Quit key
+                          beq.s              noend
  
-                          cmp.b         #'s',mors
-                          beq.b         plr2quit 
+ *******************************************************************
+ ; Single player quit
 
-                          st            MASTERQUITTING
-                          bra.b         noend
+                          cmp.b              #'n',mors
+                          beq                exitToMainMenu
 
-plr2quit:
-                          st            SLAVEQUITTING
+ *******************************************************************
+ ; Multi player quit
+
+                          cmp.b              #'s',mors
+                          bne.b              notSlaveQuit 
+                          st                 SLAVEQUITTING
+
+notSlaveQuit:
+                          cmp.b              #'m',mors
+                          bne.b              notMasterQuit 
+                          st                 MASTERQUITTING
+                          
+notMasterQuit:
+                        
+*******************************************************************
 
 noend:
-                          tst.b         MASTERQUITTING
-                          beq.s         .noquit
-                          tst.b         SLAVEQUITTING
-                          bne           endnomusic
+                          tst.b              MASTERQUITTING
+                          beq.s              .noQuit
 
-.noquit
-                          cmp.b         #'n',mors
-                          bne.s         .noexit
-                          move.l        PLR1_Roompt,a0
-                          move.w        (a0),d0
-                          move.w        PLOPT,d1
-                          move.l        #ENDZONES,a0
-                          cmp.w         (a0,d1.w*2),d0
-                          beq           endLeven
+                          tst.b              SLAVEQUITTING
+                          beq.s              .noQuit
 
-.noexit:
-                          tst.w         PLR1_energy
-                          ble           endLeven
-                          tst.w         PLR2_energy
-                          ble           endLeven
+                          bra                exitToMainMenu                                                       ; exit to main menu
 
-                          ; move.l SwitchData,a0
-                          ; tst.b 24+8(a0)
-                          ; bne endLeven
-  
-                          IFNE          ENABLETIMER
-                          JSR           STOPTIMER
+.noQuit:
+
+*******************************************************************
+
+                          IFEQ               ENABLECOOP
+                          cmp.b              #'n',mors
+                          bne.s              .noExit
                           ENDC
 
-                          bra           mainLoop
+                          move.l             PLR1_Roompt,a0
+                          move.w             (a0),d0
+                          move.w             PLOPT,d1
+                          move.l             #ENDZONES,a0
+                          cmp.w              (a0,d1.w*2),d0
+                          beq                quitGame                                                             ; exit to main menu
 
-; End of Main Loop here
+.noExit:
+                          tst.w              PLR1_energy
+                          ble                quitGame                                                             ; exit to main menu
+
+                          tst.w              PLR2_energy
+                          ble                quitGame                                                             ; exit to main menu
+
+*********************************************************************************************
+                          ; move.l             SwitchData,a0
+                          ; tst.b              24+8(a0)
+                          ; bne                quitGame
 *********************************************************************************************
 
-MASTERQUITTING:           dc.b          0
-SLAVEQUITTING:            dc.b          0
-MASTERPAUSE:              dc.b          0
-SLAVEPAUSE:               dc.b          0
+                          IFNE               ENABLETIMER
+                          JSR                STOPTIMER
+                          ENDC
+                          
+                          bra                mainLoop
+
+*********************************************************************************************
+; Multi player
+
+MASTERQUITTING:           dc.b               0
+SLAVEQUITTING:            dc.b               0
+                          even
+
+MASTERPAUSE:              dc.b               0
+SLAVEPAUSE:               dc.b               0
+                          even
 
 *********************************************************************************************
 
-PAUSEOPTS:                include       "PauseOpts.s"
+PAUSEOPTS:                include            "PauseOpts.s"
+                          even
 
 *********************************************************************************************
 
 ENDZONES:
 ; LEVEL 1
-                          dc.w          132
+                          dc.w               132
 ; LEVEL 2
-                          dc.w          149
+                          dc.w               149
 ; LEVEL 3
-                          dc.w          155
+                          dc.w               155
 ; LEVEL 4
-                          dc.w          107
+                          dc.w               107
 ; LEVEL 5
-                          dc.w          67
+                          dc.w               67
 ; LEVEL 6
-                          dc.w          132
+                          dc.w               132
 ; LEVEL 7
-                          dc.w          203
+                          dc.w               203
 ; LEVEL 8
-                          dc.w          166
+                          dc.w               166
 ; LEVEL 9
-                          dc.w          118
+                          dc.w               118
 ; LEVEL 10
-                          dc.w          102
+                          dc.w               102
 ; LEVEL 11
-                          dc.w          103
+                          dc.w               103
 ; LEVEL 12
-                          dc.w          2
+                          dc.w               2
 ; LEVEL 13
-                          dc.w          98
+                          dc.w               98
 ; LEVEL 14
-                          dc.w          0
+                          dc.w               0
 ; LEVEL 15
-                          dc.w          148
+                          dc.w               148
 ; LEVEL 16
-                          dc.w          103
+                          dc.w               103
 
 *********************************************************************************************
 
 putinsmallscr:
 
-                          move.l        #$1fe0000,statskip
-                          move.l        #$1fe0000,statskip+4
+                          move.l             #$1fe0000,statskip
+                          move.l             #$1fe0000,statskip+4
 
 ***************************************************************************
 
-                          move.l        #HealthPal,a5
-                          move.l        COPSCRN1,a0                                                          ; filled with CopNop
-                          move.l        COPSCRN2,a2
-                          move.w        #scrheight-1,d0                                                      ; ie. 80-1
-                          moveq         #0,d6
-                          move.w        #0,d3
-                          move.w        #$2bdf,startwait
-                          move.w        #$2d01,endwait
+                          move.l             #HealthPal,a5
+                          move.l             COPSCRN1,a0                                                          ; filled with CopNop
+                          move.l             COPSCRN2,a2
+                          move.w             #scrheight-1,d0                                                      ; ie. 80-1
+                          moveq              #0,d6
+                          move.w             #0,d3
+                          move.w             #$2bdf,startwait
+                          move.w             #$2d01,endwait
 
-.fillcop
-                          move.l        a0,a1
-                          move.l        a2,a3
+.fillcop:
+                          move.l             a0,a1
+                          move.l             a2,a3
 
-                          move.w        #bplcon4,(a1)+                                                       ; bplcon4 
-                          move.w        #bplcon4,(a3)+                                                       ; bplcon4 
-                          move.w        d3,(a1)+          
-                          move.w        d3,(a3)+                                                             ; ->4
-                          eor.w         #$8000,d3                                                            ; 
+                          move.w             #bplcon4,(a1)+                                                       ; bplcon4 
+                          move.w             #bplcon4,(a3)+                                                       ; bplcon4 
+                          move.w             d3,(a1)+          
+                          move.w             d3,(a3)+                                                             ; ->4
+                          eor.w              #$8000,d3                                                            ; 
 
                           ; Copper pixel line
 
                           ; Bank 1
-                          move.w        #bplcon3,(a1)+                                                       ; bplcon3  
-                          move.w        #bplcon3,(a3)+                                                       ; bplcon3  
-                          move.w        #$2c42,d5                                                            ; %00101100 01000010
-                          or.w          d3,d5
-                          and.w         #$fffe,d5
-                          move.w        d5,(a1)+
-                          move.w        d5,(a3)+                                                             ; ->8
-                          bsr           do32                                                                 ; 32 Color register (32*4=124)
+                          move.w             #bplcon3,(a1)+                                                       ; bplcon3  
+                          move.w             #bplcon3,(a3)+                                                       ; bplcon3  
+                          move.w             #$2c42,d5                                                            ; %00101100 01000010
+                          or.w               d3,d5
+                          and.w              #$fffe,d5
+                          move.w             d5,(a1)+
+                          move.w             d5,(a3)+                                                             ; ->8
+                          bsr                do32                                                                 ; 32 Color register (32*4=124)
                                                                                                                    ; <= Note: frompt ptr is first color value (10)
                           ; Bank 2
-                          move.w        #bplcon3,(a1)+                                                       ; bplcon3  
-                          move.w        #bplcon3,(a3)+                                                       ; bplcon3  
-                          move.w        #$4c42,d5
-                          or.w          d3,d5
-                          and.w         #$fffe,d5
-                          move.w        d5,(a1)+                                                              
-                          move.w        d5,(a3)+                                                             ; ->12
-                          bsr           do32                                                                 ; 32 Color register (32*4=124)
+                          move.w             #bplcon3,(a1)+                                                       ; bplcon3  
+                          move.w             #bplcon3,(a3)+                                                       ; bplcon3  
+                          move.w             #$4c42,d5
+                          or.w               d3,d5
+                          and.w              #$fffe,d5
+                          move.w             d5,(a1)+                                                              
+                          move.w             d5,(a3)+                                                             ; ->12
+                          bsr                do32                                                                 ; 32 Color register (32*4=124)
 
                           ; Bank 3
-                          move.w        #bplcon3,(a1)+                                                       ; bplcon3
-                          move.w        #bplcon3,(a3)+                                                       ; bplcon3
-                          move.w        #$6c42,d5
-                          or.w          d3,d5
-                          and.w         #$fffe,d5
-                          move.w        d5,(a1)+
-                          move.w        d5,(a3)+                                                             ; ->16
-                          bsr           do32                                                                 ; 32 Color register (32*4=124)
+                          move.w             #bplcon3,(a1)+                                                       ; bplcon3
+                          move.w             #bplcon3,(a3)+                                                       ; bplcon3
+                          move.w             #$6c42,d5
+                          or.w               d3,d5
+                          and.w              #$fffe,d5
+                          move.w             d5,(a1)+
+                          move.w             d5,(a3)+                                                             ; ->16
+                          bsr                do32                                                                 ; 32 Color register (32*4=124)
                           
                           ; => 96 color registers
 
-                          move.w        #bplcon3,(a1)+                                                       ; bplcon3
-                          move.w        #$0c42,(a1)+                                                         ; 1100 01000010
-                          move.w        #bplcon3,(a3)+                                                       ; bplcon3
-                          move.w        #$0c42,(a3)+                                                         ; 1100 01000010
+                          move.w             #bplcon3,(a1)+                                                       ; bplcon3
+                          move.w             #$0c42,(a1)+                                                         ; 1100 01000010
+                          move.w             #bplcon3,(a3)+                                                       ; bplcon3
+                          move.w             #$0c42,(a3)+                                                         ; 1100 01000010
 
-                          move.w        #color15,(a1)+                              
-                          move.w        (a5),(a1)+                                                           ; HealthPal
-                          move.w        #color15,(a3)+
-                          move.w        (a5)+,(a3)+                                                          ; ->24
+                          move.w             #color15,(a1)+                              
+                          move.w             (a5),(a1)+                                                           ; HealthPal
+                          move.w             #color15,(a3)+
+                          move.w             (a5)+,(a3)+                                                          ; ->24
 
                           ; = 124*3+24 => 396
                           ; skip to "frompt" = 10 bytes : +(bplcon4.w + value.w + bplcon3.w + value.w + 180.w) -> value.w
@@ -2375,102 +2411,108 @@ putinsmallscr:
                           ; CopLineSpace = 416 bytes (416-396=20 CopNops)
 
                           ; Next copper pixel line
-                          adda.w        #104*4,a0                                                            ; +416 (
-                          adda.w        #104*4,a2                                                            
-                          dbra          d0,.fillcop
+                          adda.w             #widthOffset,a0                                                      ; +416 (
+                          adda.w             #widthOffset,a2                                                            
+                          dbra               d0,.fillcop
 
 ***************************************************************************
 
-                          move.w        #$48,fetchstart
-                          move.w        #$88,fetchstop
-                          move.w        #$2cb1,winstart
-                          move.w        #$2c91,winstop
-                          move.w        #-24,modulo
-                          move.w        #-24,modulo+4
+                          move.w             #$48,fetchstart
+                          move.w             #$88,fetchstop
+                          move.w             #$2cb1,winstart
+                          move.w             #$2c91,winstop
+                          move.w             #-24,modulo
+                          move.w             #-24,modulo+4
 
 ***************************************************************************
 
-                          move.l        #nullspr,d0
-                          move.w        d0,s4l
-                          move.w        d0,s5l
-                          move.w        d0,s6l
-                          move.w        d0,s7l
-                          swap          d0
-                          move.w        d0,s4h
-                          move.w        d0,s5h
-                          move.w        d0,s6h
-                          move.w        d0,s7h 
+                          move.l             #nullspr,d0
+                          move.w             d0,s4l
+                          move.w             d0,s5l
+                          move.w             d0,s6l
+                          move.w             d0,s7l
+                          swap               d0
+                          move.w             d0,s4h
+                          move.w             d0,s5h
+                          move.w             d0,s6h
+                          move.w             d0,s7h 
 
-                          move.l        #borders,d0
-                          move.w        d0,s0l
-                          swap          d0
-                          move.w        d0,s0h
-                          move.l        #borders+2592,d0
-                          move.w        d0,s1l
-                          swap          d0
-                          move.w        d0,s1h
-                          move.l        #borders+2592*2,d0
-                          move.w        d0,s2l
-                          swap          d0
-                          move.w        d0,s2h
-                          move.l        #borders+2592*3,d0
-                          move.w        d0,s3l
-                          swap          d0
-                          move.w        d0,s3h
+                          move.l             #borders,d0
+                          move.w             d0,s0l
+                          swap               d0
+                          move.w             d0,s0h
+                          move.l             #borders+2592,d0
+                          move.w             d0,s1l
+                          swap               d0
+                          move.w             d0,s1h
+                          move.l             #borders+2592*2,d0
+                          move.w             d0,s2l
+                          swap               d0
+                          move.w             d0,s2h
+                          move.l             #borders+2592*3,d0
+                          move.w             d0,s3l
+                          swap               d0
+                          move.w             d0,s3h
 
 ***************************************************************************
 
-                          move.l        #scrn+40,a0
-                          move.l        #scrn+160,a1
-                          move.l        #scrn+280,a2
-                          move.l        #smallscrntab,a3
-                          move.w        #191,d7                                                              ; counter
-                          move.w        #0,d1                                                                ; xpos
+                          move.l             #scrn+40,a0
+                          move.l             #scrn+160,a1
+                          move.l             #scrn+280,a2
+                          move.l             #smallscrntab,a3
+                          move.w             #191,d7                                                              ; counter
+                          move.w             #0,d1                                                                ; xpos
 
 .plotscrnloop:
-                          move.b        (a3)+,d0
-                          move.w        d1,d2
-                          asr.w         #3,d2
-                          move.b        d1,d3
-                          not.b         d3
-                          bclr.b        d3,-40(a0,d2.w)
-                          bclr.b        d3,(a0,d2.w)
-                          bclr.b        d3,40(a0,d2.w)
-                          bclr.b        d3,-40(a1,d2.w)
-                          bclr.b        d3,(a1,d2.w)
-                          bclr.b        d3,40(a1,d2.w)
-                          bclr.b        d3,-40(a2,d2.w)
-                          btst          #0,d0
-                          beq.s         .nobp1
-                          bset.b        d3,-40(a0,d2.w)
-.nobp1:
-                          btst          #1,d0
-                          beq.s         .nobp2
-                          bset.b        d3,(a0,d2.w)
-.nobp2:
-                          btst          #2,d0
-                          beq.s         .nobp3
-                          bset.b        d3,40(a0,d2.w)
-.nobp3:
-                          btst          #3,d0
-                          beq.s         .nobp4
-                          bset.b        d3,-40(a1,d2.w)
-.nobp4:
-                          btst          #4,d0
-                          beq.s         .nobp5
-                          bset.b        d3,(a1,d2.w)
-.nobp5:
-                          btst          #5,d0
-                          beq.s         .nobp6
-                          bset.b        d3,40(a1,d2.w)
-.nobp6:
-                          btst          #6,d0
-                          beq.s         .nobp7
-                          bset.b        d3,-40(a2,d2.w)
-.nobp7:
+                          move.b             (a3)+,d0
+                          move.w             d1,d2
+                          asr.w              #3,d2
+                          move.b             d1,d3
+                          not.b              d3
+                          bclr.b             d3,-40(a0,d2.w)
+                          bclr.b             d3,(a0,d2.w)
+                          bclr.b             d3,40(a0,d2.w)
+                          bclr.b             d3,-40(a1,d2.w)
+                          bclr.b             d3,(a1,d2.w)
+                          bclr.b             d3,40(a1,d2.w)
+                          bclr.b             d3,-40(a2,d2.w)
+                          btst               #0,d0
+                          beq.s              .nobp1
+                          bset.b             d3,-40(a0,d2.w)
 
-                          addq          #1,d1
-                          dbra          d7,.plotscrnloop
+.nobp1:
+                          btst               #1,d0
+                          beq.s              .nobp2
+                          bset.b             d3,(a0,d2.w)
+
+.nobp2:
+                          btst               #2,d0
+                          beq.s              .nobp3
+                          bset.b             d3,40(a0,d2.w)
+
+.nobp3:
+                          btst               #3,d0
+                          beq.s              .nobp4
+                          bset.b             d3,-40(a1,d2.w)
+
+.nobp4:
+                          btst               #4,d0
+                          beq.s              .nobp5
+                          bset.b             d3,(a1,d2.w)
+
+.nobp5:
+                          btst               #5,d0
+                          beq.s              .nobp6
+                          bset.b             d3,40(a1,d2.w)
+
+.nobp6:
+                          btst               #6,d0
+                          beq.s              .nobp7
+                          bset.b             d3,-40(a2,d2.w)
+
+.nobp7:
+                          addq               #1,d1
+                          dbra               d7,.plotscrnloop
 
 ***************************************************************************
 
@@ -2480,72 +2522,72 @@ putinsmallscr:
 
 putinlargescr:
 
-                          move.l        #$1000000,statskip
-                          move.l        #$fffffffe,statskip+4
+                          move.l             #$1000000,statskip
+                          move.l             #$fffffffe,statskip+4
 
 ***************************************************************************
 
-                          move.l        #HealthPal,a5
-                          move.l        COPSCRN1,a0
-                          move.l        COPSCRN2,a2
-                          move.w        #scrheight-1,d0                                                      ; ie. 80
-                          moveq         #0,d6
-                          move.w        #0,d3
-                          move.w        #$29df,startwait
-                          move.w        #$2b01,endwait
+                          move.l             #HealthPal,a5
+                          move.l             COPSCRN1,a0
+                          move.l             COPSCRN2,a2
+                          move.w             #scrheight-1,d0                                                      ; ie. 80
+                          moveq              #0,d6
+                          move.w             #0,d3
+                          move.w             #$29df,startwait
+                          move.w             #$2b01,endwait
 
-.fillcop
-                          move.l        a0,a1
-                          move.l        a2,a3
-                          move.w        #$10c,(a1)+                                                          ; bplcon4     
-                          move.w        #$10c,(a3)+                                                          ; bplcon4
-                          move.w        d3,(a1)+
-                          move.w        d3,(a3)+
-                          eor.w         #$8000,d3
+.fillcop:
+                          move.l             a0,a1
+                          move.l             a2,a3
+                          move.w             #$10c,(a1)+                                                          ; bplcon4     
+                          move.w             #$10c,(a3)+                                                          ; bplcon4
+                          move.w             d3,(a1)+
+                          move.w             d3,(a3)+
+                          eor.w              #$8000,d3
 
-                          move.w        #$106,(a1)+                                                          ; bplcon3
-                          move.w        #$106,(a3)+                                                          ; bplcon3
-                          move.w        #$2c42,d5
-                          or.w          d3,d5
-                          and.w         #$fffe,d5
-                          move.w        d5,(a1)+
-                          move.w        d5,(a3)+
-                          bsr           do32                                                                 ; 32 Color register (32*8=256)
+                          move.w             #$106,(a1)+                                                          ; bplcon3
+                          move.w             #$106,(a3)+                                                          ; bplcon3
+                          move.w             #$2c42,d5
+                          or.w               d3,d5
+                          and.w              #$fffe,d5
+                          move.w             d5,(a1)+
+                          move.w             d5,(a3)+
+                          bsr                do32                                                                 ; 32 Color register (32*8=256)
 
-                          move.w        #$106,(a1)+                                                          ; bplcon3
-                          move.w        #$106,(a3)+                                                          ; bplcon3
-                          move.w        #$4c42,d5
-                          or.w          d3,d5
-                          and.w         #$fffe,d5
-                          move.w        d5,(a1)+
-                          move.w        d5,(a3)+
-                          bsr           do32                                                                 ; 32 Color register (32*8=256)
+                          move.w             #$106,(a1)+                                                          ; bplcon3
+                          move.w             #$106,(a3)+                                                          ; bplcon3
+                          move.w             #$4c42,d5
+                          or.w               d3,d5
+                          and.w              #$fffe,d5
+                          move.w             d5,(a1)+
+                          move.w             d5,(a3)+
+                          bsr                do32                                                                 ; 32 Color register (32*8=256)
 
-                          move.w        #$106,(a1)+                                                          ; bplcon3
-                          move.w        #$106,(a3)+                                                          ; bplcon3
-                          move.w        #$6c42,d5
-                          or.w          d3,d5
-                          and.w         #$fffe,d5
-                          move.w        d5,(a1)+
-                          move.w        d5,(a3)+
-                          bsr           do32                                                                 ; 32 Color register (32*8=256)
+                          move.w             #$106,(a1)+                                                          ; bplcon3
+                          move.w             #$106,(a3)+                                                          ; bplcon3
+                          move.w             #$6c42,d5
+                          or.w               d3,d5
+                          and.w              #$fffe,d5
+                          move.w             d5,(a1)+
+                          move.w             d5,(a3)+
+                          bsr                do32                                                                 ; 32 Color register (32*8=256)
  
-                          move.w        startwait,(a1)+
-                          move.w        #$fffe,(a1)+
-                          move.w        endwait,(a1)+
-                          move.w        #$ff00,(a1)+
-                          move.w        startwait,(a3)+
-                          move.w        #$fffe,(a3)+
-                          move.w        endwait,(a3)+
-                          move.w        #$ff00,(a3)+
+                          move.w             startwait,(a1)+
+                          move.w             #$fffe,(a1)+
+                          move.w             endwait,(a1)+
+                          move.w             #$ff00,(a1)+
+                          move.w             startwait,(a3)+
+                          move.w             #$fffe,(a3)+
+                          move.w             endwait,(a3)+
+                          move.w             #$ff00,(a3)+
 
                         ; move.l $1fe0000,(a1)+
                         ; move.l $1fe0000,(a3)+
                         ; move.l $1fe0000,(a1)+
                         ; move.l $1fe0000,(a3)+
  
-                          add.w         #$300,startwait
-                          add.w         #$300,endwait
+                          add.w              #$300,startwait
+                          add.w              #$300,endwait
 
                         ; move.l #$1060c42,(a1)+
                         ; move.l #$1060c42,(a3)+
@@ -2554,92 +2596,99 @@ putinlargescr:
                         ; move.w #$19e,(a3)+
                         ; move.w (a5)+,(a3)+
 
-                          adda.w        #104*4,a0
-                          adda.w        #104*4,a2
-                          dbra          d0,.fillcop
+                          adda.w             #widthOffset,a0
+                          adda.w             #widthOffset,a2
+                          dbra               d0,.fillcop
 
 ***************************************************************************
 
-                          move.w        #$38,fetchstart
-                          move.w        #$b8,fetchstop
-                          move.w        #$2c81,winstart
-                          move.w        #$2cc1,winstop
-                          move.w        #-40,modulo
-                          move.w        #-40,modulo+4
+                          move.w             #$38,fetchstart
+                          move.w             #$b8,fetchstop
+                          move.w             #$2c81,winstart
+                          move.w             #$2cc1,winstop
+                          move.w             #-40,modulo
+                          move.w             #-40,modulo+4
 
 ***************************************************************************
 
-                          move.l        #nullspr,d0
-                          move.w        d0,s0l
-                          move.w        d0,s1l
-                          move.w        d0,s2l
-                          move.w        d0,s3l
-                          move.w        d0,s4l
-                          move.w        d0,s5l
-                          move.w        d0,s6l
-                          move.w        d0,s7l
-                          swap          d0
-                          move.w        d0,s0h
-                          move.w        d0,s1h
-                          move.w        d0,s2h
-                          move.w        d0,s3h
-                          move.w        d0,s4h
-                          move.w        d0,s5h
-                          move.w        d0,s6h
-                          move.w        d0,s7h 
+                          move.l             #nullspr,d0
+                          move.w             d0,s0l
+                          move.w             d0,s1l
+                          move.w             d0,s2l
+                          move.w             d0,s3l
+                          move.w             d0,s4l
+                          move.w             d0,s5l
+                          move.w             d0,s6l
+                          move.w             d0,s7l
+                          swap               d0
+                          move.w             d0,s0h
+                          move.w             d0,s1h
+                          move.w             d0,s2h
+                          move.w             d0,s3h
+                          move.w             d0,s4h
+                          move.w             d0,s5h
+                          move.w             d0,s6h
+                          move.w             d0,s7h 
  
  ***************************************************************************
 
-                          move.l        #scrn+40,a0
-                          move.l        #scrn+160,a1
-                          move.l        #scrn+280,a2
-                          move.l        #scrntab,a3
-                          move.w        #319,d7                                                              ; counter
-                          move.w        #0,d1                                                                ; xpos
+                          move.l             #scrn+40,a0
+                          move.l             #scrn+160,a1
+                          move.l             #scrn+280,a2
+                          move.l             #scrntab,a3
+                          move.w             #319,d7                                                              ; counter
+                          move.w             #0,d1                                                                ; xpos
+
 .plotscrnloop:
-                          move.b        (a3)+,d0
-                          move.w        d1,d2
-                          asr.w         #3,d2
-                          move.b        d1,d3
-                          not.b         d3
-                          bclr.b        d3,-40(a0,d2.w)
-                          bclr.b        d3,(a0,d2.w)
-                          bclr.b        d3,40(a0,d2.w)
-                          bclr.b        d3,-40(a1,d2.w)
-                          bclr.b        d3,(a1,d2.w)
-                          bclr.b        d3,40(a1,d2.w)
-                          bclr.b        d3,-40(a2,d2.w)
-                          btst          #0,d0
-                          beq.s         .nobp1
-                          bset.b        d3,-40(a0,d2.w)
+                          move.b             (a3)+,d0
+                          move.w             d1,d2
+                          asr.w              #3,d2
+                          move.b             d1,d3
+                          not.b              d3
+                          bclr.b             d3,-40(a0,d2.w)
+                          bclr.b             d3,(a0,d2.w)
+                          bclr.b             d3,40(a0,d2.w)
+                          bclr.b             d3,-40(a1,d2.w)
+                          bclr.b             d3,(a1,d2.w)
+                          bclr.b             d3,40(a1,d2.w)
+                          bclr.b             d3,-40(a2,d2.w)
+                          btst               #0,d0
+                          beq.s              .nobp1
+                          bset.b             d3,-40(a0,d2.w)
+
 .nobp1:
-                          btst          #1,d0
-                          beq.s         .nobp2
-                          bset.b        d3,(a0,d2.w)
+                          btst               #1,d0
+                          beq.s              .nobp2
+                          bset.b             d3,(a0,d2.w)
+
 .nobp2:
-                          btst          #2,d0
-                          beq.s         .nobp3
-                          bset.b        d3,40(a0,d2.w)
+                          btst               #2,d0
+                          beq.s              .nobp3
+                          bset.b             d3,40(a0,d2.w)
+
 .nobp3:
-                          btst          #3,d0
-                          beq.s         .nobp4
-                          bset.b        d3,-40(a1,d2.w)
+                          btst               #3,d0
+                          beq.s              .nobp4
+                          bset.b             d3,-40(a1,d2.w)
+
 .nobp4:
-                          btst          #4,d0
-                          beq.s         .nobp5
-                          bset.b        d3,(a1,d2.w)
+                          btst               #4,d0
+                          beq.s              .nobp5
+                          bset.b             d3,(a1,d2.w)
+
 .nobp5:
-                          btst          #5,d0
-                          beq.s         .nobp6
-                          bset.b        d3,40(a1,d2.w)
+                          btst               #5,d0
+                          beq.s              .nobp6
+                          bset.b             d3,40(a1,d2.w)
+
 .nobp6:
-                          btst          #6,d0
-                          beq.s         .nobp7
-                          bset.b        d3,-40(a2,d2.w)
+                          btst               #6,d0
+                          beq.s              .nobp7
+                          bset.b             d3,-40(a2,d2.w)
+
 .nobp7:
- 
-                          addq          #1,d1
-                          dbra          d7,.plotscrnloop
+                          addq               #1,d1
+                          dbra               d7,.plotscrnloop
 
 ***************************************************************************
 
@@ -2648,192 +2697,192 @@ putinlargescr:
 *********************************************************************************************
 
 CLEARKEYBOARD:
-                          move.l        #KeyMap,a5
-                          moveq         #0,d0
-                          move.w        #15,d1
+
+                          move.l             #KeyMap,a5
+                          moveq              #0,d0
+                          move.w             #15,d1
 
 clrKbdLoop:
-                          move.l        d0,(a5)+
-                          move.l        d0,(a5)+
-                          move.l        d0,(a5)+
-                          move.l        d0,(a5)+
-                          dbra          d1,clrKbdLoop
+                          move.l             d0,(a5)+
+                          move.l             d0,(a5)+
+                          move.l             d0,(a5)+
+                          move.l             d0,(a5)+
+                          dbra               d1,clrKbdLoop
+
                           rts
 
 *********************************************************************************************
 
-READCONTROLS:             dc.w          0
+READCONTROLS:             dc.w               0
 
-tstststst:                dc.w          0
-
-BollocksRoom:
-                          dc.w          -1
-                          ds.l          50
+BollocksRoom:             dc.w               -1
+                          ds.l               50
 
 *********************************************************************************************
 
-GUNYOFFS:
-                          dc.w          20
-                          dc.w          20
-                          dc.w          0
-                          dc.w          20
-                          dc.w          20
-                          dc.w          0
-                          dc.w          0
-                          dc.w          20
+GUNYOFFS:                 dc.w               20
+                          dc.w               20
+                          dc.w               0
+                          dc.w               20
+                          dc.w               20
+                          dc.w               0
+                          dc.w               0
+                          dc.w               20
 
 *********************************************************************************************
 
 USEPLR1:
 
-                          move.l        PLR1_Obj,a0 
-                          move.l        ObjectPoints,a1
-                          move.l        #ObjRotated,a2
-                          move.w        (a0),d0
-                          move.l        PLR1_xoff,(a1,d0.w*8)
-                          move.l        PLR1_zoff,4(a1,d0.w*8)
-                          move.l        PLR1_Roompt,a1
+                          move.l             PLR1_Obj,a0 
+                          move.l             ObjectPoints,a1
+                          move.l             #ObjRotated,a2
+                          move.w             (a0),d0
+                          move.l             PLR1_xoff,(a1,d0.w*8)
+                          move.l             PLR1_zoff,4(a1,d0.w*8)
+                          move.l             PLR1_Roompt,a1
 
-                          moveq         #0,d2
-                          move.b        damagetaken(a0),d2
-                          beq.b         .notbeenshot
+                          moveq              #0,d2
+                          move.b             damagetaken(a0),d2
+                          beq.b              .notbeenshot
 
-                          move.w        #$f00,hitcol
-                          move.w        #$f00,hitcol2
+                          move.w             #$f00,hitcol
+                          move.w             #$f00,hitcol2
 
-                          IFEQ          UNLIMITEDHITS
-                          sub.w         d2,PLR1_energy
+                          IFEQ               UNLIMITEDHITS
+                          sub.w              d2,PLR1_energy
                           ENDC
 
-                          movem.l       d0-d7/a0-a6,-(a7)
-                          move.b        #$fb,IDNUM
-                          move.w        #19,Samplenum
-                          clr.b         notifplaying
-                          move.w        #0,Noisex
-                          move.w        #0,Noisez
-                          move.w        #100,Noisevol
-                          jsr           MakeSomeNoise
-                          movem.l       (a7)+,d0-d7/a0-a6
+                          SAVEREGS
+                          move.b             #$fb,IDNUM
+                          move.w             #19,Samplenum
+                          clr.b              notifplaying
+                          move.w             #0,Noisex
+                          move.w             #0,Noisez
+                          move.w             #100,Noisevol
+                          jsr                MakeSomeNoise
+                          GETREGS
 
-.notbeenshot
-                          move.b        #0,damagetaken(a0)
-                          move.b        PLR1_energy+1,numlives(a0)
+.notbeenshot:
+                          move.b             #0,damagetaken(a0)
+                          move.b             PLR1_energy+1,numlives(a0)
 
-                          move.b        PLR1_StoodInTop,ObjInTop(a0)
+                          move.b             PLR1_StoodInTop,ObjInTop(a0)
  
-                          move.w        (a1),12(a0)
-                          move.w        (a1),d2
-                          move.l        #ZoneBrightTable,a1
-                          move.l        (a1,d2.w*4),d2
-                          tst.b         PLR1_StoodInTop
-                          bne.s         .okinbott
-                          swap          d2
+                          move.w             (a1),12(a0)
+                          move.w             (a1),d2
+                          move.l             #ZoneBrightTable,a1
+                          move.l             (a1,d2.w*4),d2
+                          tst.b              PLR1_StoodInTop
+                          bne.s              .okinbott
+                          swap               d2
+
 .okinbott:
-
-                          move.w        d2,2(a0)
+                          move.w             d2,2(a0)
  
-                          move.l        p1_yoff,d0
-                          move.l        p1_height,d1
-                          asr.l         #1,d1
-                          add.l         d1,d0
-                          asr.l         #7,d0
-                          move.w        d0,4(a0)
+                          move.l             p1_yoff,d0
+                          move.l             p1_height,d1
+                          asr.l              #1,d1
+                          add.l              d1,d0
+                          asr.l              #7,d0
+                          move.w             d0,4(a0)
 
 ***********************************
 
-                          move.l        PLR2_Obj,a0 
+                          move.l             PLR2_Obj,a0 
  
-                          move.w        PLR2_angpos,d0
-                          and.w         #8190,d0
-                          move.w        d0,Facing(a0)
+                          move.w             PLR2_angpos,d0
+                          and.w              #8190,d0
+                          move.w             d0,Facing(a0)
  
-                          jsr           ViewpointToDraw
-                          asl.w         #2,d0
-                          moveq         #0,d1
-                          move.b        p2_bobble,d1
-                          not.b         d1
-                          lsr.b         #3,d1
-                          and.b         #$3,d1
-                          add.w         d1,d0
-                          move.w        d0,10(a0)
-                          move.w        #10,8(a0)
+                          jsr                ViewpointToDraw
+                          asl.w              #2,d0
+                          moveq              #0,d1
+                          move.b             p2_bobble,d1
+                          not.b              d1
+                          lsr.b              #3,d1
+                          and.b              #$3,d1
+                          add.w              d1,d0
+                          move.w             d0,10(a0)
+                          move.w             #10,8(a0)
  
-                          move.l        ObjectPoints,a1
-                          move.l        #ObjRotated,a2
-                          move.w        (a0),d0
-                          move.l        PLR2_xoff,(a1,d0.w*8)
-                          move.l        PLR2_zoff,4(a1,d0.w*8)
-                          move.l        PLR2_Roompt,a1
+                          move.l             ObjectPoints,a1
+                          move.l             #ObjRotated,a2
+                          move.w             (a0),d0
+                          move.l             PLR2_xoff,(a1,d0.w*8)
+                          move.l             PLR2_zoff,4(a1,d0.w*8)
+                          move.l             PLR2_Roompt,a1
 
-                          moveq         #0,d2
-                          move.b        damagetaken(a0),d2
-                          beq.b         .notbeenshot2
-                          sub.w         d2,PLR2_energy
-.notbeenshot2
-                          move.b        #0,damagetaken(a0)
-                          move.b        PLR2_energy+1,numlives(a0)
+                          moveq              #0,d2
+                          move.b             damagetaken(a0),d2
+                          beq.b              .notbeenshot2
+                          sub.w              d2,PLR2_energy
 
-                          move.b        PLR2_StoodInTop,ObjInTop(a0)
+.notbeenshot2:
+                          move.b             #0,damagetaken(a0)
+                          move.b             PLR2_energy+1,numlives(a0)
+
+                          move.b             PLR2_StoodInTop,ObjInTop(a0)
  
-                          move.w        (a1),12(a0)
-                          move.w        (a1),d2
-                          move.l        #ZoneBrightTable,a1
-                          move.l        (a1,d2.w*4),d2
-                          tst.b         PLR2_StoodInTop
-                          bne.s         .okinbott2
-                          swap          d2
+                          move.w             (a1),12(a0)
+                          move.w             (a1),d2
+                          move.l             #ZoneBrightTable,a1
+                          move.l             (a1,d2.w*4),d2
+                          tst.b              PLR2_StoodInTop
+                          bne.s              .okinbott2
+                          swap               d2
+
 .okinbott2:
-
-                          move.w        d2,2(a0)
+                          move.w             d2,2(a0)
  
-                          move.l        p2_yoff,d0
-                          move.l        p2_height,d1
-                          asr.l         #1,d1
-                          add.l         d1,d0
-                          asr.l         #7,d0
-                          move.w        d0,4(a0)
+                          move.l             p2_yoff,d0
+                          move.l             p2_height,d1
+                          asr.l              #1,d1
+                          add.l              d1,d0
+                          asr.l              #7,d0
+                          move.w             d0,4(a0)
 
 **********************************
 
-                          move.l        PLR1_Obj,a0
-                          move.w        #-1,12+128(a0)
+                          move.l             PLR1_Obj,a0
+                          move.w             #-1,12+128(a0)
 
                           rts
 
 *********************************************************************************************
 
 DRAWINGUN:
-                          move.l        #Objects+9*16,a0
-                          move.l        4(a0),a5                                                             ; ptr
-                          move.l        8(a0),a2                                                             ; frames
-                          move.l        12(a0),a4                                                            ; pal
-                          move.l        (a0),a0                                                              ; wad
- 
-                          move.l        #GunAnims,a1
-                          move.l        (a1,d0.w*8),a1
-                          move.w        (a1,d1.w*2),d5                                                       ; frame of anim
- 
-                          move.l        #GUNYOFFS,a1
-                          move.w        (a1,d0.w*2),d7                                                       ; yoff
-                          move.l        frompt,a6
-                          move.w        d7,d6
-                          muls          #104*4,d6
-                          add.l         d6,a6                                                                ; screen pointer
 
-                          asl.w         #2,d0
-                          add.w         d5,d0                                                                ; frame
-                          move.w        (a2,d0.w*4),d1                                                       ; xoff
-
-                          lea           (a5,d1.w),a5                                                         ; right ptr
+                          move.l             #Objects+9*16,a0
+                          move.l             4(a0),a5                                                             ; ptr
+                          move.l             8(a0),a2                                                             ; frames
+                          move.l             12(a0),a4                                                            ; pal
+                          move.l             (a0),a0                                                              ; wad
  
-                          move.w        #31,d0
-                          bsr.b         DRAWCHUNK
-                          addq.w        #4,a6                                                                ; Skip register
-                          move.w        #31,d0
-                          bsr.b         DRAWCHUNK
-                          addq.w        #4,a6
-                          move.w        #31,d0
-                          bsr.b         DRAWCHUNK
+                          move.l             #GunAnims,a1
+                          move.l             (a1,d0.w*8),a1
+                          move.w             (a1,d1.w*2),d5                                                       ; frame of anim
+ 
+                          move.l             #GUNYOFFS,a1
+                          move.w             (a1,d0.w*2),d7                                                       ; yoff
+                          move.l             frompt,a6                                                            ; Copper chunky
+                          move.w             d7,d6
+                          muls               #widthOffset,d6
+                          add.l              d6,a6                                                                ; screen pointer
+
+                          asl.w              #2,d0
+                          add.w              d5,d0                                                                ; frame
+                          move.w             (a2,d0.w*4),d1                                                       ; xoff
+
+                          lea                (a5,d1.w),a5                                                         ; right ptr
+ 
+                          move.w             #31,d0
+                          bsr.b              DRAWCHUNK
+                          addq.w             #4,a6                                                                ; Skip register
+                          move.w             #31,d0
+                          bsr.b              DRAWCHUNK
+                          addq.w             #4,a6
+                          move.w             #31,d0
+                          bsr.b              DRAWCHUNK
                           rts
  
 *********************************************************************************************
@@ -2843,226 +2892,226 @@ DRAWCHUNK:
 ; a6=frompt
 ; a4=pal
 
-                          move.w        #78,d3
-                          sub.w         d7,d3
-                          move.l        a6,a3
-                          move.b        (a5),d2
-                          move.l        (a5)+,d1
-                          bne.s         .noblank
+                          move.w             #78,d3
+                          sub.w              d7,d3
+                          move.l             a6,a3
+                          move.b             (a5),d2
+                          move.l             (a5)+,d1
+                          bne.s              .noblank
 
-                          addq          #4,a6                                                                ; skip col reg
-                          dbra          d0,DRAWCHUNK 
+                          addq               #4,a6                                                                ; skip col reg
+                          dbra               d0,DRAWCHUNK 
                           rts
  
 .noblank:
-                          and.l         #$ffffff,d1
-                          lea           (a0,d1.l),a1
-                          cmp.b         #1,d2
-                          bgt.s         thirdd
-                          beq.s         secc
+                          and.l              #$ffffff,d1
+                          lea                (a0,d1.l),a1
+                          cmp.b              #1,d2
+                          bgt.s              thirdd
+                          beq.s              secc
 
 .drawdown:
-                          move.w        (a1)+,d2
-                          and.w         #%11111,d2
-                          beq.s         .itsblank
-                          move.w        (a4,d2.w*2),(a3)
+                          move.w             (a1)+,d2
+                          and.w              #%11111,d2
+                          beq.s              .itsblank
+                          move.w             (a4,d2.w*2),(a3)
 
-.itsblank
-                          lea           104*4(a3),a3
-                          dbra          d3,.drawdown
+.itsblank:
+                          lea                widthOffset(a3),a3
+                          dbra               d3,.drawdown
 
-                          addq          #4,a6
-                          dbra          d0,DRAWCHUNK
+                          addq               #4,a6
+                          dbra               d0,DRAWCHUNK
                           rts
 
 secc:
 .drawdown:
-                          move.w        (a1)+,d2
-                          lsr.w         #5,d2
-                          and.w         #%11111,d2
-                          beq.s         .itsblank
-                          move.w        (a4,d2.w*2),(a3)
+                          move.w             (a1)+,d2
+                          lsr.w              #5,d2
+                          and.w              #%11111,d2
+                          beq.s              .itsblank
+                          move.w             (a4,d2.w*2),(a3)
 
-.itsblank
-                          lea           104*4(a3),a3
-                          dbra          d3,.drawdown
+.itsblank:
+                          lea                widthOffset(a3),a3
+                          dbra               d3,.drawdown
 
-                          addq          #4,a6
-                          dbra          d0,DRAWCHUNK
+                          addq               #4,a6
+                          dbra               d0,DRAWCHUNK
                           rts
 
 thirdd:
 .drawdown:
-                          move.b        (a1),d2
-                          addq          #2,a1
-                          lsr.b         #2,d2
-                          and.w         #%11111,d2
-                          beq.s         .itsblank
-                          move.w        (a4,d2.w*2),(a3)
+                          move.b             (a1),d2
+                          addq               #2,a1
+                          lsr.b              #2,d2
+                          and.w              #%11111,d2
+                          beq.s              .itsblank
+                          move.w             (a4,d2.w*2),(a3)
 
-.itsblank
-                          lea           104*4(a3),a3
-                          dbra          d3,.drawdown
+.itsblank:
+                          lea                widthOffset(a3),a3
+                          dbra               d3,.drawdown
 
-                          addq          #4,a6
-                          dbra          d0,DRAWCHUNK
+                          addq               #4,a6
+                          dbra               d0,DRAWCHUNK
                           rts
  
 *********************************************************************************************
 
 USEPLR2:
 
-                          move.l        PLR2_Obj,a0 
-                          move.l        ObjectPoints,a1
-                          move.l        #ObjRotated,a2
-                          move.w        (a0),d0
-                          move.l        PLR2_xoff,(a1,d0.w*8)
-                          move.l        PLR2_zoff,4(a1,d0.w*8)
-                          move.l        PLR2_Roompt,a1
+                          move.l             PLR2_Obj,a0 
+                          move.l             ObjectPoints,a1
+                          move.l             #ObjRotated,a2
+                          move.w             (a0),d0
+                          move.l             PLR2_xoff,(a1,d0.w*8)
+                          move.l             PLR2_zoff,4(a1,d0.w*8)
+                          move.l             PLR2_Roompt,a1
 
-                          moveq         #0,d2
-                          move.b        damagetaken(a0),d2
-                          beq.b         .notbeenshot
-                          move.w        #$f00,hitcol
-                          move.w        #$f00,hitcol2
-                          sub.w         d2,PLR2_energy
-                          movem.l       d0-d7/a0-a6,-(a7)
-                          move.w        #19,Samplenum
-                          clr.b         notifplaying
-                          move.b        #$fb,IDNUM
-                          move.w        #0,Noisex
-                          move.w        #0,Noisez
-                          move.w        #100,Noisevol
-                          jsr           MakeSomeNoise
+                          moveq              #0,d2
+                          move.b             damagetaken(a0),d2
+                          beq.b              .notbeenshot
+                          move.w             #$f00,hitcol
+                          move.w             #$f00,hitcol2
+                          sub.w              d2,PLR2_energy
+
+                          SAVEREGS
+                          move.w             #19,Samplenum
+                          clr.b              notifplaying
+                          move.b             #$fb,IDNUM
+                          move.w             #0,Noisex
+                          move.w             #0,Noisez
+                          move.w             #100,Noisevol
+                          jsr                MakeSomeNoise
+                          GETREGS
+                          
+.notbeenshot:
+                          move.b             #0,damagetaken(a0)
+                          move.b             PLR2_energy+1,numlives(a0)
+
+                          move.b             PLR2_StoodInTop,ObjInTop(a0)
  
-                          movem.l       (a7)+,d0-d7/a0-a6
-
-.notbeenshot
-                          move.b        #0,damagetaken(a0)
-                          move.b        PLR2_energy+1,numlives(a0)
-
-                          move.b        PLR2_StoodInTop,ObjInTop(a0)
- 
-                          move.w        (a1),12(a0)
-                          move.w        (a1),d2
-                          move.l        #ZoneBrightTable,a1
-                          move.l        (a1,d2.w*4),d2
-                          tst.b         PLR2_StoodInTop
-                          bne.s         .okinbott
-                          swap          d2
+                          move.w             (a1),12(a0)
+                          move.w             (a1),d2
+                          move.l             #ZoneBrightTable,a1
+                          move.l             (a1,d2.w*4),d2
+                          tst.b              PLR2_StoodInTop
+                          bne.s              .okinbott
+                          swap               d2
 
 .okinbott:
-                          move.w        d2,2(a0)
+                          move.w             d2,2(a0)
  
-                          move.l        PLR2_yoff,d0
-                          move.l        p2_height,d1
-                          asr.l         #1,d1
-                          add.l         d1,d0
-                          asr.l         #7,d0
-                          move.w        d0,4(a0)
+                          move.l             PLR2_yoff,d0
+                          move.l             p2_height,d1
+                          asr.l              #1,d1
+                          add.l              d1,d0
+                          asr.l              #7,d0
+                          move.w             d0,4(a0)
 
 ***********************************
 
-                          move.l        PLR1_Obj,a0 
+                          move.l             PLR1_Obj,a0 
 
-                          move.w        PLR1_angpos,d0
-                          and.w         #8190,d0
-                          move.w        d0,Facing(a0)
+                          move.w             PLR1_angpos,d0
+                          and.w              #8190,d0
+                          move.w             d0,Facing(a0)
  
-                          jsr           ViewpointToDraw
-                          asl.w         #2,d0
-                          moveq         #0,d1
-                          move.b        p1_bobble,d1
-                          not.b         d1
-                          lsr.b         #3,d1
-                          and.b         #$3,d1
-                          add.w         d1,d0
-                          move.w        d0,10(a0)
-                          move.w        #10,8(a0)
+                          jsr                ViewpointToDraw
+                          asl.w              #2,d0
+                          moveq              #0,d1
+                          move.b             p1_bobble,d1
+                          not.b              d1
+                          lsr.b              #3,d1
+                          and.b              #$3,d1
+                          add.w              d1,d0
+                          move.w             d0,10(a0)
+                          move.w             #10,8(a0)
 
-                          move.l        ObjectPoints,a1
-                          move.l        #ObjRotated,a2
-                          move.w        (a0),d0
-                          move.l        PLR1_xoff,(a1,d0.w*8)
-                          move.l        PLR1_zoff,4(a1,d0.w*8)
-                          move.l        PLR1_Roompt,a1
+                          move.l             ObjectPoints,a1
+                          move.l             #ObjRotated,a2
+                          move.w             (a0),d0
+                          move.l             PLR1_xoff,(a1,d0.w*8)
+                          move.l             PLR1_zoff,4(a1,d0.w*8)
+                          move.l             PLR1_Roompt,a1
 
-                          moveq         #0,d2
-                          move.b        damagetaken(a0),d2
+                          moveq              #0,d2
+                          move.b             damagetaken(a0),d2
 
-                          IFEQ          UNLIMITEDHITS
-                          beq.b         .notbeenshot2
-                          sub.w         d2,PLR1_energy
+                          IFEQ               UNLIMITEDHITS
+                          beq.b              .notbeenshot2
+                          sub.w              d2,PLR1_energy
                           ENDC
 
-.notbeenshot2
-                          move.b        #0,damagetaken(a0)
-                          move.b        PLR1_energy+1,numlives(a0)
-                          move.b        PLR1_StoodInTop,ObjInTop(a0)
+.notbeenshot2:
+                          move.b             #0,damagetaken(a0)
+                          move.b             PLR1_energy+1,numlives(a0)
+                          move.b             PLR1_StoodInTop,ObjInTop(a0)
  
-                          move.w        (a1),12(a0)
-                          move.w        (a1),d2
-                          move.l        #ZoneBrightTable,a1
-                          move.l        (a1,d2.w*4),d2
-                          tst.b         PLR1_StoodInTop
-                          bne.s         .okinbott2
-                          swap          d2
+                          move.w             (a1),12(a0)
+                          move.w             (a1),d2
+                          move.l             #ZoneBrightTable,a1
+                          move.l             (a1,d2.w*4),d2
+                          tst.b              PLR1_StoodInTop
+                          bne.s              .okinbott2
+                          swap               d2
 
 .okinbott2:
-                          move.w        d2,2(a0)
+                          move.w             d2,2(a0)
  
-                          move.l        PLR1_yoff,d0
-                          move.l        p1_height,d1
-                          asr.l         #1,d1
-                          add.l         d1,d0
-                          asr.l         #7,d0
-                          move.w        d0,4(a0)
+                          move.l             PLR1_yoff,d0
+                          move.l             p1_height,d1
+                          asr.l              #1,d1
+                          add.l              d1,d0
+                          asr.l              #7,d0
+                          move.w             d0,4(a0)
 
 **********************************
 
-                          move.l        PLR2_Obj,a0
-                          move.w        #-1,12+64(a0)
+                          move.l             PLR2_Obj,a0
+                          move.w             #-1,12+64(a0)
 
                           rts
 
 *********************************************************************************************
 
-GunSelected:              dc.b          0
+GunSelected:              dc.b               0
                           even
 
 *********************************************************************************************
 
 GunAnims:
-                          dc.l          MachineAnim,3
-                          dc.l          PlasmaAnim,5
-                          dc.l          RocketAnim,5
-                          dc.l          FlameThrowerAnim,5
-                          dc.l          GrenadeAnim,12
-                          dc.l          0,0
-                          dc.l          0,0
-                          dc.l          ShotGunAnim,12+19+11+20+1
+                          dc.l               MachineAnim,3
+                          dc.l               PlasmaAnim,5
+                          dc.l               RocketAnim,5
+                          dc.l               FlameThrowerAnim,5
+                          dc.l               GrenadeAnim,12
+                          dc.l               0,0
+                          dc.l               0,0
+                          dc.l               ShotGunAnim,12+19+11+20+1
 
 *********************************************************************************************
 
-MachineAnim:              dc.w          0,1,2,3
-PlasmaAnim:               dc.w          0,1,2,3,3,3
-RocketAnim:               dc.w          0,1,2,3,3,3
-FlameThrowerAnim:         dc.w          0,1,2,3,3,3
+MachineAnim:              dc.w               0,1,2,3
+PlasmaAnim:               dc.w               0,1,2,3,3,3
+RocketAnim:               dc.w               0,1,2,3,3,3
+FlameThrowerAnim:         dc.w               0,1,2,3,3,3
 
-GrenadeAnim:              dc.w          0,1,1,1,1
-                          dc.w          2,2,2,2,3
-                          dc.w          3,3,3
+GrenadeAnim:              dc.w               0,1,1,1,1
+                          dc.w               2,2,2,2,3
+                          dc.w               3,3,3
 
-ShotGunAnim:              dc.w          0
-                          dcb.w         12,2
-                          dcb.w         19,1
-                          dcb.w         11,2
-                          dcb.w         20,0
-                          dc.w          3
+ShotGunAnim:              dc.w               0
+                          dcb.w              12,2
+                          dcb.w              19,1
+                          dcb.w              11,2
+                          dcb.w              20,0
+                          dc.w               3
 
 *********************************************************************************************
 
-GunData:                  dc.l          0
+GunData:                  dc.l               0
 
 *********************************************************************************************
 
@@ -3077,122 +3126,122 @@ PLR1_GunData:
 
 *************************************************
 ; PlayerGun (*0)
-                          dc.w          0                                                                    ; 0: Ammoleft (0=Pistol / 1=Big gun)
-                          dc.b          8                                                                    ; 2: AmmoPerShot
-                          dc.b          3                                                                    ; 3: GunSampleNumber
-                          dc.b          15                                                                   ; 4: AmmoClip
-                          dc.b          -1                                                                   ; 5: PlrFireBullet
-                          dc.b          4                                                                    ; 6: ShotPower/BulletDamage
+                          dc.w               0                                                                    ; 0: Ammoleft (0=Pistol / 1=Big gun)
+                          dc.b               8                                                                    ; 2: AmmoPerShot
+                          dc.b               3                                                                    ; 3: GunSampleNumber
+                          dc.b               15                                                                   ; 4: AmmoClip
+                          dc.b               -1                                                                   ; 5: PlrFireBullet
+                          dc.b               4                                                                    ; 6: ShotPower/BulletDamage
 
-                          dc.b          $ff                                                                  ; 7: Visible/Instant (0/$ff) 
+                          dc.b               $ff                                                                  ; 7: Visible/Instant (0/$ff) 
 
-                          dc.w          5                                                                    ; 8: TimeToShoot/Delay
-                          dc.w          -1                                                                   ; 10: Life time of bullet
-                          dc.w          1                                                                    ; 12: Click or hold down (0,1)
+                          dc.w               5                                                                    ; 8: TimeToShoot/Delay
+                          dc.w               -1                                                                   ; 10: Life time of bullet
+                          dc.w               1                                                                    ; 12: Click or hold down (0,1)
 
-                          dc.w          0                                                                    ; 14: Bullet speed
-                          dc.w          0                                                                    ; 16: Shot gravity
-                          dc.w          0                                                                    ; 18: Shot flags (Ammo type (?))
+                          dc.w               0                                                                    ; 14: Bullet speed
+                          dc.w               0                                                                    ; 16: Shot gravity
+                          dc.w               0                                                                    ; 18: Shot flags (Ammo type (?))
 
-                          dc.w          0                                                                    ; 20: Bullet speed?                         
-                          dc.w          1                                                                    ; 22: Plr1FireBullet / Hitting?
-                          ds.w          4                                                                    ; 24: ?
+                          dc.w               0                                                                    ; 20: Bullet speed?                         
+                          dc.w               1                                                                    ; 22: Plr1FireBullet / Hitting?
+                          ds.w               4                                                                    ; 24: ?
 PLR1_GunDataEnd:
 
 *************************************************
 ; PlasmaGun (*1)
-                          dc.w          0
-                          dc.b          8,1
-                          dc.b          20
-                          dc.b          0
-                          dc.b          16,0
-                          dc.w          10,-1,0,5
-                          dc.w          0,0,0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               8,1
+                          dc.b               20
+                          dc.b               0
+                          dc.b               16,0
+                          dc.w               10,-1,0,5
+                          dc.w               0,0,0
+                          dc.w               1
+                          ds.w               4
  
  *************************************************
 ; RocketLauncher (*2)
-                          dc.w          0
-                          dc.b          8,9
-                          dc.b          2
-                          dc.b          0
-                          dc.b          12,0
-                          dc.w          30,-1,0,5
-                          dc.w          0,0,0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               8,9
+                          dc.b               2
+                          dc.b               0
+                          dc.b               12,0
+                          dc.w               30,-1,0,5
+                          dc.w               0,0,0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; FlameThrower (*3)
-                          dc.w          90*8
-                          dc.b          1,22
-                          dc.b          40
-                          dc.b          0
-                          dc.b          8,$0	
-                          dc.w          5,50,1,4
-                          dc.w          0,0,0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               90*8
+                          dc.b               1,22
+                          dc.b               40
+                          dc.b               0
+                          dc.b               8,$0	
+                          dc.w               5,50,1,4
+                          dc.w               0,0,0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; Grenade launcher (*4)
-                          dc.w          0
-                          dc.b          8,9
-                          dc.b          6
-                          dc.b          0
-                          dc.b          8,0
-                          dc.w          50,100,1,5
-                          dc.w          60,3,-1000
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               8,9
+                          dc.b               6
+                          dc.b               0
+                          dc.b               8,0
+                          dc.w               50,100,1,5
+                          dc.w               60,3,-1000
+                          dc.w               1
+                          ds.w               4
 
 ************************************************* 
 ; WORMGUN (*5) NotUsed
-                          dc.w          0
-                          dc.b          0,0
-                          dc.b          0
-                          dc.b          0                          
-                          dc.b          0,0
-                          dc.w          0,-1,0,5
-                          dc.w          0,0,0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               0,0
+                          dc.b               0
+                          dc.b               0                          
+                          dc.b               0,0
+                          dc.w               0,-1,0,5
+                          dc.w               0,0,0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; ToughMarineGun (*6) NotUsed
-                          dc.w          0
-                          dc.b          0,0
-                          dc.b          0
-                          dc.b          0                          
-                          dc.b          0,0
-                          dc.w          0,-1,0,5
-                          dc.w          0,0,0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               0,0
+                          dc.b               0
+                          dc.b               0                          
+                          dc.b               0,0
+                          dc.w               0,-1,0,5
+                          dc.w               0,0,0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; Shotgun (*7)
-                          dc.w          0                                                                    ; 0: Ammoleft 
-                          dc.b          8                                                                    ; 2: AmmoPerShot
-                          dc.b          21                                                                   ; 3: GunSampleNumber                          
-                          dc.b          15                                                                   ; 4: AmmoClip
-                          dc.b          -1                                                                   ; 5: PlrFireBullet -1
-                          dc.b          4                                                                    ; 6: ShotPower/BulletDamage
+                          dc.w               0                                                                    ; 0: Ammoleft 
+                          dc.b               8                                                                    ; 2: AmmoPerShot
+                          dc.b               21                                                                   ; 3: GunSampleNumber                          
+                          dc.b               15                                                                   ; 4: AmmoClip
+                          dc.b               -1                                                                   ; 5: PlrFireBullet -1
+                          dc.b               4                                                                    ; 6: ShotPower/BulletDamage
 
-                          dc.b          0                                                                    ; 7: Visible/Instant (0/$ff)
+                          dc.b               0                                                                    ; 7: Visible/Instant (0/$ff)
 
-                          dc.w          50                                                                   ; 8: TimeToShoot/Delay
-                          dc.w          -1                                                                   ; 10: Life time of bullet
-                          dc.w          1                                                                    ; 12: Click or hold down (0,1)
+                          dc.w               50                                                                   ; 8: TimeToShoot/Delay
+                          dc.w               -1                                                                   ; 10: Life time of bullet
+                          dc.w               1                                                                    ; 12: Click or hold down (0,1)
 
-                          dc.w          0                                                                    ; 14: Bullet speed
-                          dc.w          0                                                                    ; 16: Shot gravity
-                          dc.w          0                                                                    ; 18: Shot flags (Ammo type (?))
+                          dc.w               0                                                                    ; 14: Bullet speed
+                          dc.w               0                                                                    ; 16: Shot gravity
+                          dc.w               0                                                                    ; 18: Shot flags (Ammo type (?))
 
-                          dc.w          0                                                                    ; 20: Bullet speed? 
-                          dc.w          7                                                                    ; 22: Plr1FireBullet / Hitting? 7
-                          ds.w          4                                                                    ; 24: ?
+                          dc.w               0                                                                    ; 20: Bullet speed? 
+                          dc.w               7                                                                    ; 22: Plr1FireBullet / Hitting? 7
+                          ds.w               4                                                                    ; 24: ?
 
 *********************************************************************************************
 
@@ -3205,851 +3254,868 @@ PLR2_GunData:
 
 *************************************************
 ; PlayerGun (*0)
-                          dc.w          0
-                          dc.b          8,3
-                          dc.b          15
-                          dc.b          -1
-                          dc.b          4,$ff
-                          dc.w          5,-1,1,0
-                          dc.w          0,0,0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               8,3
+                          dc.b               15
+                          dc.b               -1
+                          dc.b               4,$ff
+                          dc.w               5,-1,1,0
+                          dc.w               0,0,0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; PlasmaGun (*1)
-                          dc.w          0
-                          dc.b          8,1
-                          dc.b          20
-                          dc.b          0
-                          dc.b          16,0
-                          dc.w          10,-1,0,5
-                          dc.w          0,0,0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               8,1
+                          dc.b               20
+                          dc.b               0
+                          dc.b               16,0
+                          dc.w               10,-1,0,5
+                          dc.w               0,0,0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; RocketLauncher (*2)
-                          dc.w          0
-                          dc.b          8,9
-                          dc.b          2
-                          dc.b          0
-                          dc.b          12,0
-                          dc.w          30,-1,0,5
-                          dc.w          0,0,0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               8,9
+                          dc.b               2
+                          dc.b               0
+                          dc.b               12,0
+                          dc.w               30,-1,0,5
+                          dc.w               0,0,0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; FlameThrower (*3)
-                          dc.w          90*8
-                          dc.b          1,22
-                          dc.b          40
-                          dc.b          0
-                          dc.b          8,$0	
-                          dc.w          5,50,1,4
-                          dc.w          0,0,0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               90*8
+                          dc.b               1,22
+                          dc.b               40
+                          dc.b               0
+                          dc.b               8,$0	
+                          dc.w               5,50,1,4
+                          dc.w               0,0,0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; Grenade launcher (*4)
-                          dc.w          0
-                          dc.b          8,9
-                          dc.b          6
-                          dc.b          0
-                          dc.b          8,0
-                          dc.w          50,100,1,5
-                          dc.w          60,3
-                          dc.w          -1000
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               8,9
+                          dc.b               6
+                          dc.b               0
+                          dc.b               8,0
+                          dc.w               50,100,1,5
+                          dc.w               60,3
+                          dc.w               -1000
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; WORMGUN (*5)
-                          dc.w          0
-                          dc.b          0,0
-                          dc.b          0
-                          dc.b          0
-                          dc.b          0,0
-                          dc.w          0,-1,0,5
-                          dc.w          0,0
-                          dc.w          0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               0,0
+                          dc.b               0
+                          dc.b               0
+                          dc.b               0,0
+                          dc.w               0,-1,0,5
+                          dc.w               0,0
+                          dc.w               0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; ToughMarineGun (*6)
-                          dc.w          0
-                          dc.b          0,0
-                          dc.b          0
-                          dc.b          0
-                          dc.b          0,0
-                          dc.w          0,-1,0,5
-                          dc.w          0,0
-                          dc.w          0
-                          dc.w          1
-                          ds.w          4
+                          dc.w               0
+                          dc.b               0,0
+                          dc.b               0
+                          dc.b               0
+                          dc.b               0,0
+                          dc.w               0,-1,0,5
+                          dc.w               0,0
+                          dc.w               0
+                          dc.w               1
+                          ds.w               4
 
 *************************************************
 ; Shotgun (*7)
-                          dc.w          0
-                          dc.b          8,21
-                          dc.b          15
-                          dc.b          -1
-                          dc.b          4,0
-                          dc.w          50,-1,1,0
-                          dc.w          0,0,0
-                          dc.w          7
-                          ds.w          4
+                          dc.w               0
+                          dc.b               8,21
+                          dc.b               15
+                          dc.b               -1
+                          dc.b               4,0
+                          dc.w               50,-1,1,0
+                          dc.w               0,0,0
+                          dc.w               7
+                          ds.w               4
+
+*********************************************************************************************
+
+                          even
 
 *********************************************************************************************
 ; Path
 
-                          IFNE          ENABLEPATH
-Path:                     incbin        "data/testpath"
+                          IFNE               ENABLEPATH
+Path:                     incbin             "data/testpath"
 endpath:
-pathpt:                   dc.l          Path
+pathpt:                   dc.l               Path
                           ENDC
-
-*********************************************************************************************
-
-PLR1KEYS:                 dc.b          0
-PLR1PATH:                 dc.b          0
-PLR1MOUSE:                dc.b          -1
-PLR1MOUSEKBD:             dc.b          0
-
-PLR1JOY:                  dc.b          0
-PLR2KEYS:                 dc.b          0
-PLR2PATH:                 dc.b          0
-PLR2MOUSE:                dc.b          -1
-PLR2JOY:                  dc.b          0
                           even
 
 *********************************************************************************************
 
-PLR1_bobble:              dc.w          0
-PLR2_bobble:              dc.w          0
+PLR1KEYS:                 dc.b               0
+PLR1PATH:                 dc.b               0
+PLR1MOUSE:                dc.b               -1
+PLR1MOUSEKBD:             dc.b               0
+PLR1JOY:                  dc.b               0
 
-xwobble:                  dc.l          0
-xwobxoff:                 dc.w          0
-xwobzoff:                 dc.w          0
+PLR2KEYS:                 dc.b               0
+PLR2PATH:                 dc.b               0
+PLR2MOUSE:                dc.b               -1
+PLR2MOUSEKBD:             dc.b               0
+PLR2JOY:                  dc.b               0
+                          even
+
+*********************************************************************************************
+
+PLR1_bobble:              dc.w               0
+PLR2_bobble:              dc.w               0
+
+xwobble:                  dc.l               0
+xwobxoff:                 dc.w               0
+xwobzoff:                 dc.w               0
 
 *********************************************************************************************
 
 PLR1_Control:
 ; Take a snapshot of everything.
 
-                          move.l        PLR1_xoff,d2
-                          move.l        d2,PLR1_oldxoff
-                          move.l        d2,oldx
-                          move.l        PLR1_zoff,d3
-                          move.l        d3,PLR1_oldzoff
-                          move.l        d3,oldz
-                          move.l        p1_xoff,d0
-                          move.l        d0,PLR1_xoff
-                          move.l        d0,newx
-                          move.l        p1_zoff,d1
-                          move.l        d1,newz
-                          move.l        d1,PLR1_zoff
+                          move.l             PLR1_xoff,d2
+                          move.l             d2,PLR1_oldxoff
+                          move.l             d2,oldx
+                          move.l             PLR1_zoff,d3
+                          move.l             d3,PLR1_oldzoff
+                          move.l             d3,oldz
+                          move.l             p1_xoff,d0
+                          move.l             d0,PLR1_xoff
+                          move.l             d0,newx
+                          move.l             p1_zoff,d1
+                          move.l             d1,newz
+                          move.l             d1,PLR1_zoff
 
-                          move.l        p1_height,PLR1_height
+                          move.l             p1_height,PLR1_height
  
-                          sub.l         d2,d0
-                          sub.l         d3,d1
-                          move.l        d0,xdiff
-                          move.l        d1,zdiff
-                          move.w        p1_angpos,d0
-                          move.w        d0,PLR1_angpos
+                          sub.l              d2,d0
+                          sub.l              d3,d1
+                          move.l             d0,xdiff
+                          move.l             d1,zdiff
+                          move.w             p1_angpos,d0
+                          move.w             d0,PLR1_angpos
  
-                          move.l        #SineTable,a1
-                          move.w        (a1,d0.w),PLR1_sinval
-                          add.w         #2048,d0
-                          and.w         #8190,d0
-                          move.w        (a1,d0.w),PLR1_cosval
+                          move.l             #SineTable,a1
+                          move.w             (a1,d0.w),PLR1_sinval
+                          add.w              #2048,d0
+                          and.w              #8190,d0
+                          move.w             (a1,d0.w),PLR1_cosval
 
-                          move.l        p1_yoff,d0
-                          move.w        p1_bobble,d1
-                          move.w        (a1,d1.w),d1
-                          move.w        d1,d3
-                          ble.s         notnegative
-                          neg.w         d1
+                          move.l             p1_yoff,d0
+                          move.w             p1_bobble,d1
+                          move.w             (a1,d1.w),d1
+                          move.w             d1,d3
+                          ble.s              notnegative
+                          neg.w              d1
 
 notnegative:
-                          add.w         #16384,d1
-                          asr.w         #4,d1
+                          add.w              #16384,d1
+                          asr.w              #4,d1
 
-                          tst.b         PLR1_Ducked
-                          bne.s         .notdouble
-                          add.w         d1,d1
+                          tst.b              PLR1_Ducked
+                          bne.s              .notdouble
+                          add.w              d1,d1
 
 .notdouble:
-                          ext.l         d1
-                          move.l        PLR1_height,d4
-                          sub.l         d1,d4
-                          add.l         d1,d0
+                          ext.l              d1
+                          move.l             PLR1_height,d4
+                          sub.l              d1,d4
+                          add.l              d1,d0
  
-                          cmp.b         #'s',mors
-                          beq.s         .otherwob
-                          asr.w         #6,d3
-                          ext.l         d3
-                          move.l        d3,xwobble
-                          move.w        PLR1_sinval,d1
-                          muls          d3,d1
-                          move.w        PLR1_cosval,d2
-                          muls          d3,d2
-                          swap          d1
-                          swap          d2
-                          asr.w         #7,d1
-                          move.w        d1,xwobxoff
-                          asr.w         #7,d2
-                          neg.w         d2
-                          move.w        d2,xwobzoff
+                          cmp.b              #'s',mors
+                          beq.s              .otherwob
+
+                          asr.w              #6,d3
+                          ext.l              d3
+                          move.l             d3,xwobble
+                          move.w             PLR1_sinval,d1
+                          muls               d3,d1
+                          move.w             PLR1_cosval,d2
+                          muls               d3,d2
+                          swap               d1
+                          swap               d2
+                          asr.w              #7,d1
+                          move.w             d1,xwobxoff
+                          asr.w              #7,d2
+                          neg.w              d2
+                          move.w             d2,xwobzoff
 
 .otherwob:
-                          move.l        d0,PLR1_yoff
-                          move.l        d0,newy
-                          move.l        d0,oldy
+                          move.l             d0,PLR1_yoff
+                          move.l             d0,newy
+                          move.l             d0,oldy
  
-                          move.l        d4,thingheight
-                          move.l        #40*256,StepUpVal
-                          tst.b         PLR1_Ducked
-                          beq.s         .okbigstep
-                          move.l        #10*256,StepUpVal
+                          move.l             d4,thingheight
+                          move.l             #40*256,StepUpVal
+                          tst.b              PLR1_Ducked
+                          beq.s              .okbigstep
+                          move.l             #10*256,StepUpVal
 
 .okbigstep:
-                          move.l        #$1000000,StepDownVal
+                          move.l             #$1000000,StepDownVal
  
-                          move.l        PLR1_Roompt,a0
-                          move.w        ToTelZone(a0),d0
-                          blt           .noteleport
+                          move.l             PLR1_Roompt,a0
+                          move.w             ToTelZone(a0),d0
+                          blt                .noteleport
  
 *********************************************************************************************
 
-                          move.w        ToTelX(a0),newx
-                          move.w        ToTelZ(a0),newz
-                          move.w        #-1,CollId
-                          move.l        #%111111111111111111,CollideFlags
-                          bsr           Collision
-                          tst.b         hitwall
-                          beq.s         .teleport
+                          move.w             ToTelX(a0),newx
+                          move.w             ToTelZ(a0),newz
+                          move.w             #-1,CollId
+                          move.l             #%111111111111111111,CollideFlags
+                          bsr                Collision
+                          tst.b              hitwall
+                          beq.s              .teleport
  
-                          move.w        PLR1_xoff,newx
-                          move.w        PLR1_zoff,newz
-                          bra           .noteleport
+                          move.w             PLR1_xoff,newx
+                          move.w             PLR1_zoff,newz
+                          bra                .noteleport
  
 .teleport:
 
 *********************************************************************************************
 
-                          move.l        PLR1_Roompt,a0
-                          move.w        ToTelZone(a0),d0
-                          move.w        ToTelX(a0),PLR1_xoff
-                          move.w        ToTelZ(a0),PLR1_zoff
-                          move.l        PLR1_yoff,d1
-                          sub.l         ToZoneFloor(a0),d1
-                          move.l        ZoneAdds,a0
-                          move.l        (a0,d0.w*4),a0
-                          add.l         LEVELDATA,a0
-                          move.l        a0,PLR1_Roompt
-                          add.l         ToZoneFloor(a0),d1
-                          move.l        d1,PLR1s_yoff
-                          move.l        d1,PLR1_yoff
-                          move.l        d1,PLR1s_tyoff
-                          move.l        PLR1_xoff,PLR1s_xoff
-                          move.l        PLR1_zoff,PLR1s_zoff
+                          move.l             PLR1_Roompt,a0
+                          move.w             ToTelZone(a0),d0
+                          move.w             ToTelX(a0),PLR1_xoff
+                          move.w             ToTelZ(a0),PLR1_zoff
+                          move.l             PLR1_yoff,d1
+                          sub.l              ToZoneFloor(a0),d1
+                          move.l             ZoneAdds,a0
+                          move.l             (a0,d0.w*4),a0
+                          add.l              LEVELDATA,a0
+                          move.l             a0,PLR1_Roompt
+                          add.l              ToZoneFloor(a0),d1
+                          move.l             d1,PLR1s_yoff
+                          move.l             d1,PLR1_yoff
+                          move.l             d1,PLR1s_tyoff
+                          move.l             PLR1_xoff,PLR1s_xoff
+                          move.l             PLR1_zoff,PLR1s_zoff
  
                           SAVEREGS
-                          move.w        #0,Noisex
-                          move.w        #0,Noisez
-                          move.w        #26,Samplenum
-                          move.w        #100,Noisevol
-                          move.b        #$fa,IDNUM
-                          jsr           MakeSomeNoise
+                          move.w             #0,Noisex
+                          move.w             #0,Noisez
+                          move.w             #26,Samplenum
+                          move.w             #100,Noisevol
+                          move.b             #$fa,IDNUM
+                          jsr                MakeSomeNoise
                           GETREGS
  
-                          bra           .cantmove
+                          bra                .cantmove
  
 *********************************************************************************************
 
 .noteleport:
  
-                          move.l        PLR1_Roompt,objroom
-                          move.w        #%100000000,wallflags
-                          move.b        PLR1_StoodInTop,StoodInTop
-                          move.l        #%1011111110111000001,CollideFlags
-                          move.w        #-1,CollId
-                          bsr           Collision
-                          tst.b         hitwall
-                          beq.s         .nothitanything
+                          move.l             PLR1_Roompt,objroom
+                          move.w             #%100000000,wallflags
+                          move.b             PLR1_StoodInTop,StoodInTop
+                          move.l             #%1011111110111000001,CollideFlags
+                          move.w             #-1,CollId
+                          bsr                Collision
+                          tst.b              hitwall
+                          beq.s              .nothitanything
 
-                          move.w        oldx,PLR1_xoff
-                          move.w        oldz,PLR1_zoff
-                          move.l        PLR1_xoff,PLR1s_xoff
-                          move.l        PLR1_zoff,PLR1s_zoff
-                          bra.b         .cantmove
+                          move.w             oldx,PLR1_xoff
+                          move.w             oldz,PLR1_zoff
+                          move.l             PLR1_xoff,PLR1s_xoff
+                          move.l             PLR1_zoff,PLR1s_zoff
+                          bra.b              .cantmove
 
 .nothitanything:
 
 *********************************************************************************************
 
-                          move.w        #40,extlen
-                          move.b        #0,awayfromwall
+                          move.w             #40,extlen
+                          move.b             #0,awayfromwall
 
-                          clr.b         exitfirst
-                          clr.b         wallbounce
-                          bsr           MoveObject
-                          move.b        StoodInTop,PLR1_StoodInTop
-                          move.l        objroom,PLR1_Roompt
-                          move.w        newx,PLR1_xoff
-                          move.w        newz,PLR1_zoff
-                          move.l        PLR1_xoff,PLR1s_xoff
-                          move.l        PLR1_zoff,PLR1s_zoff
+                          clr.b              exitfirst
+                          clr.b              wallbounce
+                          bsr                MoveObject
+                          move.b             StoodInTop,PLR1_StoodInTop
+                          move.l             objroom,PLR1_Roompt
+                          move.w             newx,PLR1_xoff
+                          move.w             newz,PLR1_zoff
+                          move.l             PLR1_xoff,PLR1s_xoff
+                          move.l             PLR1_zoff,PLR1s_zoff
 
 *********************************************************************************************
 
 .cantmove:
-                          move.l        PLR1_Roompt,a0
+                          move.l             PLR1_Roompt,a0
  
-                          move.l        ToZoneFloor(a0),d0
-                          tst.b         PLR1_StoodInTop
-                          beq.s         notintop
-                          move.l        ToUpperFloor(a0),d0
-notintop:
+                          move.l             ToZoneFloor(a0),d0
+                          tst.b              PLR1_StoodInTop
+                          beq.s              notintop
+                          move.l             ToUpperFloor(a0),d0
 
-                          adda.w        #ToZonePts,a0
-                          sub.l         PLR1_height,d0
-                          move.l        d0,PLR1s_tyoff
-                          move.w        p1_angpos,tmpangpos
+notintop:
+                          adda.w             #ToZonePts,a0
+                          sub.l              PLR1_height,d0
+                          move.l             d0,PLR1s_tyoff
+                          move.w             p1_angpos,tmpangpos
 
                           ; move.l (a0),a0		; jump to viewpoint list
 
                           ; A0 is pointing at a pointer to list of points to rotate
-                          move.w        (a0)+,d1
-                          ext.l         d1
-                          add.l         PLR1_Roompt,d1
-                          move.l        d1,PLR1_PointsToRotatePtr
-                          tst.w         (a0)+
-                          sne           DRAWNGRAPHTOP
-                          beq.s         nobackgraphics
-                          cmp.b         #'s',mors
-                          beq.s         nobackgraphics
-                          move.l        a0,-(a7)
-                          jsr           putinbackdrop 
-                          move.l        (a7)+,a0
-nobackgraphics:
-                          adda.w        #10,a0
-                          move.l        a0,PLR1_ListOfGraphRooms
+                          
+                          move.w             (a0)+,d1
+                          ext.l              d1
+                          add.l              PLR1_Roompt,d1
+                          move.l             d1,PLR1_PointsToRotatePtr
+                          
+                          tst.w              (a0)+
+                          sne                DRAWNGRAPHTOP
+                          beq.s              noBackGraphicsPlr1
+
+                          cmp.b              #'s',mors
+                          beq.s              noBackGraphicsPlr1
+                          
+                          move.l             a0,-(a7)
+                          jsr                putinbackdrop
+                          move.l             (a7)+,a0
+
+noBackGraphicsPlr1:
+                          adda.w             #10,a0
+                          move.l             a0,PLR1_ListOfGraphRooms
 
                           rts
 
 *********************************************************************************************
 
-DRAWNGRAPHTOP
-tstzone:                  dc.l          0
-CollId:                   dc.w          0
+DRAWNGRAPHTOP:
+tstzone:                  dc.l               0
+CollId:                   dc.w               0
 
 *********************************************************************************************
 
 PLR2_Control:
 ; Take a snapshot of everything.
 
-                          move.l        PLR2_xoff,d2
-                          move.l        d2,PLR2_oldxoff
-                          move.l        d2,oldx
-                          move.l        PLR2_zoff,d3
-                          move.l        d3,PLR2_oldzoff
-                          move.l        d3,oldz
-                          move.l        p2_xoff,d0
-                          move.l        d0,PLR2_xoff
-                          move.l        d0,newx
-                          move.l        p2_zoff,d1
-                          move.l        d1,newz
-                          move.l        d1,PLR2_zoff
+                          move.l             PLR2_xoff,d2
+                          move.l             d2,PLR2_oldxoff
+                          move.l             d2,oldx
+                          move.l             PLR2_zoff,d3
+                          move.l             d3,PLR2_oldzoff
+                          move.l             d3,oldz
+                          move.l             p2_xoff,d0
+                          move.l             d0,PLR2_xoff
+                          move.l             d0,newx
+                          move.l             p2_zoff,d1
+                          move.l             d1,newz
+                          move.l             d1,PLR2_zoff
 
-                          move.l        p2_height,PLR2_height
+                          move.l             p2_height,PLR2_height
  
-                          sub.l         d2,d0
-                          sub.l         d3,d1
-                          move.l        d0,xdiff
-                          move.l        d1,zdiff
-                          move.w        p2_angpos,d0
-                          move.w        d0,PLR2_angpos
+                          sub.l              d2,d0
+                          sub.l              d3,d1
+                          move.l             d0,xdiff
+                          move.l             d1,zdiff
+                          move.w             p2_angpos,d0
+                          move.w             d0,PLR2_angpos
  
-                          move.l        #SineTable,a1
-                          move.w        (a1,d0.w),PLR2_sinval
-                          add.w         #2048,d0
-                          and.w         #8190,d0
-                          move.w        (a1,d0.w),PLR2_cosval
+                          move.l             #SineTable,a1
+                          move.w             (a1,d0.w),PLR2_sinval
+                          add.w              #2048,d0
+                          and.w              #8190,d0
+                          move.w             (a1,d0.w),PLR2_cosval
  
-                          move.l        p2_yoff,d0
-                          move.w        p2_bobble,d1
-                          move.w        (a1,d1.w),d1
-                          move.w        d1,d3
-                          ble.s         .notnegative
-                          neg.w         d1
+                          move.l             p2_yoff,d0
+                          move.w             p2_bobble,d1
+                          move.w             (a1,d1.w),d1
+                          move.w             d1,d3
+                          ble.s              .notnegative
+                          neg.w              d1
 
 .notnegative:
-                          add.w         #16384,d1
-                          asr.w         #4,d1
-                          add.w         d1,d1
-                          ext.l         d1
-                          move.l        PLR2_height,d4
-                          sub.l         d1,d4
-                          add.l         d1,d0
+                          add.w              #16384,d1
+                          asr.w              #4,d1
+                          add.w              d1,d1
+                          ext.l              d1
+                          move.l             PLR2_height,d4
+                          sub.l              d1,d4
+                          add.l              d1,d0
  
-                          cmp.b         #'s',mors
-                          bne.s         .otherwob
-                          asr.w         #6,d3
-                          ext.l         d3
-                          move.l        d3,xwobble
-                          move.w        PLR2_sinval,d1
-                          muls          d3,d1
-                          move.w        PLR2_cosval,d2
-                          muls          d3,d2
-                          swap          d1
-                          swap          d2
-                          asr.w         #7,d1
-                          move.w        d1,xwobxoff
-                          asr.w         #7,d2
-                          neg.w         d2
-                          move.w        d2,xwobzoff
+                          cmp.b              #'s',mors
+                          bne.s              .otherwob
 
-.otherwob 
-                          move.l        d0,PLR2_yoff
-                          move.l        d0,newy
-                          move.l        d0,oldy
+                          asr.w              #6,d3
+                          ext.l              d3
+                          move.l             d3,xwobble
+                          move.w             PLR2_sinval,d1
+                          muls               d3,d1
+                          move.w             PLR2_cosval,d2
+                          muls               d3,d2
+                          swap               d1
+                          swap               d2
+                          asr.w              #7,d1
+                          move.w             d1,xwobxoff
+                          asr.w              #7,d2
+                          neg.w              d2
+                          move.w             d2,xwobzoff
+
+.otherwob:
+                          move.l             d0,PLR2_yoff
+                          move.l             d0,newy
+                          move.l             d0,oldy
  
-                          move.l        d4,thingheight
-                          move.l        #40*256,StepUpVal
-                          tst.b         PLR2_Ducked
-                          beq.s         .okbigstep
-                          move.l        #10*256,StepUpVal
+                          move.l             d4,thingheight
+                          move.l             #40*256,StepUpVal
+                          tst.b              PLR2_Ducked
+                          beq.s              .okbigstep
+                          move.l             #10*256,StepUpVal
 
 .okbigstep:
-                          move.l        #$1000000,StepDownVal
+                          move.l             #$1000000,StepDownVal
 
-                          move.l        PLR2_Roompt,a0
-                          move.w        ToTelZone(a0),d0
-                          blt           .noteleport
+                          move.l             PLR2_Roompt,a0
+                          move.w             ToTelZone(a0),d0
+                          blt                .noteleport
  
-                          move.w        ToTelX(a0),newx
-                          move.w        ToTelZ(a0),newz
-                          move.w        #-1,CollId
-                          move.l        #%111111111111111111,CollideFlags
-                          bsr           Collision
-                          tst.b         hitwall
-                          beq.s         .teleport
+                          move.w             ToTelX(a0),newx
+                          move.w             ToTelZ(a0),newz
+                          move.w             #-1,CollId
+                          move.l             #%111111111111111111,CollideFlags
+                          bsr                Collision
+                          tst.b              hitwall
+                          beq.s              .teleport
  
-                          move.w        PLR2_xoff,newx
-                          move.w        PLR2_zoff,newz
-                          bra           .noteleport
+                          move.w             PLR2_xoff,newx
+                          move.w             PLR2_zoff,newz
+                          bra                .noteleport
  
 .teleport:
-                          move.l        PLR2_Roompt,a0
-                          move.w        ToTelZone(a0),d0
-                          move.w        ToTelX(a0),PLR2_xoff
-                          move.w        ToTelZ(a0),PLR2_zoff
-                          move.l        PLR2_yoff,d1
-                          sub.l         ToZoneFloor(a0),d1
-                          move.l        ZoneAdds,a0
-                          move.l        (a0,d0.w*4),a0
-                          add.l         LEVELDATA,a0
-                          move.l        a0,PLR2_Roompt
-                          add.l         ToZoneFloor(a0),d1
-                          move.l        d1,PLR2s_yoff
-                          move.l        d1,PLR2_yoff
-                          move.l        d1,PLR2s_tyoff
-                          move.l        PLR2_xoff,PLR2s_xoff
-                          move.l        PLR2_zoff,PLR2s_zoff
+                          move.l             PLR2_Roompt,a0
+                          move.w             ToTelZone(a0),d0
+                          move.w             ToTelX(a0),PLR2_xoff
+                          move.w             ToTelZ(a0),PLR2_zoff
+                          move.l             PLR2_yoff,d1
+                          sub.l              ToZoneFloor(a0),d1
+                          move.l             ZoneAdds,a0
+                          move.l             (a0,d0.w*4),a0
+                          add.l              LEVELDATA,a0
+                          move.l             a0,PLR2_Roompt
+                          add.l              ToZoneFloor(a0),d1
+                          move.l             d1,PLR2s_yoff
+                          move.l             d1,PLR2_yoff
+                          move.l             d1,PLR2s_tyoff
+                          move.l             PLR2_xoff,PLR2s_xoff
+                          move.l             PLR2_zoff,PLR2s_zoff
  
                           SAVEREGS
-                          move.w        #0,Noisex
-                          move.w        #0,Noisez
-                          move.w        #26,Samplenum
-                          move.w        #100,Noisevol
-                          move.b        #$fa,IDNUM
-                          jsr           MakeSomeNoise
+                          move.w             #0,Noisex
+                          move.w             #0,Noisez
+                          move.w             #26,Samplenum
+                          move.w             #100,Noisevol
+                          move.b             #$fa,IDNUM
+                          jsr                MakeSomeNoise
                           GETREGS
  
-                          bra           .cantmove
+                          bra                .cantmove
  
 .noteleport:
-                          move.l        PLR2_Roompt,objroom
-                          move.w        #%100000000000,wallflags
-                          move.b        PLR2_StoodInTop,StoodInTop
+                          move.l             PLR2_Roompt,objroom
+                          move.w             #%100000000000,wallflags
+                          move.b             PLR2_StoodInTop,StoodInTop
 
-                          move.l        #%1011111010111100001,CollideFlags
-                          move.w        #-1,CollId
+                          move.l             #%1011111010111100001,CollideFlags
+                          move.w             #-1,CollId
 
-                          bsr           Collision
-                          tst.b         hitwall
-                          beq.s         .nothitanything
-                          move.w        oldx,PLR2_xoff
-                          move.w        oldz,PLR2_zoff
-                          move.l        PLR2_xoff,PLR2s_xoff
-                          move.l        PLR2_zoff,PLR2s_zoff
-                          bra.b         .cantmove
+                          bsr                Collision
+                          tst.b              hitwall
+                          beq.s              .nothitanything
+                          move.w             oldx,PLR2_xoff
+                          move.w             oldz,PLR2_zoff
+                          move.l             PLR2_xoff,PLR2s_xoff
+                          move.l             PLR2_zoff,PLR2s_zoff
+                          bra.b              .cantmove
 
 .nothitanything:
-                          move.w        #40,extlen
-                          move.b        #0,awayfromwall
+                          move.w             #40,extlen
+                          move.b             #0,awayfromwall
 
-                          clr.b         exitfirst
-                          clr.b         wallbounce
-                          bsr           MoveObject
-                          move.b        StoodInTop,PLR2_StoodInTop
-                          move.l        objroom,PLR2_Roompt
-                          move.w        newx,PLR2_xoff
-                          move.w        newz,PLR2_zoff
-                          move.l        PLR2_xoff,PLR2s_xoff
-                          move.l        PLR2_zoff,PLR2s_zoff
+                          clr.b              exitfirst
+                          clr.b              wallbounce
+                          bsr                MoveObject
+                          move.b             StoodInTop,PLR2_StoodInTop
+                          move.l             objroom,PLR2_Roompt
+                          move.w             newx,PLR2_xoff
+                          move.w             newz,PLR2_zoff
+                          move.l             PLR2_xoff,PLR2s_xoff
+                          move.l             PLR2_zoff,PLR2s_zoff
  
-.cantmove
-                          move.l        PLR2_Roompt,a0
+.cantmove:
+                          move.l             PLR2_Roompt,a0
  
-                          move.l        ToZoneFloor(a0),d0
-                          tst.b         PLR2_StoodInTop
-                          beq.s         .notintop
-                          move.l        ToUpperFloor(a0),d0
+                          move.l             ToZoneFloor(a0),d0
+                          tst.b              PLR2_StoodInTop
+                          beq.s              .notintop
+                          move.l             ToUpperFloor(a0),d0
 
 .notintop:
-                          adda.w        #ToZonePts,a0
-                          sub.l         PLR2_height,d0
-                          move.l        d0,PLR2s_tyoff
-                          move.w        p2_angpos,tmpangpos
+                          adda.w             #ToZonePts,a0
+                          sub.l              PLR2_height,d0
+                          move.l             d0,PLR2s_tyoff
+                          move.w             p2_angpos,tmpangpos
 
                           ; move.l (a0),a0		; jump to viewpoint list
 
                           ; A0 is pointing at a pointer to list of points to rotate
-                          move.w        (a0)+,d1
-                          ext.l         d1
-                          add.l         PLR2_Roompt,d1
-                          move.l        d1,PLR2_PointsToRotatePtr
-                          tst.w         (a0)+
-                          beq.s         .nobackgraphics
-                          cmp.b         #'s',mors
-                          bne.s         .nobackgraphics
-                          move.l        a0,-(a7)
-                          jsr           putinbackdrop 
-                          move.l        (a7)+,a0
 
-.nobackgraphics:
-                          adda.w        #10,a0
-                          move.l        a0,PLR2_ListOfGraphRooms
+                          move.w             (a0)+,d1
+                          ext.l              d1
+                          add.l              PLR2_Roompt,d1
+                          move.l             d1,PLR2_PointsToRotatePtr
+
+                          tst.w              (a0)+
+                          beq.s              noBackGraphicsPlr2
+
+                          cmp.b              #'s',mors
+                          bne.s              noBackGraphicsPlr2
+
+                          move.l             a0,-(a7)
+                          jsr                putinbackdrop
+                          move.l             (a7)+,a0
+
+noBackGraphicsPlr2:
+                          adda.w             #10,a0
+                          move.l             a0,PLR2_ListOfGraphRooms
 
                           rts
 
 *********************************************************************************************
 
-KeyMap:                   ds.b          256                                                                  ; Table of pressed keys
+KeyMap:                   ds.b               256                                                                  ; Table of pressed keys
 
 *********************************************************************************************
 
-fillscrnwater:            dc.w          0                                                                    ; really .b
-DONTDOGUN:                dc.w          0                                                                    ; really .b
+fillscrnwater:            dc.w               0                                                                    ; really .b
+DONTDOGUN:                dc.w               0                                                                    ; really .b
  
 *********************************************************************************************
 
 DrawDisplay:
 
-                          clr.b         fillscrnwater
+                          clr.b              fillscrnwater
 
-                          move.l        #SineTable,a0
-                          move.w        angpos,d0
-                          move.w        (a0,d0.w),d6
-                          adda.w        #2048,a0
-                          move.w        (a0,d0.w),d7
-                          move.w        d6,sinval
-                          move.w        d7,cosval
+                          move.l             #SineTable,a0
+                          move.w             angpos,d0
+                          move.w             (a0,d0.w),d6
+                          adda.w             #2048,a0
+                          move.w             (a0,d0.w),d7
+                          move.w             d6,sinval
+                          move.w             d7,cosval
 
-                          move.l        #KeyMap,a5
-                          moveq         #0,d5
-                          move.b        look_behind_key,d5
-                          tst.b         (a5,d5.w)
-                          sne           DONTDOGUN
-                          beq.s         .nolookback
-                          neg.w         cosval
-                          neg.w         sinval
-                          add.w         #10,DebugValue                                                       ; agi: debug
+                          move.l             #KeyMap,a5
+                          moveq              #0,d5
+                          move.b             look_behind_key,d5
+                          tst.b              (a5,d5.w)
+                          sne                DONTDOGUN
+                          beq.s              .nolookback
+                          neg.w              cosval
+                          neg.w              sinval
 
 .nolookback:
-                          move.l        yoff,d0
-                          asr.l         #8,d0
-                          move.w        d0,d1
-                          add.w         #256-32,d1
-                          and.w         #255,d1
-                          move.w        d1,wallyoff
-                          asl.w         #2,d0
-                          move.w        d0,flooryoff
+                          move.l             yoff,d0
+                          asr.l              #8,d0
+                          move.w             d0,d1
+                          add.w              #256-32,d1
+                          and.w              #255,d1
+                          move.w             d1,wallyoff
+                          asl.w              #2,d0
+                          move.w             d0,flooryoff
  
-                          move.w        xoff,d6
-                          move.w        d6,d3
-                          asr.w         #1,d3
-                          add.w         d3,d6
-                          asr.w         #1,d6
-                          move.w        d6,xoff34
+                          move.w             xoff,d6
+                          move.w             d6,d3
+                          asr.w              #1,d3
+                          add.w              d3,d6
+                          asr.w              #1,d6
+                          move.w             d6,xoff34
  
-                          move.w        zoff,d6
-                          move.w        d6,d3
-                          asr.w         #1,d3
-                          add.w         d3,d6
-                          asr.w         #1,d6
-                          move.w        d6,zoff34
+                          move.w             zoff,d6
+                          move.w             d6,d3
+                          asr.w              #1,d3
+                          add.w              d3,d6
+                          asr.w              #1,d6
+                          move.w             d6,zoff34
 
-                          bsr           RotateLevelPts
-                          bsr           RotateObjectPts
-                          bsr           CalcPLR1InLine
+                          bsr                RotateLevelPts
+                          bsr                RotateObjectPts
+                          bsr                CalcPLR1InLine
  
-                          cmp.b         #'n',mors
-                          bne.s         doplr2too
-                          move.l        PLR2_Obj,a0
-                          move.w        #-1,12(a0)
-                          move.w        #-1,GraphicRoom(a0)
-                          bra.b         noplr2either
+                          cmp.b              #'n',mors
+                          bne.s              doplr2too
+
+                          move.l             PLR2_Obj,a0
+                          move.w             #-1,12(a0)
+                          move.w             #-1,GraphicRoom(a0)
+                          bra.b              noplr2either
 
 doplr2too:
-                          bsr           CalcPLR2InLine
+                          bsr                CalcPLR2InLine
 
 noplr2either:
-                          move.l        endoflist,a0
+                          move.l             endoflist,a0
 
 subroomloop:
-                          move.w        -(a0),d7
-                          blt           jumpoutofrooms
+                          move.w             -(a0),d7
+                          blt                jumpoutofrooms
  
                         ; bsr setlrclip
                         ; move.w leftclip,d0
                         ; cmp.w rightclip,d0
                         ; bge subroomloop
 
-                          move.l        a0,-(a7)
+                          move.l             a0,-(a7)
  
-                          move.l        ZoneAdds,a0
-                          move.l        (a0,d7.w*4),a0
-                          add.l         LEVELDATA,a0
-                          move.l        ToZoneRoof(a0),SplitHeight
-                          move.l        a0,ROOMBACK
+                          move.l             ZoneAdds,a0
+                          move.l             (a0,d7.w*4),a0
+                          add.l              LEVELDATA,a0
+                          move.l             ToZoneRoof(a0),SplitHeight
+                          move.l             a0,ROOMBACK
  
-                          move.l        ZoneGraphAdds,a0
-                          move.l        4(a0,d7.w*8),a2
-                          move.l        (a0,d7.w*8),a0
+                          move.l             ZoneGraphAdds,a0
+                          move.l             4(a0,d7.w*8),a2
+                          move.l             (a0,d7.w*8),a0
  
-                          add.l         LEVELGRAPHICS,a0
-                          add.l         LEVELGRAPHICS,a2
-                          move.l        a2,ThisRoomToDraw+4
-                          move.l        a0,ThisRoomToDraw
+                          add.l              LEVELGRAPHICS,a0
+                          add.l              LEVELGRAPHICS,a2
+                          move.l             a2,ThisRoomToDraw+4
+                          move.l             a0,ThisRoomToDraw
 
-                          move.l        ListOfGraphRooms,a1
+                          move.l             ListOfGraphRooms,a1
  
 finditit:
-                          tst.w         (a1)
-                          blt           nomoretodoatall
-                          cmp.w         (a1),d7
-                          beq.b         outoffind
-                          adda.w        #8,a1
-                          bra.b         finditit
+                          tst.w              (a1)
+                          blt                nomoretodoatall
+                          cmp.w              (a1),d7
+                          beq.b              outoffind
+                          adda.w             #8,a1
+                          bra.b              finditit
 
 outoffind:
-                          move.l        a1,-(a7)
+                          move.l             a1,-(a7)
 
-                          move.w        #0,leftclip
-                          move.w        #96,rightclip
-                          moveq         #0,d7
-                          move.w        2(a1),d7
-                          blt.s         outofrcliplop
-                          move.l        LEVELCLIPS,a0
-                          lea           (a0,d7.l*2),a0
+                          move.w             #0,leftclip
+                          move.w             #96,rightclip
+                          moveq              #0,d7
+                          move.w             2(a1),d7
+                          blt.s              outofrcliplop
+                          move.l             LEVELCLIPS,a0
+                          lea                (a0,d7.l*2),a0
 
-                          tst.w         (a0)
-                          blt.b         outoflcliplop
+                          tst.w              (a0)
+                          blt.b              outoflcliplop
  
-                          bsr           NEWsetlclip
+                          bsr                NEWsetlclip
  
 intolcliplop:		          ; clips
-                          tst.w         (a0)
-                          blt.b         outoflcliplop
+                          tst.w              (a0)
+                          blt.b              outoflcliplop
  
-                          bsr           NEWsetlclip 
-                          bra.b         intolcliplop
+                          bsr                NEWsetlclip 
+                          bra.b              intolcliplop
  
 outoflcliplop:
-                          addq          #2,a0
+                          addq               #2,a0
 
-                          tst.w         (a0)
-                          blt.b         outofrcliplop
+                          tst.w              (a0)
+                          blt.b              outofrcliplop
  
-                          bsr           NEWsetrclip
+                          bsr                NEWsetrclip
  
 intorcliplop:		          ; clips
-                          tst.w         (a0)
-                          blt.b         outofrcliplop
+                          tst.w              (a0)
+                          blt.b              outofrcliplop
  
-                          bsr           NEWsetrclip 
-                          bra.b         intorcliplop
+                          bsr                NEWsetrclip 
+                          bra.b              intorcliplop
  
 outofrcliplop:
-                          move.w        leftclip,d0
-                          cmp.w         #96,d0
-                          bge           dontbothercantseeit
-                          move.w        rightclip,d1
-                          blt           dontbothercantseeit
-                          cmp.w         d1,d0
-                          bge           dontbothercantseeit
+                          move.w             leftclip,d0
+                          cmp.w              #96,d0
+                          bge                dontbothercantseeit
+                          move.w             rightclip,d1
+                          blt                dontbothercantseeit
+                          cmp.w              d1,d0
+                          bge                dontbothercantseeit
  
-                          move.l        yoff,d0
-                          cmp.l         SplitHeight,d0
-                          blt           botfirst
+                          move.l             yoff,d0
+                          cmp.l              SplitHeight,d0
+                          blt                botfirst
  
-                          move.l        ThisRoomToDraw+4,a0
-                          cmp.l         LEVELGRAPHICS,a0
-                          beq.s         noupperroom
-                          st            DOUPPER
+                          move.l             ThisRoomToDraw+4,a0
+                          cmp.l              LEVELGRAPHICS,a0
+                          beq.s              noupperroom
+                          st                 DOUPPER
  
-                          move.l        ROOMBACK,a1
-                          move.l        ToUpperRoof(a1),TOPOFROOM
-                          move.l        ToUpperFloor(a1),BOTOFROOM
+                          move.l             ROOMBACK,a1
+                          move.l             ToUpperRoof(a1),TOPOFROOM
+                          move.l             ToUpperFloor(a1),BOTOFROOM
  
-                          move.l        #CurrentPointBrights+2,PointBrightsPtr
-                          bsr           dothisroom
+                          move.l             #CurrentPointBrights+2,PointBrightsPtr
+                          bsr                dothisroom
 
 noupperroom:
-                          move.l        ThisRoomToDraw,a0
-                          clr.b         DOUPPER
-                          move.l        #CurrentPointBrights,PointBrightsPtr
+                          move.l             ThisRoomToDraw,a0
+                          clr.b              DOUPPER
+                          move.l             #CurrentPointBrights,PointBrightsPtr
 
-                          move.l        ROOMBACK,a1
-                          move.l        ToZoneRoof(a1),d0
-                          move.l        d0,TOPOFROOM
-                          move.l        ToZoneFloor(a1),d1
-                          move.l        d1,BOTOFROOM
+                          move.l             ROOMBACK,a1
+                          move.l             ToZoneRoof(a1),d0
+                          move.l             d0,TOPOFROOM
+                          move.l             ToZoneFloor(a1),d1
+                          move.l             d1,BOTOFROOM
 
-                          move.l        ToZoneWater(a1),d2
-                          cmp.l         yoff,d2
-                          blt.s         .abovefirst
-                          move.l        d2,BEFOREWATTOP
-                          move.l        d1,BEFOREWATBOT
-                          move.l        d2,AFTERWATBOT
-                          move.l        d0,AFTERWATTOP
-                          bra.s         .belowfirst
+                          move.l             ToZoneWater(a1),d2
+                          cmp.l              yoff,d2
+                          blt.s              .abovefirst
+                          move.l             d2,BEFOREWATTOP
+                          move.l             d1,BEFOREWATBOT
+                          move.l             d2,AFTERWATBOT
+                          move.l             d0,AFTERWATTOP
+                          bra.s              .belowfirst
 
 .abovefirst:
-                          move.l        d0,BEFOREWATTOP
-                          move.l        d2,BEFOREWATBOT
-                          move.l        d1,AFTERWATBOT
-                          move.l        d2,AFTERWATTOP
+                          move.l             d0,BEFOREWATTOP
+                          move.l             d2,BEFOREWATBOT
+                          move.l             d1,AFTERWATBOT
+                          move.l             d2,AFTERWATTOP
 
 .belowfirst:
-                          bsr           dothisroom 
-                          bra           dontbothercantseeit
+                          bsr                dothisroom 
+                          bra                dontbothercantseeit
 
 botfirst:
-                          move.l        ThisRoomToDraw,a0
-                          clr.b         DOUPPER
-                          move.l        #CurrentPointBrights,PointBrightsPtr
+                          move.l             ThisRoomToDraw,a0
+                          clr.b              DOUPPER
+                          move.l             #CurrentPointBrights,PointBrightsPtr
 
-                          move.l        ROOMBACK,a1
-                          move.l        ToZoneRoof(a1),d0
-                          move.l        d0,TOPOFROOM
-                          move.l        ToZoneFloor(a1),d1
-                          move.l        d1,BOTOFROOM
+                          move.l             ROOMBACK,a1
+                          move.l             ToZoneRoof(a1),d0
+                          move.l             d0,TOPOFROOM
+                          move.l             ToZoneFloor(a1),d1
+                          move.l             d1,BOTOFROOM
 
-                          move.l        ToZoneWater(a1),d2
-                          cmp.l         yoff,d2
-                          blt.s         .abovefirst
-                          move.l        d2,BEFOREWATTOP
-                          move.l        d1,BEFOREWATBOT
-                          move.l        d2,AFTERWATBOT
-                          move.l        d0,AFTERWATTOP
-                          bra.s         .belowfirst
+                          move.l             ToZoneWater(a1),d2
+                          cmp.l              yoff,d2
+                          blt.s              .abovefirst
+                          move.l             d2,BEFOREWATTOP
+                          move.l             d1,BEFOREWATBOT
+                          move.l             d2,AFTERWATBOT
+                          move.l             d0,AFTERWATTOP
+                          bra.s              .belowfirst
 
 .abovefirst:
-                          move.l        d0,BEFOREWATTOP
-                          move.l        d2,BEFOREWATBOT
-                          move.l        d1,AFTERWATBOT
-                          move.l        d2,AFTERWATTOP
+                          move.l             d0,BEFOREWATTOP
+                          move.l             d2,BEFOREWATBOT
+                          move.l             d1,AFTERWATBOT
+                          move.l             d2,AFTERWATTOP
 
 .belowfirst:
-                          bsr           dothisroom
-                          move.l        ThisRoomToDraw+4,a0
-                          cmp.l         LEVELGRAPHICS,a0
-                          beq.s         noupperroom2
-                          move.l        #CurrentPointBrights+2,PointBrightsPtr
+                          bsr                dothisroom
+                          move.l             ThisRoomToDraw+4,a0
+                          cmp.l              LEVELGRAPHICS,a0
+                          beq.s              noupperroom2
+                          move.l             #CurrentPointBrights+2,PointBrightsPtr
 
-                          move.l        ROOMBACK,a1
-                          move.l        ToUpperRoof(a1),TOPOFROOM
-                          move.l        ToUpperFloor(a1),BOTOFROOM
+                          move.l             ROOMBACK,a1
+                          move.l             ToUpperRoof(a1),TOPOFROOM
+                          move.l             ToUpperFloor(a1),BOTOFROOM
 
-                          st            DOUPPER
-                          bsr           dothisroom
+                          st                 DOUPPER
+                          bsr                dothisroom
 
 noupperroom2:
 dontbothercantseeit:
 pastemp:
-                          move.l        (a7)+,a1
-                          move.l        ThisRoomToDraw,a0
-                          move.w        (a0),d7
+                          move.l             (a7)+,a1
+                          move.l             ThisRoomToDraw,a0
+                          move.w             (a0),d7
  
-                          adda.w        #8,a1
-                          bra           finditit
+                          adda.w             #8,a1
+                          bra                finditit
  
 nomoretodoatall:
-                          move.l        (a7)+,a0
+                          move.l             (a7)+,a0
  
-                          bra           subroomloop
+                          bra                subroomloop
 
 jumpoutofrooms:
-                          tst.b         DONTDOGUN
-                          bne.b         NOGUNLOOK
+                          tst.b              DONTDOGUN
+                          bne.b              NOGUNLOOK
 
-                          cmp.b         #'s',mors
-                          beq.s         drawslavegun
+                          cmp.b              #'s',mors
+                          beq.s              drawslavegun
 
-                          moveq         #0,d0
-                          move.b        PLR1_GunSelected,d0
-                          moveq         #0,d1
-                          move.b        PLR1_GunFrame,d1
-                          bsr           DRAWINGUN
-                          bra.b         drawngun
+                          moveq              #0,d0
+                          move.b             PLR1_GunSelected,d0
+                          moveq              #0,d1
+                          move.b             PLR1_GunFrame,d1
+                          bsr                DRAWINGUN
+                          bra.b              drawngun
 
 drawslavegun:
-                          moveq         #0,d0
-                          move.b        PLR2_GunSelected,d0
-                          moveq         #0,d1
-                          move.b        PLR2_GunFrame,d1
-                          bsr           DRAWINGUN
+                          moveq              #0,d0
+                          move.b             PLR2_GunSelected,d0
+                          moveq              #0,d1
+                          move.b             PLR2_GunFrame,d1
+                          bsr                DRAWINGUN
 
 drawngun:
 NOGUNLOOK:
 
 ****************************************************************
 
-                          moveq         #0,d1
-                          move.b        PLR1_GunFrame,d1
-                          sub.w         TempFrames,d1
-                          bgt.s         .nn
-                          moveq         #0,d1
+                          moveq              #0,d1
+                          move.b             PLR1_GunFrame,d1
+                          sub.w              TempFrames,d1
+                          bgt.s              .nn
+                          moveq              #0,d1
 
-.nn
-                          move.b        d1,PLR1_GunFrame
+.nn:
+                          move.b             d1,PLR1_GunFrame
  
-                          ble.s         .donefire
-                          subq.b        #1,PLR1_GunFrame
+                          ble.s              .donefire
+                          subq.b             #1,PLR1_GunFrame
 
 .donefire:
 
 ****************************************************************
 
-                          moveq         #0,d1
-                          move.b        PLR2_GunFrame,d1
-                          sub.w         TempFrames,d1
-                          bgt.s         .nn2
-                          moveq         #0,d1
+                          moveq              #0,d1
+                          move.b             PLR2_GunFrame,d1
+                          sub.w              TempFrames,d1
+                          bgt.s              .nn2
+                          moveq              #0,d1
 
-.nn2
-                          move.b        d2,PLR2_GunFrame
+.nn2:
+                          move.b             d2,PLR2_GunFrame
  
-                          ble.s         .donefire2
-                          subq.b        #1,PLR2_GunFrame
+                          ble.s              .donefire2
+                          subq.b             #1,PLR2_GunFrame
 
 .donefire2:
 
@@ -4057,91 +4123,91 @@ NOGUNLOOK:
 ; Water 
 ; Note: Use LEA with neagtive offset
 
-                          move.w        #3,d5
-                          tst.b         fillscrnwater
-                          beq           nowaterfull
-                          bgt.b         oknothalf
-                          moveq         #1,d5
+                          move.w             #3,d5
+                          tst.b              fillscrnwater
+                          beq                nowaterfull
+                          bgt.b              oknothalf
+                          moveq              #1,d5
 
 oknothalf:
-                          bclr.b        #1,$bfe001                                                           ; Filter / led off
+                          bclr.b             #1,$bfe001                                                           ; Filter / led off
 
 ****************************************************************
 ; 1. 32 color registers
 ; - frompt ptr is first color value (10 bytes from begin of copper memory)
 ; - color registers with values 31*4 bytes
 
-                          move.l        frompt,a0                                                            ; Copper chunky
-                          lea           104*4*60(a0),a0                                                      ; 104*4*60
-                          move.w        #31,d0                                                               ; 32 color regs
+                          move.l             frompt,a0                                                            ; Copper chunky
+                          lea                widthOffset*60(a0),a0                                                ; 104*4*60
+                          move.w             #31,d0                                                               ; 32 color regs
 
 fw:
-                          move.w        d5,d1
-                          move.l        a0,a1
+                          move.w             d5,d1
+                          move.l             a0,a1
 
 fwd:
 
-val                       SET           104*4*19                                                             ; 104*4*19
-                          REPT          20
-                          and.w         #$ff,val(a1)
-val                       SET           val-104*4                                                            ; 104*4
+val                       SET                widthOffset*19                                                       ; 104*4*19
+                          REPT               20
+                          and.w              #$ff,val(a1)
+val                       SET                val-widthOffset                                                      ; 104*4
                           ENDR
 
-                          lea           -(104*4*20)(a1),a1
-                          dbra          d1,fwd
+                          lea                -(widthOffset*20)(a1),a1
+                          dbra               d1,fwd
 
-                          addq          #4,a0
-                          dbra          d0,fw       
+                          addq               #4,a0
+                          dbra               d0,fw       
 
 ****************************************************************
 ; 2. 32 color registes
 
-                          addq          #4,a0
-                          move.w        #31,d0
+                          addq               #4,a0
+                          move.w             #31,d0
 sw:
-                          move.w        d5,d1
-                          move.l        a0,a1
+                          move.w             d5,d1
+                          move.l             a0,a1
 swd:
 
-val                       SET           104*4*19
-                          REPT          20
-                          and.w         #$ff,val(a1)
-val                       SET           val-104*4
+val                       SET                widthOffset*19
+                          REPT               20
+                          and.w              #$ff,val(a1)
+val                       SET                val-widthOffset
                           ENDR
 
-                          lea           -(104*4*20)(a1),a1
-                          dbra          d1,swd
+                          lea                -(widthOffset*20)(a1),a1
+                          dbra               d1,swd
 
-                          addq          #4,a0
-                          dbra          d0,sw
+                          addq               #4,a0
+                          dbra               d0,sw
 
 ****************************************************************
 ; 3. 32 color registes
 
-                          addq          #4,a0
-                          move.w        #31,d0
+                          addq               #4,a0
+                          move.w             #31,d0
 tw:
-                          move.w        d5,d1
-                          move.l        a0,a1
+                          move.w             d5,d1
+                          move.l             a0,a1
 twd:
-val                       SET           104*4*19
-                          REPT          20
-                          and.w         #$ff,val(a1)
-val                       SET           val-104*4
+val                       SET                widthOffset*19
+                          REPT               20
+                          and.w              #$ff,val(a1)
+val                       SET                val-widthOffset
                           ENDR
 
-                          lea           -(104*4*20)(a1),a1
-                          dbra          d1,twd
+                          lea                -(widthOffset*20)(a1),a1
+                          dbra               d1,twd
 
-                          addq          #4,a0
-                          dbra          d0,tw
+                          addq               #4,a0
+                          dbra               d0,tw
 
                           rts
 
 ****************************************************************
 
 nowaterfull:
-                          bset.b        #1,$bfe001                                                           ; Filter / led on
+                          bset.b             #1,$bfe001                                                           ; Filter / led on
 
 ****************************************************************
 
@@ -4149,304 +4215,305 @@ nowaterfull:
 
 *********************************************************************************************
  
-TempBuffer:               ds.l          100 
+TempBuffer:               ds.l               100 
 
-ClipTable:                ds.l          30
-EndOfClipPt:              dc.l          0
-DOUPPER:                  dc.w          0
+ClipTable:                ds.l               30
+EndOfClipPt:              dc.l               0
+DOUPPER:                  dc.w               0
 
 *********************************************************************************************
 
-dothisroom
+dothisroom:
 ; a0 = ThisRoomToDraw+n
 
-                          move.w        (a0)+,d0
-                          move.w        d0,currzone
-                          move.l        #ZoneBrightTable,a1
-                          move.l        (a1,d0.w*4),d1
-                          tst.b         DOUPPER
-                          bne.s         .okbot
-                          swap          d1
+                          move.w             (a0)+,d0
+                          move.w             d0,currzone
+                          lea                ZoneBrightTable,a1
+                          move.l             (a1,d0.w*4),d1
+                          tst.b              DOUPPER
+                          bne.s              .okbot
+                          swap               d1
 
 .okbot:
-                          move.w        d1,ZoneBright
+                          move.w             d1,ZoneBright
 
 polyloop:
-                          move.w        (a0)+,d0
-                          blt           jumpoutofloop
-                          beq           itsawall
-                          cmp.w         #3,d0
-                          beq           itsasetclip
-                          blt           itsafloor
-                          cmp.w         #4,d0
-                          beq.b         itsanobject
-                          cmp.w         #5,d0
-                          beq.b         itsanarc
-                          cmp.w         #6,d0
-                          beq.b         itsalightbeam
-                          cmp.w         #7,d0
-                          beq.s         itswater
-                          cmp.w         #9,d0
-                          ble           itsachunkyfloor
-                          cmp.w         #11,d0
-                          ble.b         itsabumpyfloor
-                          cmp.w         #12,d0
-                          beq.s         itsbackdrop
-                          cmp.w         #13,d0
-                          beq.s         itsaseewall
+                          move.w             (a0)+,d0
+                          blt                jumpoutofloop
+                          beq                itsawall
+                          cmp.w              #3,d0
+                          beq                itsasetclip
+                          blt                itsafloor
+                          cmp.w              #4,d0
+                          beq.b              itsanobject
+                          cmp.w              #5,d0
+                          beq.b              itsanarc
+                          cmp.w              #6,d0
+                          beq.b              itsalightbeam
+                          cmp.w              #7,d0
+                          beq.s              itswater
+                          cmp.w              #9,d0
+                          ble                itsachunkyfloor
+                          cmp.w              #11,d0
+                          ble.b              itsabumpyfloor
+                          cmp.w              #12,d0
+                          beq.s              itsbackdrop
+                          cmp.w              #13,d0
+                          beq.s              itsaseewall
  
-                          bra.b         polyloop
+                          bra.b              polyloop
  
 itsaseewall:
-                          st            seethru
-                          jsr           itsawalldraw
-                          bra.b         polyloop
+                          st                 seethru
+                          jsr                itsawalldraw
+                          bra.b              polyloop
  
 itsbackdrop:
-                          jsr           putinbackdrop
-                          bra.b         polyloop
+                          jsr                putinbackdrop
+                          bra.b              polyloop
  
 itswater:
-                          move.w        #3,d0
-                          clr.b         gourfloor
-                          move.l        #FloorLine,LineRoutineToUse
-                          st            usewater
-                          clr.b         usebumps
-                          jsr           itsafloordraw
-                          bra           polyloop
+                          move.w             #3,d0
+                          clr.b              gourfloor
+                          move.l             #FloorLine,LineRoutineToUse
+                          st                 usewater
+                          clr.b              usebumps
+                          jsr                itsafloordraw
+                          bra                polyloop
  
 itsanarc:
-                          jsr           CurveDraw
-                          bra           polyloop
+                          jsr                CurveDraw
+                          bra                polyloop
  
 itsanobject:
-                          jsr           ObjDraw
-                          bra           polyloop
+                          jsr                ObjDraw
+                          bra                polyloop
  
 itsalightbeam:
-                          jsr           LightDraw
-                          bra           polyloop
+                          jsr                LightDraw
+                          bra                polyloop
  
 itsabumpyfloor:
-                          sub.w         #9,d0
-                          st            usebumps
-                          st            smoothbumps
-                          clr.b         usewater
-                          move.l        #BumpLine,LineRoutineToUse
-                          jsr           itsafloordraw
-                          bra           polyloop
+                          sub.w              #9,d0
+                          st                 usebumps
+                          st                 smoothbumps
+                          clr.b              usewater
+                          move.l             #BumpLine,LineRoutineToUse
+                          jsr                itsafloordraw
+                          bra                polyloop
  
 itsachunkyfloor:
-                          subq.w        #7,d0
-                          st            usebumps
-                          sub.w         #12,topclip
+                          subq.w             #7,d0
+                          st                 usebumps
+                          sub.w              #12,topclip
                           ; add.w #10,botclip
-                          clr.b         smoothbumps
-                          clr.b         usewater
-                          move.l        #BumpLine,LineRoutineToUse
-                          jsr           itsafloordraw
-                          add.w         #12,topclip
+                          clr.b              smoothbumps
+                          clr.b              usewater
+                          move.l             #BumpLine,LineRoutineToUse
+                          jsr                itsafloordraw
+                          add.w              #12,topclip
                           ; sub.w #10,botclip
-                          bra           polyloop 
+                          bra                polyloop 
  
 itsafloor:
-                          move.l        TheFloorLineRoutine,LineRoutineToUse                                 ; 1,2 = floor/roof
-                          clr.b         usewater
-                          clr.b         usebumps
-                          move.b        GOURSEL,gourfloor	
-                          jsr           itsafloordraw
+                          move.l             TheFloorLineRoutine,LineRoutineToUse                                 ; 1,2 = floor/roof
+                          clr.b              usewater
+                          clr.b              usebumps
+                          move.b             GOURSEL,gourfloor	
+                          jsr                itsafloordraw
 
-                          bra           polyloop
+                          bra                polyloop
 
 itsasetclip:
-                          bra           polyloop
+                          bra                polyloop
 
 itsawall:
-                          clr.b         seethru
+                          clr.b              seethru
                           ; move.l #stripbuffer,a1
-                          jsr           itsawalldraw
-                          bra           polyloop
+                          jsr                itsawalldraw
+                          bra                polyloop
 
 jumpoutofloop:
                           rts
 
 *********************************************************************************************
 
-GOURSEL:                  dc.w          0
-ThisRoomToDraw:           dc.l          0,0
-SplitHeight:              dc.l          0
+GOURSEL:                  dc.w               0
+ThisRoomToDraw:           dc.l               0,0
+SplitHeight:              dc.l               0
 
 *********************************************************************************************
 
-                          include       "OrderZones.s"
+                          include            "OrderZones.s"
 
 *********************************************************************************************
 
 ReadMouse:
-                          move.l        #$dff000,a6
-                          clr.l         d0
-                          clr.l         d1
-                          move.w        $a(a6),d0
-                          lsr.w         #8,d0
-                          ext.l         d0
-                          move.w        d0,d3
-                          move.w        oldmy,d2
-                          sub.w         d2,d0
 
-                          cmp.w         #127,d0
-                          blt.b         nonegy
-                          move.w        #255,d1
-                          sub.w         d0,d1
-                          move.w        d1,d0
-                          neg.w         d0
+                          lea                $dff000,a6
+                          clr.l              d0
+                          clr.l              d1
+                          move.w             joy0dat(a6),d0
+                          lsr.w              #8,d0
+                          ext.l              d0
+                          move.w             d0,d3
+                          move.w             oldmy,d2
+                          sub.w              d2,d0
+
+                          cmp.w              #127,d0
+                          blt.b              nonegy
+                          move.w             #255,d1
+                          sub.w              d0,d1
+                          move.w             d1,d0
+                          neg.w              d0
 
 nonegy:
-                          cmp.w         #-127,d0
-                          bge.b         nonegy2
-                          move.w        #255,d1
-                          add.w         d0,d1
-                          move.w        d1,d0
+                          cmp.w              #-127,d0
+                          bge.b              nonegy2
+                          move.w             #255,d1
+                          add.w              d0,d1
+                          move.w             d1,d0
 
 nonegy2:
-                          add.b         d0,d2
-                          add.w         d0,oldy2
-                          move.w        d2,oldmy
-                          move.w        d2,d0
+                          add.b              d0,d2
+                          add.w              d0,oldy2
+                          move.w             d2,oldmy
+                          move.w             d2,d0
 
-                          move.w        oldy2,d0
-                          move.w        d0,ymouse
+                          move.w             oldy2,d0
+                          move.w             d0,ymouse
 
-                          clr.l         d0
-                          clr.l         d1
-                          move.w        $a(a6),d0
-                          ext.w         d0
-                          ext.l         d0
-                          move.w        d0,d3
-                          move.w        oldmx,d2
-                          sub.w         d2,d0
+                          clr.l              d0
+                          clr.l              d1
+                          move.w             $a(a6),d0
+                          ext.w              d0
+                          ext.l              d0
+                          move.w             d0,d3
+                          move.w             oldmx,d2
+                          sub.w              d2,d0
 
-                          cmp.w         #127,d0
-                          blt.b         nonegx
-                          move.w        #255,d1
-                          sub.w         d0,d1
-                          move.w        d1,d0
-                          neg.w         d0
+                          cmp.w              #127,d0
+                          blt.b              nonegx
+                          move.w             #255,d1
+                          sub.w              d0,d1
+                          move.w             d1,d0
+                          neg.w              d0
 
 nonegx:
-                          cmp.w         #-127,d0
-                          bge.b         nonegx2
-                          move.w        #255,d1
-                          add.w         d0,d1
-                          move.w        d1,d0
+                          cmp.w              #-127,d0
+                          bge.b              nonegx2
+                          move.w             #255,d1
+                          add.w              d0,d1
+                          move.w             d1,d0
 
 nonegx2:
-                          add.b         d0,d2
-                          move.w        d0,d1
-                          move.w        d2,oldmx
+                          add.b              d0,d2
+                          move.w             d0,d1
+                          move.w             d2,oldmx
 
-                          move.w        #$0,$dff034
+                          move.w             #$0,potgo(a6)
 
-                          add.w         d0,oldx2
-                          move.w        oldx2,d0
-                          and.w         #2047,d0
-                          move.w        d0,oldx2
+                          add.w              d0,oldx2
+                          move.w             oldx2,d0
+                          and.w              #2047,d0
+                          move.w             d0,oldx2
  
-                          asl.w         #2,d0
-                          sub.w         prevx,d0
-                          add.w         d0,prevx
-                          add.w         d0,angpos
-                          move.w        #0,lrs
+                          asl.w              #2,d0
+                          sub.w              prevx,d0
+                          add.w              d0,prevx
+                          add.w              d0,angpos
+                          move.w             #0,lrs
                           rts
 
 noturn:
                           ; got to move lr instead. 
                           ; d1 = speed moved l/r
-                          move.w        d1,lrs
+                          move.w             d1,lrs
 
                           rts
 
 *********************************************************************************************
 
-lrs:                      dc.w          0
-prevx:                    dc.w          0
+lrs:                      dc.w               0
+prevx:                    dc.w               0
  
-angpos:                   dc.w          0
-mang:                     dc.w          0
-oldymouse:                dc.w          0
-xmouse:                   dc.w          0
-ymouse:                   dc.w          0
-oldx2:                    dc.w          0
-oldmx:                    dc.w          0
-oldmy:                    dc.w          0
-oldy2:                    dc.w          0
+angpos:                   dc.w               0
+mang:                     dc.w               0
+oldymouse:                dc.w               0
+xmouse:                   dc.w               0
+ymouse:                   dc.w               0
+oldx2:                    dc.w               0
+oldmx:                    dc.w               0
+oldmy:                    dc.w               0
+oldy2:                    dc.w               0
 
 *********************************************************************************************
 
 RotateLevelPts:
 
-                          move.w        sinval,d6
-                          swap          d6
-                          move.w        cosval,d6
+                          move.w             sinval,d6
+                          swap               d6
+                          move.w             cosval,d6
 
-                          move.l        PointsToRotatePtr,a0
-                          move.l        Points,a3
-                          move.l        #Rotated,a1
-                          move.l        #OnScreen,a2
-                          move.w        xoff,d4
-                          move.w        zoff,d5
+                          move.l             PointsToRotatePtr,a0
+                          move.l             Points,a3
+                          lea                Rotated,a1
+                          lea                OnScreen,a2
+                          move.w             xoff,d4
+                          move.w             zoff,d5
  
                           ; move.w #$c40,$dff106
                           ; move.w #$f00,$dff180
  
 pointrotlop:
-                          move.w        (a0)+,d7
-                          blt.s         outofpointrot
+                          move.w             (a0)+,d7
+                          blt.s              outofpointrot
  
-                          move.w        (a3,d7*4),d0
-                          sub.w         d4,d0
-                          move.w        d0,d2
-                          move.w        2(a3,d7*4),d1
-                          sub.w         d5,d1
-                          muls          d6,d2
-                          swap          d6
-                          move.w        d1,d3
-                          muls          d6,d3
-                          sub.l         d3,d2
-                          add.l         d2,d2
-                          swap          d2
-                          ext.l         d2
-                          asl.l         #7,d2
-                          add.l         xwobble,d2
-                          move.l        d2,(a1,d7*8)
+                          move.w             (a3,d7*4),d0
+                          sub.w              d4,d0
+                          move.w             d0,d2
+                          move.w             2(a3,d7*4),d1
+                          sub.w              d5,d1
+                          muls               d6,d2
+                          swap               d6
+                          move.w             d1,d3
+                          muls               d6,d3
+                          sub.l              d3,d2
+                          add.l              d2,d2
+                          swap               d2
+                          ext.l              d2
+                          asl.l              #7,d2
+                          add.l              xwobble,d2
+                          move.l             d2,(a1,d7*8)
 
-                          muls          d6,d0
-                          swap          d6
-                          muls          d6,d1
-                          add.l         d0,d1
-                          asl.l         #2,d1
-                          swap          d1
-                          move.l        d1,4(a1,d7*8)
+                          muls               d6,d0
+                          swap               d6
+                          muls               d6,d1
+                          add.l              d0,d1
+                          asl.l              #2,d1
+                          swap               d1
+                          move.l             d1,4(a1,d7*8)
 
-                          tst.w         d1
-                          bgt.s         ptnotbehind
-                          tst.w         d2
-                          bgt.s         onrightsomewhere
-                          move.w        #0,d2
-                          bra.b         putin
+                          tst.w              d1
+                          bgt.s              ptnotbehind
+                          tst.w              d2
+                          bgt.s              onrightsomewhere
+                          move.w             #0,d2
+                          bra.b              putin
 
 onrightsomewhere:
-                          move.w        #96,d2
-                          bra.b         putin
+                          move.w             #96,d2
+                          bra.b              putin
 
 ptnotbehind:
 
-                          divs          d1,d2
-                          add.w         #47,d2
+                          divs               d1,d2
+                          add.w              #47,d2
 
 putin:
-                          move.w        d2,(a2,d7*2)
+                          move.w             d2,(a2,d7*2)
  
-                          bra.b         pointrotlop
+                          bra.b              pointrotlop
 
 outofpointrot:
 
@@ -4457,379 +4524,379 @@ outofpointrot:
 
 *********************************************************************************************
 
-PLR1_ObjDists:            ds.w          250
-PLR2_ObjDists:            ds.w          250
+PLR1_ObjDists:            ds.w               250
+PLR2_ObjDists:            ds.w               250
 
 *********************************************************************************************
 
 CalcPLR1InLine:
 
-                          move.w        PLR1_sinval,d5
-                          move.w        PLR1_cosval,d6
-                          move.l        ObjectData,a4
-                          move.l        ObjectPoints,a0
-                          move.w        NumObjectPoints,d7
-                          move.l        #PLR1_ObsInLine,a2
-                          move.l        #PLR1_ObjDists,a3
+                          move.w             PLR1_sinval,d5
+                          move.w             PLR1_cosval,d6
+                          move.l             ObjectData,a4
+                          move.l             ObjectPoints,a0
+                          move.w             NumObjectPoints,d7
+                          move.l             #PLR1_ObsInLine,a2
+                          move.l             #PLR1_ObjDists,a3
 
 .objpointrotlop:
-                          move.w        (a0),d0
-                          sub.w         PLR1_xoff,d0
-                          move.w        4(a0),d1
-                          addq          #8,a0
+                          move.w             (a0),d0
+                          sub.w              PLR1_xoff,d0
+                          move.w             4(a0),d1
+                          addq               #8,a0
  
-                          tst.w         12(a4)
-                          blt.b         .noworkout
+                          tst.w              12(a4)
+                          blt.b              .noworkout
  
-                          moveq         #0,d2
-                          move.b        16(a4),d2
-                          move.l        #ColBoxTable,a6
-                          lea           (a6,d2.w*8),a6
+                          moveq              #0,d2
+                          move.b             16(a4),d2
+                          lea                ColBoxTable,a6
+                          lea                (a6,d2.w*8),a6
  
-                          sub.w         PLR1_zoff,d1
-                          move.w        d0,d2
-                          muls          d6,d2
-                          move.w        d1,d3
-                          muls          d5,d3
-                          sub.l         d3,d2
-                          add.l         d2,d2
+                          sub.w              PLR1_zoff,d1
+                          move.w             d0,d2
+                          muls               d6,d2
+                          move.w             d1,d3
+                          muls               d5,d3
+                          sub.l              d3,d2
+                          add.l              d2,d2
  
-                          bgt.s         .okh
-                          neg.l         d2
+                          bgt.s              .okh
+                          neg.l              d2
 
 .okh:
-                          swap          d2
+                          swap               d2
  
-                          muls          d5,d0
-                          muls          d6,d1
-                          add.l         d0,d1
-                          asl.l         #2,d1
-                          swap          d1
-                          moveq         #0,d3
+                          muls               d5,d0
+                          muls               d6,d1
+                          add.l              d0,d1
+                          asl.l              #2,d1
+                          swap               d1
+                          moveq              #0,d3
  
-                          tst.w         d1
-                          ble.s         .notinline
-                          asr.w         #1,d2
-                          cmp.w         (a6),d2
-                          bgt.s         .notinline
+                          tst.w              d1
+                          ble.s              .notinline
+                          asr.w              #1,d2
+                          cmp.w              (a6),d2
+                          bgt.s              .notinline
  
-                          st            d3
+                          st                 d3
 
-.notinline
-                          move.b        d3,(a2)+
+.notinline:
+                          move.b             d3,(a2)+
 
-                          move.w        d1,(a3)+
+                          move.w             d1,(a3)+
 
-                          lea           64(a4),a4
-                          dbra          d7,.objpointrotlop
+                          lea                64(a4),a4
+                          dbra               d7,.objpointrotlop
 
                           rts
  
 .noworkout:
-                          move.b        #0,(a2)+
-                          move.w        #0,(a3)+
-                          lea           64(a4),a4
-                          dbra          d7,.objpointrotlop
+                          move.b             #0,(a2)+
+                          move.w             #0,(a3)+
+                          lea                64(a4),a4
+                          dbra               d7,.objpointrotlop
                           rts
  
 CalcPLR2InLine:
-                          move.w        PLR2_sinval,d5
-                          move.w        PLR2_cosval,d6
-                          move.l        ObjectData,a4
-                          move.l        ObjectPoints,a0
-                          move.w        NumObjectPoints,d7
-                          move.l        #PLR2_ObsInLine,a2
-                          move.l        #PLR2_ObjDists,a3
+                          move.w             PLR2_sinval,d5
+                          move.w             PLR2_cosval,d6
+                          move.l             ObjectData,a4
+                          move.l             ObjectPoints,a0
+                          move.w             NumObjectPoints,d7
+                          move.l             #PLR2_ObsInLine,a2
+                          move.l             #PLR2_ObjDists,a3
 
 .objpointrotlop:
-                          move.w        (a0),d0
-                          sub.w         PLR2_xoff,d0
-                          move.w        4(a0),d1
-                          addq          #8,a0
+                          move.w             (a0),d0
+                          sub.w              PLR2_xoff,d0
+                          move.w             4(a0),d1
+                          addq               #8,a0
  
-                          tst.w         12(a4)
-                          blt.b         .noworkout
+                          tst.w              12(a4)
+                          blt.b              .noworkout
  
-                          moveq         #0,d2
-                          move.b        16(a4),d2
-                          move.l        #ColBoxTable,a6
-                          lea           (a6,d2.w*8),a6
+                          moveq              #0,d2
+                          move.b             16(a4),d2
+                          lea                ColBoxTable,a6
+                          lea                (a6,d2.w*8),a6
  
-                          sub.w         PLR2_zoff,d1
-                          move.w        d0,d2
-                          muls          d6,d2
-                          move.w        d1,d3
-                          muls          d5,d3
-                          sub.l         d3,d2
-                          add.l         d2,d2
+                          sub.w              PLR2_zoff,d1
+                          move.w             d0,d2
+                          muls               d6,d2
+                          move.w             d1,d3
+                          muls               d5,d3
+                          sub.l              d3,d2
+                          add.l              d2,d2
 
-                          bgt.s         .okh
-                          neg.l         d2
+                          bgt.s              .okh
+                          neg.l              d2
 
 .okh:
-                          swap          d2
+                          swap               d2
 
-                          muls          d5,d0
-                          muls          d6,d1
-                          add.l         d0,d1
-                          asl.l         #2,d1
-                          swap          d1
-                          moveq         #0,d3
+                          muls               d5,d0
+                          muls               d6,d1
+                          add.l              d0,d1
+                          asl.l              #2,d1
+                          swap               d1
+                          moveq              #0,d3
 
-                          tst.w         d1
-                          ble.s         .notinline
-                          asr.w         #1,d2
-                          cmp.w         (a6),d2
-                          bgt.s         .notinline
+                          tst.w              d1
+                          ble.s              .notinline
+                          asr.w              #1,d2
+                          cmp.w              (a6),d2
+                          bgt.s              .notinline
  
-                          st            d3
+                          st                 d3
 
 .notinline:
-                          move.b        d3,(a2)+
+                          move.b             d3,(a2)+
 
-                          move.w        d1,(a3)+
+                          move.w             d1,(a3)+
 
-                          lea           64(a4),a4
-                          dbra          d7,.objpointrotlop
+                          lea                64(a4),a4
+                          dbra               d7,.objpointrotlop
 
                           rts
  
 .noworkout:
-                          move.w        #0,(a3)+
-                          move.b        #0,(a2)+
-                          lea           64(a4),a4
-                          dbra          d7,.objpointrotlop
+                          move.w             #0,(a3)+
+                          move.b             #0,(a2)+
+                          lea                64(a4),a4
+                          dbra               d7,.objpointrotlop
                           rts
  
 
 RotateObjectPts:
-                          move.w        sinval,d5
-                          move.w        cosval,d6
+                          move.w             sinval,d5
+                          move.w             cosval,d6
 
-                          move.l        ObjectData,a4
-                          move.l        ObjectPoints,a0
-                          move.w        NumObjectPoints,d7
-                          move.l        #ObjRotated,a1
+                          move.l             ObjectData,a4
+                          move.l             ObjectPoints,a0
+                          move.w             NumObjectPoints,d7
+                          move.l             #ObjRotated,a1
  
 .objpointrotlop:
-                          move.w        (a0),d0
-                          sub.w         xoff,d0
-                          move.w        4(a0),d1
-                          addq          #8,a0
+                          move.w             (a0),d0
+                          sub.w              xoff,d0
+                          move.w             4(a0),d1
+                          addq               #8,a0
  
-                          tst.w         12(a4)
-                          blt.b         .noworkout
+                          tst.w              12(a4)
+                          blt.b              .noworkout
  
-                          sub.w         zoff,d1
-                          move.w        d0,d2
-                          muls          d6,d2
-                          move.w        d1,d3
-                          muls          d5,d3
-                          sub.l         d3,d2
+                          sub.w              zoff,d1
+                          move.w             d0,d2
+                          muls               d6,d2
+                          move.w             d1,d3
+                          muls               d5,d3
+                          sub.l              d3,d2
  
  
-                          add.l         d2,d2
-                          swap          d2
-                          move.w        d2,(a1)+
+                          add.l              d2,d2
+                          swap               d2
+                          move.w             d2,(a1)+
  
-                          muls          d5,d0
-                          muls          d6,d1
-                          add.l         d0,d1
-                          asl.l         #2,d1
-                          swap          d1
-                          moveq         #0,d3
+                          muls               d5,d0
+                          muls               d6,d1
+                          add.l              d0,d1
+                          asl.l              #2,d1
+                          swap               d1
+                          moveq              #0,d3
  
-                          move.w        d1,(a1)+
-                          ext.l         d2
-                          asl.l         #7,d2
-                          add.l         xwobble,d2
-                          move.l        d2,(a1)+
-                          sub.l         xwobble,d2
+                          move.w             d1,(a1)+
+                          ext.l              d2
+                          asl.l              #7,d2
+                          add.l              xwobble,d2
+                          move.l             d2,(a1)+
+                          sub.l              xwobble,d2
 
-                          lea           64(a4),a4
-                          dbra          d7,.objpointrotlop
+                          lea                64(a4),a4
+                          dbra               d7,.objpointrotlop
 
                           rts
  
 .noworkout:
-                          move.l        #0,(a1)+
-                          move.l        #0,(a1)+
-                          lea           64(a4),a4
-                          dbra          d7,.objpointrotlop
+                          move.l             #0,(a1)+
+                          move.l             #0,(a1)+
+                          lea                64(a4),a4
+                          dbra               d7,.objpointrotlop
                           rts
 
 LightDraw:
-                          move.w        (a0)+,d0
-                          move.w        (a0)+,d1
-                          move.l        #Rotated,a1
-                          move.w        6(a1,d0.w*8),d2
-                          ble.s         oneendbehind
-                          move.w        6(a1,d1.w*8),d3
-                          bgt.s         bothendsinfront
+                          move.w             (a0)+,d0
+                          move.w             (a0)+,d1
+                          lea                Rotated,a1
+                          move.w             6(a1,d0.w*8),d2
+                          ble.s              oneendbehind
+                          move.w             6(a1,d1.w*8),d3
+                          bgt.s              bothendsinfront
 
 oneendbehind:
                           rts
 
 bothendsinfront:
-                          move.l        #OnScreen,a2
-                          move.w        (a2,d0.w*2),d0
-                          bge.s         okleftend
-                          moveq         #0,d0
+                          lea                OnScreen,a2
+                          move.w             (a2,d0.w*2),d0
+                          bge.s              okleftend
+                          moveq              #0,d0
 
 okleftend:
-                          move.w        (a2,d1.w*2),d1
-                          bgt.s         somevis
+                          move.w             (a2,d1.w*2),d1
+                          bgt.s              somevis
                           rts
 
 somevis:
-                          cmp.w         #95,d0
-                          ble.s         somevis2
+                          cmp.w              #95,d0
+                          ble.s              somevis2
                           rts
 
 somevis2:
-                          cmp.w         #95,d1
-                          ble.s         okrightend
-                          move.w        #95,d1
+                          cmp.w              #95,d1
+                          ble.s              okrightend
+                          move.w             #95,d1
 
 okrightend:
-                          sub.w         d0,d1
-                          blt.s         wrongbloodywayround
-                          move.l        #brightentab,a4
-                          move.l        #objintocop,a1
-                          lea           (a1,d0.w*2),a1
+                          sub.w              d0,d1
+                          blt.s              wrongbloodywayround
+                          lea                brightentab,a4
+                          lea                objintocop,a1
+                          lea                (a1,d0.w*2),a1
  
-                          move.l        frompt,a3
-                          move.w        #104*4,d6
-                          move.w        #79,d2
+                          move.l             frompt,a3                                                            ; Copper chunky
+                          move.w             #widthOffset,d6
+                          move.w             #79,d2
 
 lacross:
-                          move.w        d2,d3
-                          move.l        a3,a2
-                          adda.w        (a1)+,a2
+                          move.w             d2,d3
+                          move.l             a3,a2
+                          adda.w             (a1)+,a2
 
 ldown:
-                          add.w         d6,a2
-                          move.w        (a2),d7
-                          move.w        (a4,d7.w*2),(a2)
-                          dbra          d3,ldown
-                          dbra          d1,lacross
+                          add.w              d6,a2
+                          move.w             (a2),d7
+                          move.w             (a4,d7.w*2),(a2)
+                          dbra               d3,ldown
+                          dbra               d1,lacross
  
 wrongbloodywayround:
                           rts
 
 *********************************************************************************************
                           
-FaceToPlace:              dc.w          0
+FaceToPlace:              dc.w               0
 
-Cheese:                   dc.w          4,15
+Cheese:                   dc.w               4,15
 
-FacesList:                dc.w          0,4*4
-                          dc.w          1,2*4
-                          dc.w          0,2*4
-                          dc.w          2,2*4
-                          dc.w          0,2*4
-                          dc.w          1,3*4
-                          dc.w          0,2*4
-                          dc.w          2,3*4
-                          dc.w          0,5*4
-                          dc.w          1,2*4
-                          dc.w          0,2*4
-                          dc.w          2,2*4
-                          dc.w          0,2*4
-                          dc.w          1,2*4
-                          dc.w          0,2*4
-                          dc.w          2,3*4
-                          dc.w          0,1*4
-                          dc.w          1,3*4
-                          dc.w          0,1*4
-                          dc.w          2,3*4
-                          dc.w          0,1*4
+FacesList:                dc.w               0,4*4
+                          dc.w               1,2*4
+                          dc.w               0,2*4
+                          dc.w               2,2*4
+                          dc.w               0,2*4
+                          dc.w               1,3*4
+                          dc.w               0,2*4
+                          dc.w               2,3*4
+                          dc.w               0,5*4
+                          dc.w               1,2*4
+                          dc.w               0,2*4
+                          dc.w               2,2*4
+                          dc.w               0,2*4
+                          dc.w               1,2*4
+                          dc.w               0,2*4
+                          dc.w               2,3*4
+                          dc.w               0,1*4
+                          dc.w               1,3*4
+                          dc.w               0,1*4
+                          dc.w               2,3*4
+                          dc.w               0,1*4
 EndOfFacesList:
 
-FacesPtr:                 dc.l          FacesList
-FacesCounter:             dc.w          0
+FacesPtr:                 dc.l               FacesList
+FacesCounter:             dc.w               0
 
-Expression:               dc.w          0
+Expression:               dc.w               0
 
 *********************************************************************************************
 ; Faces
 
 PlaceFace:
 
-                          move.w        FacesCounter,d0
-                          subq          #1,d0
-                          bgt.s         NoNewFace
+                          move.w             FacesCounter,d0
+                          subq               #1,d0
+                          bgt.s              NoNewFace
 
-                          move.l        FacesPtr,a0
+                          move.l             FacesPtr,a0
  
-                          move.w        2(a0),d0
-                          move.w        (a0),Expression
-                          addq          #4,a0
-                          cmp.l         #EndOfFacesList,a0
-                          blt.s         NotFirstFace
+                          move.w             2(a0),d0
+                          move.w             (a0),Expression
+                          addq               #4,a0
+                          cmp.l              #EndOfFacesList,a0
+                          blt.s              NotFirstFace
 
-                          move.l        #FacesList,a0
+                          move.l             #FacesList,a0
 
 NotFirstFace:
-                          move.l        a0,FacesPtr
+                          move.l             a0,FacesPtr
 
 NoNewFace:
-                          move.w        d0,FacesCounter
+                          move.w             d0,FacesCounter
 
-                          Move.w        FaceToPlace,d0
-                          muls          #5,d0
-                          add.w         Expression,d0
-                          move.l        #FacePlace+10,a0
+                          Move.w             FaceToPlace,d0
+                          muls               #5,d0
+                          add.w              Expression,d0
+                          move.l             #FacePlace+10,a0
 
-                          move.l        #Faces,a1
-                          muls          #(4*32*5),d0
-                          adda.w        d0,a1
+                          move.l             #Faces,a1
+                          muls               #(4*32*5),d0
+                          adda.w             d0,a1
 
-                          move.w        #4,d0
-                          move.w        #24,d1
-                          move.w        #4,d3
+                          move.w             #4,d0
+                          move.w             #24,d1
+                          move.w             #4,d3
 
 bitplaneloop:
-                          move.w        #31,d2 
+                          move.w             #31,d2 
 
 PlaceFaceToPlaceInFacePlaceLoop:
-                          move.l        (a1),(a0)
-                          adda.w        d0,a1
-                          adda.w        d1,a0
-                          dbra          d2,PlaceFaceToPlaceInFacePlaceLoop
-                          dbra          d3,bitplaneloop
+                          move.l             (a1),(a0)
+                          adda.w             d0,a1
+                          adda.w             d1,a0
+                          dbra               d2,PlaceFaceToPlaceInFacePlaceLoop
+                          dbra               d3,bitplaneloop
  
                           rts                          
 
 *********************************************************************************************
 ; Energy & ammo values
 
-Energy:                   dc.w          191
-OldEnergy:                dc.w          191
+Energy:                   dc.w               191
+OldEnergy:                dc.w               191
 
-Ammo:                     dc.w          63
-OldAmmo:                  dc.w          63
+Ammo:                     dc.w               63
+OldAmmo:                  dc.w               63
 
 *********************************************************************************************
 ; Energy & ammo visual
 
 FullEnergy:
-                          move.w        #127,Energy
-                          move.w        #127,OldEnergy
-                          move.l        #health,a0
-                          move.l        #borders,a1
-                          lea           25*8*2+6(a1),a1
-                          lea           2592(a1),a2
-                          move.w        #127,d0
+                          move.w             #127,Energy
+                          move.w             #127,OldEnergy
+                          move.l             #health,a0
+                          move.l             #borders,a1
+                          lea                25*8*2+6(a1),a1
+                          lea                2592(a1),a2
+                          move.w             #127,d0
 
 PutInFull:
-                          move.b        (a0)+,(a1)
-                          move.b        (a0)+,8(a1)
-                          lea           16(a1),a1
-                          move.b        (a0)+,(a2)
-                          move.b        (a0)+,8(a2)
-                          lea           16(a2),a2
-                          dbra          d0,PutInFull
+                          move.b             (a0)+,(a1)
+                          move.b             (a0)+,8(a1)
+                          lea                16(a1),a1
+                          move.b             (a0)+,(a2)
+                          move.b             (a0)+,8(a2)
+                          lea                16(a2),a2
+                          dbra               d0,PutInFull
  
                           rts
 
@@ -4838,78 +4905,78 @@ PutInFull:
 
 EnergyBar:
 
-                          move.w        Energy,d0
-                          bgt.s         .noeneg
-                          move.w        #0,d0
+                          move.w             Energy,d0
+                          bgt.s              .noeneg
+                          move.w             #0,d0
 
 .noeneg:
-                          move.w        d0,Energy
+                          move.w             d0,Energy
  
-                          cmp.w         OldEnergy,d0
-                          bne.s         gottochange
+                          cmp.w              OldEnergy,d0
+                          bne.s              gottochange
  
 NoEnergyChange:
                           rts
  
 gottochange:  
-                          blt.b         LessEnergy
-                          cmp.w         #127,Energy
-                          blt.s         NotMax
-                          move.w        #127,Energy
+                          blt.b              LessEnergy
+                          cmp.w              #127,Energy
+                          blt.s              NotMax
+                          move.w             #127,Energy
 
 NotMax:
-                          move.w        Energy,d0
-                          move.w        OldEnergy,d2
-                          sub.w         d0,d2
-                          beq.s         NoEnergyChange	
-                          neg.w         d2
+                          move.w             Energy,d0
+                          move.w             OldEnergy,d2
+                          sub.w              d0,d2
+                          beq.s              NoEnergyChange	
+                          neg.w              d2
  
-                          move.w        #127,d3
-                          sub.w         d0,d3
+                          move.w             #127,d3
+                          sub.w              d0,d3
  
-                          move.l        #health,a0
-                          lea           (a0,d3.w*4),a0
-                          move.l        #borders+25*16+6,a1
-                          lsl.w         #4,d3
-                          add.w         d3,a1
-                          lea           2592(a1),a2
+                          move.l             #health,a0
+                          lea                (a0,d3.w*4),a0
+                          move.l             #borders+25*16+6,a1
+                          lsl.w              #4,d3
+                          add.w              d3,a1
+                          lea                2592(a1),a2
  
 EnergyRise:
-                          move.b        (a0)+,(a1)
-                          move.b        (a0)+,8(a1)
-                          lea           16(a1),a1
-                          move.b        (a0)+,(a2)
-                          move.b        (a0)+,8(a2)
-                          lea           16(a2),a2
-                          subq          #1,d2
-                          bgt.s         EnergyRise
+                          move.b             (a0)+,(a1)
+                          move.b             (a0)+,8(a1)
+                          lea                16(a1),a1
+                          move.b             (a0)+,(a2)
+                          move.b             (a0)+,8(a2)
+                          lea                16(a2),a2
+                          subq               #1,d2
+                          bgt.s              EnergyRise
 
-                          move.w        Energy,OldEnergy
+                          move.w             Energy,OldEnergy
                           rts 
 
 LessEnergy: 
-                          move.w        OldEnergy,d2
-                          sub.w         d0,d2
+                          move.w             OldEnergy,d2
+                          sub.w              d0,d2
  
-                          move.w        #127,d3
-                          sub.w         OldEnergy,d3
+                          move.w             #127,d3
+                          sub.w              OldEnergy,d3
  
-                          move.l        #borders+25*16+6,a1
-                          asl.w         #4,d3
-                          add.w         d3,a1
-                          lea           2592(a1),a2
+                          move.l             #borders+25*16+6,a1
+                          asl.w              #4,d3
+                          add.w              d3,a1
+                          lea                2592(a1),a2
 
 EnergyDrain:
-                          move.b        #0,(a1)
-                          move.b        #0,8(a1)
-                          move.b        #0,(a2)
-                          move.b        #0,8(a2)
-                          lea           16(a1),a1
-                          lea           16(a2),a2
-                          subq          #1,d2
-                          bgt.s         EnergyDrain
+                          move.b             #0,(a1)
+                          move.b             #0,8(a1)
+                          move.b             #0,(a2)
+                          move.b             #0,8(a2)
+                          lea                16(a1),a1
+                          lea                16(a2),a2
+                          subq               #1,d2
+                          bgt.s              EnergyDrain
 
-                          move.w        Energy,OldEnergy
+                          move.w             Energy,OldEnergy
 
                           rts 
 
@@ -4918,183 +4985,203 @@ EnergyDrain:
 
 AmmoBar:
 
-                          move.w        Ammo,d0
-                          cmp.w         OldAmmo,d0
-                          bne.s         gotToChange
+                          move.w             Ammo,d0
+                          cmp.w              OldAmmo,d0
+                          bne.s              gotToChange
  
 NoAmmoChange:
                           rts
  
 gotToChange:  
-                          blt.b         LessAmmo
-                          cmp.w         #63,Ammo
-                          blt.s         .NotMax
-                          move.w        #63,Ammo
+                          blt.b              LessAmmo
+                          cmp.w              #63,Ammo
+                          blt.s              .NotMax
+                          move.w             #63,Ammo
 
 .NotMax:
-                          move.w        Ammo,d0
-                          move.w        OldAmmo,d2
-                          sub.w         d0,d2
-                          beq.s         NoAmmoChange
-                          neg.w         d2
+                          move.w             Ammo,d0
+                          move.w             OldAmmo,d2
+                          sub.w              d0,d2
+                          beq.s              NoAmmoChange
+                          neg.w              d2
  
-                          move.w        #63,d3
-                          sub.w         d0,d3
+                          move.w             #63,d3
+                          sub.w              d0,d3
  
-                          move.l        #Ammunition,a0
-                          lea           (a0,d3.w*8),a0
-                          move.l        #borders+5184+25*16+1,a1
-                          lsl.w         #5,d3
-                          add.w         d3,a1
-                          lea           2592(a1),a2
+                          move.l             #Ammunition,a0
+                          lea                (a0,d3.w*8),a0
+                          move.l             #borders+5184+25*16+1,a1
+                          lsl.w              #5,d3
+                          add.w              d3,a1
+                          lea                2592(a1),a2
 
 AmmoRise:
-                          move.b        (a0)+,(a1)
-                          move.b        (a0)+,8(a1)
-                          lea           16(a1),a1
-                          move.b        (a0)+,(a2)
-                          move.b        (a0)+,8(a2)
-                          lea           16(a2),a2
-                          move.b        (a0)+,(a1)
-                          move.b        (a0)+,8(a1)
-                          lea           16(a1),a1
-                          move.b        (a0)+,(a2)
-                          move.b        (a0)+,8(a2)
-                          lea           16(a2),a2
-                          subq          #1,d2
-                          bgt.s         AmmoRise
+                          move.b             (a0)+,(a1)
+                          move.b             (a0)+,8(a1)
+                          lea                16(a1),a1
+                          move.b             (a0)+,(a2)
+                          move.b             (a0)+,8(a2)
+                          lea                16(a2),a2
+                          move.b             (a0)+,(a1)
+                          move.b             (a0)+,8(a1)
+                          lea                16(a1),a1
+                          move.b             (a0)+,(a2)
+                          move.b             (a0)+,8(a2)
+                          lea                16(a2),a2
+                          subq               #1,d2
+                          bgt.s              AmmoRise
 
-                          move.w        Ammo,OldAmmo
+                          move.w             Ammo,OldAmmo
 
                           rts 
 
 LessAmmo: 
-                          move.w        OldAmmo,d2
-                          sub.w         d0,d2
+                          move.w             OldAmmo,d2
+                          sub.w              d0,d2
  
-                          move.w        #63,d3
-                          sub.w         OldAmmo,d3
+                          move.w             #63,d3
+                          sub.w              OldAmmo,d3
  
-                          move.l        #borders+5184+25*16+1,a1
-                          asl.w         #5,d3
-                          add.w         d3,a1
-                          lea           2592(a1),a2
+                          move.l             #borders+5184+25*16+1,a1
+                          asl.w              #5,d3
+                          add.w              d3,a1
+                          lea                2592(a1),a2
 
 AmmoDrain:
-                          move.b        #0,(a1)
-                          move.b        #0,8(a1)
-                          move.b        #0,(a2)
-                          move.b        #0,8(a2)
-                          lea           16(a1),a1
-                          lea           16(a2),a2
-                          move.b        #0,(a1)
-                          move.b        #0,8(a1)
-                          move.b        #0,(a2)
-                          move.b        #0,8(a2)
-                          lea           16(a1),a1
-                          lea           16(a2),a2
-                          subq          #1,d2
-                          bgt.s         AmmoDrain
+                          move.b             #0,(a1)
+                          move.b             #0,8(a1)
+                          move.b             #0,(a2)
+                          move.b             #0,8(a2)
+                          lea                16(a1),a1
+                          lea                16(a2),a2
+                          move.b             #0,(a1)
+                          move.b             #0,8(a1)
+                          move.b             #0,(a2)
+                          move.b             #0,8(a2)
+                          lea                16(a1),a1
+                          lea                16(a2),a2
+                          subq               #1,d2
+                          bgt.s              AmmoDrain
 
-                          move.w        Ammo,OldAmmo
+                          move.w             Ammo,OldAmmo
 
                           rts 
 
 *********************************************************************************************
 
-doanything:               dc.w          0
+doAnything:               dc.w               0
 
 *********************************************************************************************
 
-endLeven:
+quitGame:
 
-                          clr.b         doanything
+********************************************************************
 
-                          move.w        PLR1_energy,Energy
-                          cmp.b         #'s',mors
-                          bne.s         .notsl
-                          move.w        PLR2_energy,Energy
+                          clr.b              doAnything
+
+********************************************************************
+
+                          move.w             PLR1_energy,Energy
+
+                          cmp.b              #'s',mors
+                          bne.s              .notsl
+
+                          move.w             PLR2_energy,Energy
 
 .notsl:
-                          bsr           EnergyBar
+                          bsr                EnergyBar
  
-                          move.l        drawpt,d0
-                          move.l        olddrawpt,drawpt
-                          move.l        d0,olddrawpt
-                          move.l        d0,$dff084
+ ********************************************************************
 
+                          lea                $dff000,a6  
 
-                          cmp.b         #'b',Prefsfile+3
-                          bne.s         .noback
-                          jsr           mt_end
+                          move.l             drawpt,d0
+                          move.l             olddrawpt,drawpt
+                          move.l             d0,olddrawpt
+                          move.l             d0,cop2lch(a6)
 
-.noback
-                          tst.w         Energy
-                          bgt.s         wevewon
+********************************************************************
 
-                          move.l        #gameover,mt_data
-                          st            UseAllChannels
-                          clr.b         reachedend
-                          jsr           mt_init
+                          cmp.b              #'b',Prefsfile+3
+                          bne.s              .noBack
+                          jsr                mt_end
 
-playgameover:
-                          move.l        #$dff000,a6
+.noBack:
 
-waitfortop2:
-                          btst.b        #0,intreqrl(a6)
-                          beq.b         waitfortop2
-                          move.w        #$1,intreq(a6)
+********************************************************************
 
-                          jsr           mt_music
+                          tst.w              Energy
+                          bgt.s              weveWon
 
-                          tst.b         reachedend
-                          beq.s         playgameover
+********************************************************************
+; Lost
+                          move.l             #gameover,mt_data
+                          st                 UseAllChannels
+                          clr.b              reachedend
+                          jsr                mt_init
+
+playGameOver:
+                          lea                $dff000,a6
+                          WAITFORVERTBREQ
+
+                          jsr                mt_music
+
+                          tst.b              reachedend
+                          beq.s              playGameOver
  
-                          bra.b         wevelost
+                          bra.b              weveLost
  
-wevewon:
-                          cmp.b         #'n',mors
-                          bne.s         .nonextlev
-                          addq.w        #1,MAXLEVEL
-                          st            FINISHEDLEVEL
+********************************************************************
+; Won
 
-.nonextlev:
-                          move.l        #welldone,mt_data
-                          st            UseAllChannels
-                          clr.b         reachedend
-                          jsr           mt_init
+weveWon:
+                          cmp.b              #'n',mors
+                          bne.s              .noNextLev
 
-playwelldone:
-                          move.l        #$dff000,a6
+                          addq.w             #1,MAXLEVEL
+                          st                 FINISHEDLEVEL
 
-waitfortop3:
-                          btst.b        #0,intreqrl(a6)
-                          beq.b         waitfortop3
-                          move.w        #$1,intreq(a6)
+.noNextLev:
+                          move.l             #welldone,mt_data
+                          st                 UseAllChannels
+                          clr.b              reachedend
+                          jsr                mt_init
 
-                          jsr           mt_music
+playWellDone:
+                          lea                $dff000,a6
+                          WAITFORVERTBREQ
 
-                          tst.b         reachedend
-                          beq.s         playwelldone
+                          jsr                mt_music
+
+                          tst.b              reachedend
+                          beq.s              playWellDone
  
-                          cmp.w         #16,MAXLEVEL
-                          bne.b         .noendgame
-                          jsr           ENDGAMESCROLL
+                          cmp.w              #16,MAXLEVEL
+                          bne.b              noEndGame
 
-.noendgame:
-wevelost:
-                          jmp           cleanupForMainMenu 
+********************************************************************
+
+testEndScroll:                          
+                          jsr                EndGameScroll
+
+********************************************************************
+
+noEndGame:
+weveLost:
+                          jmp                cleanupForMainMenu 
 
 *********************************************************************************************
 
-endnomusic:
+exitToMainMenu:
 
-                          clr.b         doanything
-                          cmp.b         #'b',Prefsfile+3
-                          bne.s         .noback
-                          jsr           mt_end
+                          clr.b              doAnything
 
-.noback:
+                          cmp.b              #'b',Prefsfile+3
+                          bne.s              .noBack
+
+                          jsr                mt_end
+
+.noBack:
 
 *******************************
                           ; cmp.b #'n',mors
@@ -5106,54 +5193,61 @@ endnomusic:
                           ;.nonextlev:
 ******************************
 
-                          jmp           cleanupForMainMenu
+                          jmp                cleanupForMainMenu
 
 *********************************************************************************************
 
-ENDGAMESCROLL:            include       "EndScroll.s"
+                          include            "EndScroll.s"
 
 *********************************************************************************************
 ; Joystick handling
 
-                          include       "CD32Joy.s"
+                          include            "CD32Joy.s"
 
 *********************************************************************************************
 ; Heading to main menu
 
 cleanupForMainMenu:
 
-                          jsr           mt_end
+                          jsr                mt_end
 
 *******************************************************************
 
-                          move.l        #$dff000,a6
+                          lea                $dff000,a6
 
-                          move.l        #nullcop,d0                                                          ; Dummy placeholder copper
-                          move.l        d0,cop1lch(a6)                                                           
-                          move.w        d0,ocl
-                          swap          d0
-                          move.w        d0,och
+                          move.l             #nullcop,d0                                                          ; Dummy placeholder copper
+                          move.l             d0,cop1lch(a6)                                                           
+                          move.w             d0,ocl
+                          swap               d0
+                          move.w             d0,och
 
 *******************************************************************
 
-                          move.w        #$8020,dmacon(a6)
-                          move.w        #$f,dmacon(a6)
+                          move.w             #$8020,dmacon(a6)                                                    ; 5=SPREN
+                          move.w             #$f,dmacon(a6)                                                       ; Audio disabled
  
  *******************************************************************
 
-                          clr.w         aud0vol(a6) 
-                          clr.w         aud1vol(a6)
-                          clr.w         aud2vol(a6)
-                          clr.w         aud3vol(a6)
+                          clr.w              aud0vol(a6) 
+                          clr.w              aud1vol(a6)
+                          clr.w              aud2vol(a6)
+                          clr.w              aud3vol(a6)
 
 *******************************************************************
 
-                          jsr           RELEASELEVELMEM                                                      ; AB3DI
-                          jsr           RELEASECOPSCRNMEM                                                    ; LoadFromDisks
+                          jsr                RELEASELEVELMEM                                                      ; AB3DI
+                          jsr                RELEASECOPSCRNMEM                                                    ; LoadFromDisks
+
+*******************************************************************
+                          
+                          clr.b              SLAVEPAUSE                                                           ; agi: added
+                          clr.b              MASTERPAUSE
+                          clr.b              MASTERQUITTING                                                       ; agi: added
+                          clr.b              SLAVEQUITTING
 
 *******************************************************************
 
-                          move.l        #0,d0
+                          move.l             #0,d0
                           rts
 
 *********************************************************************************************
@@ -5163,16 +5257,16 @@ do32:
 ; a1 = screen 1
 ; a3 = screen 2
 ; 32*4 = 124
-                          move.w        #31,d7
-                          move.w        #$180,d1                                                             ; Color 0
+                          move.w             #31,d7
+                          move.w             #$180,d1                                                             ; Color 0
 
 across:
-                          move.w        d1,(a1)+  
-                          move.w        d1,(a3)+  
-                          move.w        #0,(a1)+  
-                          move.w        #0,(a3)+
-                          addq.w        #2,d1
-                          dbra          d7,across
+                          move.w             d1,(a1)+  
+                          move.w             d1,(a3)+  
+                          move.w             #0,(a1)+  
+                          move.w             #0,(a3)+
+                          addq.w             #2,d1
+                          dbra               d7,across
                           rts
 
 *********************************************************************************************
@@ -5183,137 +5277,137 @@ across:
 
 NEWsetlclip:
 
-                          move.l        #OnScreen,a1
-                          move.l        #Rotated,a2
-                          move.l        CONNECT_TABLE,a3
+                          move.l             #OnScreen,a1
+                          move.l             #Rotated,a2
+                          move.l             CONNECT_TABLE,a3
  
-                          move.w        (a0),d0
-                          bge.s         .notignoreleft
+                          move.w             (a0),d0
+                          bge.s              .notignoreleft
  
                           ; move.l #0,(a6)
  
-                          bra.b         .leftnotoktoclip
+                          bra.b              .leftnotoktoclip
 
 .notignoreleft:
-                          move.w        6(a2,d0*8),d3                                                        ; left z val
-                          bgt.s         .leftclipinfront
-                          addq          #2,a0
+                          move.w             6(a2,d0*8),d3                                                        ; left z val
+                          bgt.s              .leftclipinfront
+                          addq               #2,a0
                           rts
 
-                          tst.w         6(a2,d0*8)
-                          bgt.s         .leftnotoktoclip
+                          tst.w              6(a2,d0*8)
+                          bgt.s              .leftnotoktoclip
 
 .ignoreboth:
                           ; move.l #0,(a6)
                           ; move.l #96*65536,4(a6)
-                          move.w        #0,leftclip
-                          move.w        #96,rightclip
-                          addq          #8,a6
-                          addq          #2,a0
+                          move.w             #0,leftclip
+                          move.w             #96,rightclip
+                          addq               #8,a6
+                          addq               #2,a0
                           rts
 
 .leftclipinfront:
-                          move.w        (a1,d0*2),d1                                                         ; left x on screen
-                          move.w        (a0),d2
-                          move.w        2(a3,d2.w*4),d2
-                          move.w        (a1,d2.w*2),d2
-                          cmp.w         d1,d2
-                          bgt.s         .leftnotoktoclip
+                          move.w             (a1,d0*2),d1                                                         ; left x on screen
+                          move.w             (a0),d2
+                          move.w             2(a3,d2.w*4),d2
+                          move.w             (a1,d2.w*2),d2
+                          cmp.w              d1,d2
+                          bgt.s              .leftnotoktoclip
 
                           ; move.w d1,(a6)
                           ; move.w d3,2(a6)
-                          cmp.w         leftclip,d1
-                          ble.s         .leftnotoktoclip
-                          move.w        d1,leftclip
+                          cmp.w              leftclip,d1
+                          ble.s              .leftnotoktoclip
+                          move.w             d1,leftclip
 
 .leftnotoktoclip:
-                          addq          #2,a0
+                          addq               #2,a0
 
                           rts
 
 NEWsetrclip:
-                          move.l        #OnScreen,a1
-                          move.l        #Rotated,a2
-                          move.l        CONNECT_TABLE,a3
-                          move.w        (a0),d0
-                          bge.s         .notignoreright
+                          move.l             #OnScreen,a1
+                          move.l             #Rotated,a2
+                          move.l             CONNECT_TABLE,a3
+                          move.w             (a0),d0
+                          bge.s              .notignoreright
                           ; move.w #96,4(a6)
                           ; move.w #0,6(a6)
-                          move.w        #0,d4
-                          bra.b         .rightnotoktoclip
+                          move.w             #0,d4
+                          bra.b              .rightnotoktoclip
 
 .notignoreright:
-                          move.w        6(a2,d0*8),d4                                                        ; right z val
-                          bgt.s         .rightclipinfront
+                          move.w             6(a2,d0*8),d4                                                        ; right z val
+                          bgt.s              .rightclipinfront
                           ; move.w #96,4(a6)
                           ; move.w #0,6(a6)
-                          bra.s         .rightnotoktoclip
+                          bra.s              .rightnotoktoclip
 
 .rightclipinfront:
-                          move.w        (a1,d0*2),d1                                                         ; right x on screen
-                          move.w        (a0),d2
-                          move.w        (a3,d2.w*4),d2
-                          move.w        (a1,d2.w*2),d2
-                          cmp.w         d1,d2
-                          blt.s         .rightnotoktoclip
+                          move.w             (a1,d0*2),d1                                                         ; right x on screen
+                          move.w             (a0),d2
+                          move.w             (a3,d2.w*4),d2
+                          move.w             (a1,d2.w*2),d2
+                          cmp.w              d1,d2
+                          blt.s              .rightnotoktoclip
                           ; move.w d1,4(a6)
                           ; move.w d4,6(a6)
 
-                          cmp.w         rightclip,d1
-                          bge.s         .rightnotoktoclip
-                          addq          #1,d1
-                          move.w        d1,rightclip
+                          cmp.w              rightclip,d1
+                          bge.s              .rightnotoktoclip
+                          addq               #1,d1
+                          move.w             d1,rightclip
 
 .rightnotoktoclip:
-                          addq          #8,a6
-                          addq          #2,a0
+                          addq               #8,a6
+                          addq               #2,a0
                           rts
 
 FIRSTsetlrclip:
-                          move.l        #OnScreen,a1
-                          move.l        #Rotated,a2
+                          move.l             #OnScreen,a1
+                          move.l             #Rotated,a2
  
-                          move.w        (a0)+,d0
-                          bge.s         .notignoreleft
-                          bra.b         .leftnotoktoclip
+                          move.w             (a0)+,d0
+                          bge.s              .notignoreleft
+                          bra.b              .leftnotoktoclip
 
 .notignoreleft:
-                          move.w        6(a2,d0*8),d3                                                        ; left z val
-                          bgt.s         .leftclipinfront
+                          move.w             6(a2,d0*8),d3                                                        ; left z val
+                          bgt.s              .leftclipinfront
 
-                          move.w        (a0),d0
-                          blt.s         .ignoreboth
-                          tst.w         6(a2,d0*8)
-                          bgt.s         .leftnotoktoclip
+                          move.w             (a0),d0
+                          blt.s              .ignoreboth
+                          tst.w              6(a2,d0*8)
+                          bgt.s              .leftnotoktoclip
 
 .ignoreboth:
-                          move.w        #96,rightclip
-                          move.w        #0,leftclip
-                          addq          #2,a0
+                          move.w             #96,rightclip
+                          move.w             #0,leftclip
+                          addq               #2,a0
                           rts
 
 .leftclipinfront:
-                          move.w        (a1,d0*2),d1                                                         ; left x on screen
-                          cmp.w         leftclip,d1
-                          ble.s         .leftnotoktoclip
-                          move.w        d1,leftclip
+                          move.w             (a1,d0*2),d1                                                         ; left x on screen
+                          cmp.w              leftclip,d1
+                          ble.s              .leftnotoktoclip
+                          move.w             d1,leftclip
 
 .leftnotoktoclip:
-                          move.w        (a0)+,d0
-                          bge.s         .notignoreright
-                          move.w        #0,d4
-                          bra.b         .rightnotoktoclip
+                          move.w             (a0)+,d0
+                          bge.s              .notignoreright
+                          move.w             #0,d4
+                          bra.b              .rightnotoktoclip
 
 .notignoreright:
-                          move.w        6(a2,d0*8),d4                                                        ; right z val
-                          ble.s         .rightnotoktoclip
+                          move.w             6(a2,d0*8),d4                                                        ; right z val
+                          ble.s              .rightnotoktoclip
 
 .rightclipinfront:
-                          move.w        (a1,d0*2),d1                                                         ; right x on screen
-                          addq          #1,d1
-                          cmp.w         rightclip,d1
-                          bge.s         .rightnotoktoclip
-                          move.w        d1,rightclip
+                          move.w             (a1,d0*2),d1                                                         ; right x on screen
+                          addq               #1,d1
+                          cmp.w              rightclip,d1
+                          bge.s              .rightnotoktoclip
+                          move.w             d1,rightclip
 
 .rightnotoktoclip:
                           ; move.w leftclip,d0
@@ -5328,27 +5422,27 @@ FIRSTsetlrclip:
 
 *********************************************************************************************
 
-leftclip2:                dc.w          0
-rightclip2:               dc.w          0
-ZoneBright:               dc.w          0
+leftclip2:                dc.w               0
+rightclip2:               dc.w               0
+ZoneBright:               dc.w               0
  
-npolys:                   dc.w          0
+npolys:                   dc.w               0
 
-PLR1_fire:                dc.b          0
-PLR2_fire:                dc.b          0
-
-*********************************************************************************************
-
-                          include       "ObjectMove.s"
-                          include       "Anims.s"
+PLR1_fire:                dc.b               0
+PLR2_fire:                dc.b               0
 
 *********************************************************************************************
 
-rotanimpt:                dc.w          0
-xradd:                    dc.w          5
-yradd:                    dc.w          8
-xrpos:                    dc.w          320
-yrpos:                    dc.w          320
+                          include            "ObjectMove.s"
+                          include            "Anims.s"
+
+*********************************************************************************************
+
+rotanimpt:                dc.w               0
+xradd:                    dc.w               5
+yradd:                    dc.w               8
+xrpos:                    dc.w               320
+yrpos:                    dc.w               320
 
 *********************************************************************************************
 
@@ -5356,45 +5450,45 @@ rotanim:                  rts
 
 *********************************************************************************************
 
-option:                   dc.l          0,0
+option:                   dc.l               0,0
 
 *********************************************************************************************
 ; WALL STUFF
 
-                          include       "WallRoutine3.ChipMem.s"
+                          include            "WallRoutine3.ChipMem.s"
 
 *********************************************************************************************
 ; Floor polygon
 
-numsidestd:               dc.w          0
-bottomline:               dc.w          0
+numsidestd:               dc.w               0
+bottomline:               dc.w               0
 
 *********************************************************************************************
 ; a0=?
 
 checkforwater:
-                          tst.b         usewater
-                          beq.s         .notwater
+                          tst.b              usewater
+                          beq.s              .notwater
  
-                          move.l        Roompt,a1
-                          move.w        (a1),d7
-                          cmp.w         currzone,d7
-                          bne.s         .notwater
+                          move.l             Roompt,a1
+                          move.w             (a1),d7
+                          cmp.w              currzone,d7
+                          bne.s              .notwater
  
-                          move.b        #$f,fillscrnwater
+                          move.b             #$f,fillscrnwater
 
 .notwater:
-                          move.w        (a0)+,d6                                                             ; sides-1
-                          add.w         d6,d6
-                          add.w         d6,a0
-                          lea           4+6(a0),a0
+                          move.w             (a0)+,d6                                                             ; sides-1
+                          add.w              d6,d6
+                          add.w              d6,a0
+                          lea                4+6(a0),a0
 
                           rts
 
 *********************************************************************************************
 
-NewCornerBuff:            ds.l          100
-CLRNOFLOOR:               dc.w          0
+NewCornerBuff:            ds.l               100
+CLRNOFLOOR:               dc.w               0
 
 *********************************************************************************************
 
@@ -5402,242 +5496,242 @@ itsafloordraw:
 ; a0 = ThisRoomToDraw+n
 ; If D0=1 then its a floor otherwise (=2) it's a roof.
 
-                          move.w        #0,above
-                          move.w        (a0)+,d6                                                             ; ypos of poly
+                          move.w             #0,above
+                          move.w             (a0)+,d6                                                             ; ypos of poly
  
-                          move.w        d6,d7
-                          ext.l         d7
-                          asl.l         #6,d7
-                          cmp.l         TOPOFROOM,d7
-                          blt           checkforwater
-                          cmp.l         BOTOFROOM,d7
-                          bgt.s         dontdrawreturn
+                          move.w             d6,d7
+                          ext.l              d7
+                          asl.l              #6,d7
+                          cmp.l              TOPOFROOM,d7
+                          blt                checkforwater
+                          cmp.l              BOTOFROOM,d7
+                          bgt.s              dontdrawreturn
  
-                          move.w        leftclip(pc),d7
-                          cmp.w         rightclip(pc),d7
-                          bge.s         dontdrawreturn
+                          move.w             leftclip(pc),d7
+                          cmp.w              rightclip(pc),d7
+                          bge.s              dontdrawreturn
  
-                          move.w        botclip,d7
-                          sub.w         #40,d7
-                          ble.s         dontdrawreturn
-                          sub.w         flooryoff,d6
-                          bgt.s         below
-                          blt.s         aboveplayer
+                          move.w             botclip,d7
+                          sub.w              #40,d7
+                          ble.s              dontdrawreturn
+                          sub.w              flooryoff,d6
+                          bgt.s              below
+                          blt.s              aboveplayer
 
 ****************************************************************
 ; Water
 
-                          tst.b         usewater
-                          beq.s         .notwater
+                          tst.b              usewater
+                          beq.s              .notwater
  
-                          move.l        Roompt,a1
-                          move.w        (a1),d7
-                          cmp.w         currzone,d7
-                          bne.s         .notwater
-                          st            fillscrnwater
+                          move.l             Roompt,a1
+                          move.w             (a1),d7
+                          cmp.w              currzone,d7
+                          bne.s              .notwater
+                          st                 fillscrnwater
 
 .notwater:
 
 ****************************************************************
 
 dontdrawreturn:
-                          move.w        (a0)+,d6                                                             ; sides-1
-                          add.w         d6,d6
-                          add.w         d6,a0
-                          lea           4+6(a0),a0
+                          move.w             (a0)+,d6                                                             ; sides-1
+                          add.w              d6,d6
+                          add.w              d6,a0
+                          lea                4+6(a0),a0
                           rts
 
 aboveplayer:
-                          tst.b         usewater
-                          beq.s         .notwater
+                          tst.b              usewater
+                          beq.s              .notwater
  
-                          move.l        Roompt,a1
-                          move.w        (a1),d7
-                          cmp.w         currzone,d7
-                          bne.s         .notwater
+                          move.l             Roompt,a1
+                          move.w             (a1),d7
+                          cmp.w              currzone,d7
+                          bne.s              .notwater
  
-                          move.b        #$f,fillscrnwater
+                          move.b             #$f,fillscrnwater
 
 .notwater:
-                          btst          #1,d0
-                          beq.s         dontdrawreturn
-                          move.w        #40,d7
-                          sub.w         topclip,d7 
-                          ble.s         dontdrawreturn
-                          move.w        #1,d0
-                          move.w        d0,above
-                          neg.w         d6
+                          btst               #1,d0
+                          beq.s              dontdrawreturn
+                          move.w             #40,d7
+                          sub.w              topclip,d7 
+                          ble.s              dontdrawreturn
+                          move.w             #1,d0
+                          move.w             d0,above
+                          neg.w              d6
 
 below:
-                          btst          #0,d0
-                          beq.s         dontdrawreturn
-                          move.w        d6,distaddr
-                          muls          #64,d6
-                          move.l        d6,ypos
-                          divs          d7,d6                                                                ; zpos of bottom visible line
-                          move.w        d6,minz
-                          move.w        d7,bottomline
+                          btst               #0,d0
+                          beq.s              dontdrawreturn
+                          move.w             d6,distaddr
+                          muls               #64,d6
+                          move.l             d6,ypos
+                          divs               d7,d6                                                                ; zpos of bottom visible line
+                          move.w             d6,minz
+                          move.w             d7,bottomline
 
                           ; Go round each point finding out
                           ; if it should be visible or not.
 
-                          move.l        a0,-(a7)
+                          move.l             a0,-(a7)
 
-                          move.w        (a0)+,d7                                                             ; number of sides
-                          move.l        #Rotated,a1
-                          move.l        #OnScreen,a2
-                          move.l        #NewCornerBuff,a3
-                          moveq         #0,d4
-                          moveq         #0,d5
-                          moveq         #0,d6
-                          clr.b         anyclipping
+                          move.w             (a0)+,d7                                                             ; number of sides
+                          move.l             #Rotated,a1
+                          move.l             #OnScreen,a2
+                          move.l             #NewCornerBuff,a3
+                          moveq              #0,d4
+                          moveq              #0,d5
+                          moveq              #0,d6
+                          clr.b              anyclipping
  
 cornerprocessloop:
-                          move.w        (a0)+,d0
-                          move.w        6(a1,d0.w*8),d1
-                          ble.b         .canttell
+                          move.w             (a0)+,d0
+                          move.w             6(a1,d0.w*8),d1
+                          ble.b              .canttell
  
-                          move.w        (a2,d0.w*2),d3
-                          cmp.w         leftclip,d3
-                          bgt.s         .nol
-                          st            d4
-                          st            anyclipping
-                          bra.s         .nos
+                          move.w             (a2,d0.w*2),d3
+                          cmp.w              leftclip,d3
+                          bgt.s              .nol
+                          st                 d4
+                          st                 anyclipping
+                          bra.s              .nos
 
 .nol:
-                          cmp.w         rightclip,d3
-                          blt.s         .nor
-                          st            d6
-                          st            anyclipping
-                          bra.s         .nos
+                          cmp.w              rightclip,d3
+                          blt.s              .nor
+                          st                 d6
+                          st                 anyclipping
+                          bra.s              .nos
 
 .nor:
-                          st            d5
+                          st                 d5
 
 .nos:
-                          bra.b         .cantell
+                          bra.b              .cantell
 
 .canttell:
-                          st            d5
-                          st            anyclipping
+                          st                 d5
+                          st                 anyclipping
 
 .cantell:
-                          dbra          d7,cornerprocessloop
+                          dbra               d7,cornerprocessloop
  
-                          move.l        (a7)+,a0
-                          tst.b         d5
-                          bne.s         somefloortodraw
-                          eor.b         d4,d6
-                          bne           dontdrawreturn
+                          move.l             (a7)+,a0
+                          tst.b              d5
+                          bne.s              somefloortodraw
+                          eor.b              d4,d6
+                          bne                dontdrawreturn
 
 somefloortodraw:
-                          tst.b         gourfloor
-                          bne           goursides
+                          tst.b              gourfloor
+                          bne                goursides
 
-                          move.w        #80,top
-                          move.w        #-1,bottom
-                          move.w        #0,drawit
-                          move.l        #Rotated,a1
-                          move.l        #OnScreen,a2
-                          move.w        (a0)+,d7                                                             ; no of sides
+                          move.w             #80,top
+                          move.w             #-1,bottom
+                          move.w             #0,drawit
+                          move.l             #Rotated,a1
+                          move.l             #OnScreen,a2
+                          move.w             (a0)+,d7                                                             ; no of sides
 
 sideloop:
-                          move.w        minz,d6
-                          move.w        (a0)+,d1
-                          move.w        (a0),d3
-                          move.w        6(a1,d1*8),d4                                                        ;first z
-                          cmp.w         d6,d4
-                          bgt.b         firstinfront
-                          move.w        6(a1,d3*8),d5                                                        ; sec z
-                          cmp.w         d6,d5
-                          ble           bothbehind
+                          move.w             minz,d6
+                          move.w             (a0)+,d1
+                          move.w             (a0),d3
+                          move.w             6(a1,d1*8),d4                                                        ;first z
+                          cmp.w              d6,d4
+                          bgt.b              firstinfront
+                          move.w             6(a1,d3*8),d5                                                        ; sec z
+                          cmp.w              d6,d5
+                          ble                bothbehind
                           ; line must be on left and partially behind.
-                          sub.w         d5,d4
-                          move.l        (a1,d1*8),d0
-                          sub.l         (a1,d3*8),d0
-                          asr.l         #7,d0
-                          sub.w         d5,d6
-                          muls          d6,d0                                                                ; new x coord
-                          divs          d4,d0
-                          ext.l         d0
-                          asl.l         #7,d0
+                          sub.w              d5,d4
+                          move.l             (a1,d1*8),d0
+                          sub.l              (a1,d3*8),d0
+                          asr.l              #7,d0
+                          sub.w              d5,d6
+                          muls               d6,d0                                                                ; new x coord
+                          divs               d4,d0
+                          ext.l              d0
+                          asl.l              #7,d0
 
-                          add.l         (a1,d3*8),d0
-                          move.w        minz,d4
-                          move.w        (a2,d3*2),d2
-                          divs          d4,d0
-                          add.w         #47,d0
-                          move.l        ypos,d3
-                          divs          d5,d3
-                          move.w        bottomline,d1 
-                          bra.b         lineclipped
+                          add.l              (a1,d3*8),d0
+                          move.w             minz,d4
+                          move.w             (a2,d3*2),d2
+                          divs               d4,d0
+                          add.w              #47,d0
+                          move.l             ypos,d3
+                          divs               d5,d3
+                          move.w             bottomline,d1 
+                          bra.b              lineclipped
 
 firstinfront:
-                          move.w        6(a1,d3*8),d5                                                        ; sec z
-                          cmp.w         d6,d5
-                          bgt.b         bothinfront
+                          move.w             6(a1,d3*8),d5                                                        ; sec z
+                          cmp.w              d6,d5
+                          bgt.b              bothinfront
                           ; line must be on right and partially behind.
-                          sub.w         d4,d5                                                                ; dz
-                          move.l        (a1,d3*8),d2
-                          sub.l         (a1,d1*8),d2                                                         ; dx
-                          sub.w         d4,d6
-                          asr.l         #7,d2
-                          muls          d6,d2                                                                ; new x coord
-                          divs          d5,d2
-                          ext.l         d2
-                          asl.l         #7,d2
-                          add.l         (a1,d1*8),d2
-                          move.w        minz,d5
-                          move.w        (a2,d1*2),d0
-                          divs          d5,d2
-                          add.w         #47,d2
-                          move.l        ypos,d1
-                          divs          d4,d1
-                          move.w        bottomline,d3 
-                          bra.b         lineclipped
+                          sub.w              d4,d5                                                                ; dz
+                          move.l             (a1,d3*8),d2
+                          sub.l              (a1,d1*8),d2                                                         ; dx
+                          sub.w              d4,d6
+                          asr.l              #7,d2
+                          muls               d6,d2                                                                ; new x coord
+                          divs               d5,d2
+                          ext.l              d2
+                          asl.l              #7,d2
+                          add.l              (a1,d1*8),d2
+                          move.w             minz,d5
+                          move.w             (a2,d1*2),d0
+                          divs               d5,d2
+                          add.w              #47,d2
+                          move.l             ypos,d1
+                          divs               d4,d1
+                          move.w             bottomline,d3 
+                          bra.b              lineclipped
 
 bothinfront:
 ; Also, usefully enough, both are on-screen so no bottom clipping is needed.
 
-                          move.w        (a2,d1*2),d0                                                         ; first x
-                          move.w        (a2,d3*2),d2                                                         ; second x
-                          move.l        ypos,d1
-                          move.l        d1,d3
-                          divs          d4,d1                                                                ; first y
-                          divs          d5,d3                                                                ; second y
+                          move.w             (a2,d1*2),d0                                                         ; first x
+                          move.w             (a2,d3*2),d2                                                         ; second x
+                          move.l             ypos,d1
+                          move.l             d1,d3
+                          divs               d4,d1                                                                ; first y
+                          divs               d5,d3                                                                ; second y
 
 lineclipped:
-                          move.l        #rightsidetab,a3
-                          cmp.w         d1,d3
-                          beq           lineflat
-                          st            drawit
-                          bgt           lineonright
-                          move.l        #leftsidetab,a3
-                          exg           d1,d3
-                          exg           d0,d2
+                          move.l             #rightsidetab,a3
+                          cmp.w              d1,d3
+                          beq                lineflat
+                          st                 drawit
+                          bgt                lineonright
+                          move.l             #leftsidetab,a3
+                          exg                d1,d3
+                          exg                d0,d2
  
-                          lea           (a3,d1*2),a3
+                          lea                (a3,d1*2),a3
  
-                          cmp.w         top(pc),d1
-                          bge.s         .nonewtop
-                          move.w        d1,top
+                          cmp.w              top(pc),d1
+                          bge.s              .nonewtop
+                          move.w             d1,top
 
 .nonewtop:
-                          cmp.w         bottom(pc),d3
-                          ble.s         .nonewbot
-                          move.w        d3,bottom
+                          cmp.w              bottom(pc),d3
+                          ble.s              .nonewbot
+                          move.w             d3,bottom
 
 .nonewbot:
-                          sub.w         d1,d3                                                                ; dy
-                          sub.w         d0,d2                                                                ; dx
+                          sub.w              d1,d3                                                                ; dy
+                          sub.w              d0,d2                                                                ; dx
  
-                          blt.b         .linegoingleft
-                          subq.w        #1,d0
+                          blt.b              .linegoingleft
+                          subq.w             #1,d0
 
-                          ext.l         d2
-                          divs          d3,d2
-                          move.w        d2,d6
-                          swap          d2
+                          ext.l              d2
+                          divs               d3,d2
+                          move.w             d2,d6
+                          swap               d2
 
 ****************************************************
                           ; moveq #0,d6
@@ -5651,35 +5745,35 @@ lineclipped:
                           ; add.w d3,d2
 ****************************************************
 
-                          move.w        d3,d4
-                          move.w        d3,d5
-                          subq          #1,d5
-                          move.w        d6,d1
-                          addq          #1,d1
+                          move.w             d3,d4
+                          move.w             d3,d5
+                          subq               #1,d5
+                          move.w             d6,d1
+                          addq               #1,d1
 
 .pixlopright:
-                          move.w        d0,(a3)+
-                          sub.w         d2,d4
-                          bge.s         .nobigstep
-                          add.w         d1,d0
-                          add.w         d3,d4
-                          dbra          d5,.pixlopright
-                          bra           lineflat
+                          move.w             d0,(a3)+
+                          sub.w              d2,d4
+                          bge.s              .nobigstep
+                          add.w              d1,d0
+                          add.w              d3,d4
+                          dbra               d5,.pixlopright
+                          bra                lineflat
 
 .nobigstep:
-                          add.w         d6,d0
-                          dbra          d5,.pixlopright
-                          bra           lineflat
+                          add.w              d6,d0
+                          dbra               d5,.pixlopright
+                          bra                lineflat
 
 .linegoingleft:
-                          subq.w        #1,d0
+                          subq.w             #1,d0
  
-                          neg.w         d2
+                          neg.w              d2
 
-                          ext.l         d2
-                          divs          d3,d2
-                          move.w        d2,d6
-                          swap          d2
+                          ext.l              d2
+                          divs               d3,d2
+                          move.w             d2,d6
+                          swap               d2
 
 ****************************************************
                           ; moveq #0,d6
@@ -5693,49 +5787,49 @@ lineclipped:
                           ; add.w d3,d2
 ****************************************************
 
-                          move.w        d3,d4
-                          move.w        d3,d5
-                          subq          #1,d5
+                          move.w             d3,d4
+                          move.w             d3,d5
+                          subq               #1,d5
 
-                          move.w        d6,d1
-                          addq          #1,d1
+                          move.w             d6,d1
+                          addq               #1,d1
 
 .pixlopleft:
-                          sub.w         d2,d4
-                          bge.s         .nobigstepl
-                          sub.w         d1,d0
-                          add.w         d3,d4
-                          move.w        d0,(a3)+
-                          dbra          d5,.pixlopleft
-                          bra           lineflat
+                          sub.w              d2,d4
+                          bge.s              .nobigstepl
+                          sub.w              d1,d0
+                          add.w              d3,d4
+                          move.w             d0,(a3)+
+                          dbra               d5,.pixlopleft
+                          bra                lineflat
  
 .nobigstepl:
-                          sub.w         d6,d0
-                          move.w        d0,(a3)+
-                          dbra          d5,.pixlopleft
-                          bra.b         lineflat
+                          sub.w              d6,d0
+                          move.w             d0,(a3)+
+                          dbra               d5,.pixlopleft
+                          bra.b              lineflat
  
 lineonright:
-                          lea           (a3,d1*2),a3
+                          lea                (a3,d1*2),a3
  
-                          cmp.w         top(pc),d1
-                          bge.s         .nonewtop
-                          move.w        d1,top
+                          cmp.w              top(pc),d1
+                          bge.s              .nonewtop
+                          move.w             d1,top
 
 .nonewtop:
-                          cmp.w         bottom(pc),d3
-                          ble.s         .nonewbot
-                          move.w        d3,bottom
+                          cmp.w              bottom(pc),d3
+                          ble.s              .nonewbot
+                          move.w             d3,bottom
 
 .nonewbot:
-                          sub.w         d1,d3                                                                ; dy
-                          sub.w         d0,d2                                                                ; dx
-                          blt.b         .linegoingleft
+                          sub.w              d1,d3                                                                ; dy
+                          sub.w              d0,d2                                                                ; dx
+                          blt.b              .linegoingleft
                           ; addq #1,d0
-                          ext.l         d2
-                          divs          d3,d2
-                          move.w        d2,d6
-                          swap          d2
+                          ext.l              d2
+                          divs               d3,d2
+                          move.w             d2,d6
+                          swap               d2
 
 ****************************************************
                           ; moveq #0,d6
@@ -5749,35 +5843,35 @@ lineonright:
                           ; add.w d3,d2
 ****************************************************
 
-                          move.w        d3,d4
-                          move.w        d3,d5
-                          subq          #1,d5
-                          move.w        d6,d1
-                          addq          #1,d1
+                          move.w             d3,d4
+                          move.w             d3,d5
+                          subq               #1,d5
+                          move.w             d6,d1
+                          addq               #1,d1
 
 .pixlopright:
-                          sub.w         d2,d4
-                          bge.s         .nobigstep
-                          add.w         d1,d0
-                          add.w         d3,d4
-                          move.w        d0,(a3)+
-                          dbra          d5,.pixlopright
-                          bra.b         lineflat
+                          sub.w              d2,d4
+                          bge.s              .nobigstep
+                          add.w              d1,d0
+                          add.w              d3,d4
+                          move.w             d0,(a3)+
+                          dbra               d5,.pixlopright
+                          bra.b              lineflat
  
 .nobigstep:
-                          add.w         d6,d0
-                          move.w        d0,(a3)+
-                          dbra          d5,.pixlopright
-                          bra.b         lineflat
+                          add.w              d6,d0
+                          move.w             d0,(a3)+
+                          dbra               d5,.pixlopright
+                          bra.b              lineflat
 
 .linegoingleft:
                           ; addq #1,d0
-                          neg.w         d2
+                          neg.w              d2
 
-                          ext.l         d2
-                          divs          d3,d2
-                          move.w        d2,d6
-                          swap          d2
+                          ext.l              d2
+                          divs               d3,d2
+                          move.w             d2,d6
+                          swap               d2
 
 ****************************************************
                           ; moveq #0,d6
@@ -5791,137 +5885,137 @@ lineonright:
                           ; add.w d3,d2
 ****************************************************
 
-                          move.w        d3,d4
-                          move.w        d3,d5
-                          subq          #1,d5
-                          move.w        d6,d1
-                          addq          #1,d1
+                          move.w             d3,d4
+                          move.w             d3,d5
+                          subq               #1,d5
+                          move.w             d6,d1
+                          addq               #1,d1
 
 .pixlopleft:
-                          move.w        d0,(a3)+
-                          sub.w         d2,d4
-                          bge.s         .nobigstepl
-                          sub.w         d1,d0
-                          add.w         d3,d4
-                          dbra          d5,.pixlopleft
-                          bra.b         lineflat
+                          move.w             d0,(a3)+
+                          sub.w              d2,d4
+                          bge.s              .nobigstepl
+                          sub.w              d1,d0
+                          add.w              d3,d4
+                          dbra               d5,.pixlopleft
+                          bra.b              lineflat
  
 .nobigstepl:
-                          sub.w         d6,d0
-                          dbra          d5,.pixlopleft
+                          sub.w              d6,d0
+                          dbra               d5,.pixlopleft
 
 lineflat:
 bothbehind:
-                          dbra          d7,sideloop
-                          bra           pastsides
+                          dbra               d7,sideloop
+                          bra                pastsides
 
 *********************************************************************************************
 
-fbr:                      dc.w          0
-sbr:                      dc.w          0
+fbr:                      dc.w               0
+sbr:                      dc.w               0
 
 *********************************************************************************************
 
 goursides:
 
-                          move.w        #80,top
-                          move.w        #-1,bottom
-                          move.w        #0,drawit
-                          move.l        #Rotated,a1
-                          move.l        #OnScreen,a2
-                          move.w        (a0)+,d7                                                             ; no of sides
+                          move.w             #80,top
+                          move.w             #-1,bottom
+                          move.w             #0,drawit
+                          move.l             #Rotated,a1
+                          move.l             #OnScreen,a2
+                          move.w             (a0)+,d7                                                             ; no of sides
 
 sideloopGOUR:
-                          move.w        minz,d6
-                          move.w        (a0)+,d1
-                          move.w        (a0),d3
+                          move.w             minz,d6
+                          move.w             (a0)+,d1
+                          move.w             (a0),d3
 
-                          move.l        PointBrightsPtr,a4
-                          move.w        (a4,d1.w*4),fbr
-                          move.w        (a4,d3.w*4),sbr
+                          move.l             PointBrightsPtr,a4
+                          move.w             (a4,d1.w*4),fbr
+                          move.w             (a4,d3.w*4),sbr
  
-                          move.w        6(a1,d1*8),d4                                                        ;first z
-                          cmp.w         d6,d4
-                          bgt.b         firstinfrontGOUR
-                          move.w        6(a1,d3*8),d5                                                        ; sec z
-                          cmp.w         d6,d5
-                          ble           bothbehindGOUR
+                          move.w             6(a1,d1*8),d4                                                        ;first z
+                          cmp.w              d6,d4
+                          bgt.b              firstinfrontGOUR
+                          move.w             6(a1,d3*8),d5                                                        ; sec z
+                          cmp.w              d6,d5
+                          ble                bothbehindGOUR
 ; line must be on left and partially behind.
-                          sub.w         d5,d4
+                          sub.w              d5,d4
  
-                          move.w        fbr,d0
-                          sub.w         sbr,d0
-                          sub.w         d5,d6
-                          muls          d6,d0
-                          divs          d4,d0
-                          add.w         sbr,d0
-                          move.w        d0,fbr
+                          move.w             fbr,d0
+                          sub.w              sbr,d0
+                          sub.w              d5,d6
+                          muls               d6,d0
+                          divs               d4,d0
+                          add.w              sbr,d0
+                          move.w             d0,fbr
  
-                          move.l        (a1,d1*8),d0
-                          sub.l         (a1,d3*8),d0
-                          asr.l         #7,d0
-                          muls          d6,d0                                                                ; new x coord
-                          divs          d4,d0
-                          ext.l         d0
-                          asl.l         #7,d0
+                          move.l             (a1,d1*8),d0
+                          sub.l              (a1,d3*8),d0
+                          asr.l              #7,d0
+                          muls               d6,d0                                                                ; new x coord
+                          divs               d4,d0
+                          ext.l              d0
+                          asl.l              #7,d0
 
-                          add.l         (a1,d3*8),d0
-                          move.w        minz,d4
-                          move.w        (a2,d3*2),d2
-                          divs          d4,d0
-                          add.w         #47,d0
-                          move.l        ypos,d3
-                          divs          d5,d3
+                          add.l              (a1,d3*8),d0
+                          move.w             minz,d4
+                          move.w             (a2,d3*2),d2
+                          divs               d4,d0
+                          add.w              #47,d0
+                          move.l             ypos,d3
+                          divs               d5,d3
  
-                          move.w        bottomline,d1 
-                          bra.b         lineclippedGOUR
+                          move.w             bottomline,d1 
+                          bra.b              lineclippedGOUR
 
 firstinfrontGOUR:
-                          move.w        6(a1,d3*8),d5                                                        ; sec z
-                          cmp.w         d6,d5
-                          bgt.b         bothinfrontGOUR
+                          move.w             6(a1,d3*8),d5                                                        ; sec z
+                          cmp.w              d6,d5
+                          bgt.b              bothinfrontGOUR
 ; line must be on right and partially behind.
-                          sub.w         d4,d5                                                                ; dz
+                          sub.w              d4,d5                                                                ; dz
 
-                          move.w        sbr,d2
-                          sub.w         fbr,d2
-                          sub.w         d4,d6
-                          muls          d6,d2
-                          divs          d5,d2
-                          add.w         fbr,d2
-                          move.w        d2,sbr
+                          move.w             sbr,d2
+                          sub.w              fbr,d2
+                          sub.w              d4,d6
+                          muls               d6,d2
+                          divs               d5,d2
+                          add.w              fbr,d2
+                          move.w             d2,sbr
 
-                          move.l        (a1,d3*8),d2
-                          sub.l         (a1,d1*8),d2                                                         ; dx
-                          asr.l         #7,d2
-                          muls          d6,d2                                                                ; new x coord
-                          divs          d5,d2
-                          ext.l         d2
-                          asl.l         #7,d2
-                          add.l         (a1,d1*8),d2
-                          move.w        minz,d5
-                          move.w        (a2,d1*2),d0
-                          divs          d5,d2
-                          add.w         #47,d2
-                          move.l        ypos,d1
-                          divs          d4,d1
-                          move.w        bottomline,d3 
-                          bra.b         lineclippedGOUR
+                          move.l             (a1,d3*8),d2
+                          sub.l              (a1,d1*8),d2                                                         ; dx
+                          asr.l              #7,d2
+                          muls               d6,d2                                                                ; new x coord
+                          divs               d5,d2
+                          ext.l              d2
+                          asl.l              #7,d2
+                          add.l              (a1,d1*8),d2
+                          move.w             minz,d5
+                          move.w             (a2,d1*2),d0
+                          divs               d5,d2
+                          add.w              #47,d2
+                          move.l             ypos,d1
+                          divs               d4,d1
+                          move.w             bottomline,d3 
+                          bra.b              lineclippedGOUR
 
 bothinfrontGOUR:
 ; Also, usefully enough, both are on-screen so no bottom clipping is needed.
 
-                          move.w        (a2,d1*2),d0                                                         ; first x
-                          move.w        (a2,d3*2),d2                                                         ; second x
-                          move.l        ypos,d1
-                          move.l        d1,d3
-                          divs          d4,d1                                                                ; first y
-                          divs          d5,d3                                                                ; second y
+                          move.w             (a2,d1*2),d0                                                         ; first x
+                          move.w             (a2,d3*2),d2                                                         ; second x
+                          move.l             ypos,d1
+                          move.l             d1,d3
+                          divs               d4,d1                                                                ; first y
+                          divs               d5,d3                                                                ; second y
 
 lineclippedGOUR:
-                          move.l        #rightsidetab,a3
-                          cmp.w         d1,d3
-                          bne.b         linenotflatGOUR
+                          move.l             #rightsidetab,a3
+                          cmp.w              d1,d3
+                          bne.b              linenotflatGOUR
 
 **************************************************** 
                           ; move.w fbr,d4
@@ -5937,39 +6031,39 @@ lineclippedGOUR:
                           ; move.w d5,(a3,d3.w) 
 ****************************************************
 
-                          bra           lineflatGOUR
+                          bra                lineflatGOUR
  
 linenotflatGOUR:
-                          st            drawit
-                          bgt           lineonrightGOUR
-                          move.l        #leftsidetab,a3
-                          exg           d1,d3
-                          exg           d0,d2
+                          st                 drawit
+                          bgt                lineonrightGOUR
+                          move.l             #leftsidetab,a3
+                          exg                d1,d3
+                          exg                d0,d2
  
-                          lea           (a3,d1*2),a3
-                          lea           leftbrighttab-leftsidetab(a3),a4
+                          lea                (a3,d1*2),a3
+                          lea                leftbrighttab-leftsidetab(a3),a4
  
-                          cmp.w         top(pc),d1
-                          bge.s         .nonewtop
-                          move.w        d1,top
+                          cmp.w              top(pc),d1
+                          bge.s              .nonewtop
+                          move.w             d1,top
 
 .nonewtop:
-                          cmp.w         bottom(pc),d3
-                          ble.s         .nonewbot
-                          move.w        d3,bottom
+                          cmp.w              bottom(pc),d3
+                          ble.s              .nonewbot
+                          move.w             d3,bottom
 
 .nonewbot:
-                          sub.w         d1,d3                                                                ; dy
-                          sub.w         d0,d2                                                                ; dx
+                          sub.w              d1,d3                                                                ; dy
+                          sub.w              d0,d2                                                                ; dx
  
-                          blt.b         .linegoingleft
-                          subq.w        #1,d0
+                          blt.b              .linegoingleft
+                          subq.w             #1,d0
 
-                          ext.l         d2
-                          divs          d3,d2
-                          move.w        d2,d6
-                          swap          d2
-                          move.w        d2,a5
+                          ext.l              d2
+                          divs               d3,d2
+                          move.w             d2,d6
+                          swap               d2
+                          move.w             d2,a5
 
 ****************************************************
                           ; moveq #0,d6
@@ -5983,53 +6077,53 @@ linenotflatGOUR:
                           ; add.w d3,d2
 ****************************************************
 
-                          move.w        d3,d4
-                          move.w        d3,d5
-                          subq          #1,d5
-                          move.w        d6,d1
-                          addq          #1,d1
-                          move.w        d1,a6
+                          move.w             d3,d4
+                          move.w             d3,d5
+                          subq               #1,d5
+                          move.w             d6,d1
+                          addq               #1,d1
+                          move.w             d1,a6
 
-                          moveq         #0,d1
-                          move.w        sbr,d1
-                          move.w        fbr,d2
-                          sub.w         d1,d2
-                          ext.l         d2
-                          asl.w         #8,d2
-                          asl.w         #3,d2
-                          divs          d3,d2 
-                          ext.l         d2
-                          asl.l         #5,d2
-                          swap          d1
+                          moveq              #0,d1
+                          move.w             sbr,d1
+                          move.w             fbr,d2
+                          sub.w              d1,d2
+                          ext.l              d2
+                          asl.w              #8,d2
+                          asl.w              #3,d2
+                          divs               d3,d2 
+                          ext.l              d2
+                          asl.l              #5,d2
+                          swap               d1
  
 .pixlopright:
-                          move.w        d0,(a3)+
-                          swap          d1
-                          move.w        d1,(a4)+
-                          swap          d1
-                          add.l         d2,d1
+                          move.w             d0,(a3)+
+                          swap               d1
+                          move.w             d1,(a4)+
+                          swap               d1
+                          add.l              d2,d1
 
-                          sub.w         a5,d4
-                          bge.s         .nobigstep
-                          add.w         a6,d0
-                          add.w         d3,d4
-                          dbra          d5,.pixlopright
-                          bra           lineflatGOUR
+                          sub.w              a5,d4
+                          bge.s              .nobigstep
+                          add.w              a6,d0
+                          add.w              d3,d4
+                          dbra               d5,.pixlopright
+                          bra                lineflatGOUR
 
 .nobigstep:
-                          add.w         d6,d0
-                          dbra          d5,.pixlopright
-                          bra           lineflatGOUR
+                          add.w              d6,d0
+                          dbra               d5,.pixlopright
+                          bra                lineflatGOUR
 
 .linegoingleft:
-                          subq.w        #1,d0
+                          subq.w             #1,d0
  
-                          neg.w         d2
+                          neg.w              d2
 
-                          ext.l         d2
-                          divs          d3,d2
-                          move.w        d2,d6
-                          swap          d2
+                          ext.l              d2
+                          divs               d3,d2
+                          move.w             d2,d6
+                          swap               d2
 
 ****************************************************
                           ; moveq #0,d6
@@ -6043,70 +6137,70 @@ linenotflatGOUR:
                           ; add.w d3,d2
 ****************************************************
 
-                          move.w        d3,d4
-                          move.w        d3,d5
-                          subq          #1,d5
+                          move.w             d3,d4
+                          move.w             d3,d5
+                          subq               #1,d5
 
-                          move.w        d6,d1
-                          addq          #1,d1
-                          move.w        d1,a6
-                          move.w        d2,a5
+                          move.w             d6,d1
+                          addq               #1,d1
+                          move.w             d1,a6
+                          move.w             d2,a5
 
-                          moveq         #0,d1
-                          move.w        sbr,d1
-                          move.w        fbr,d2
-                          sub.w         d1,d2
-                          ext.l         d2
-                          asl.w         #8,d2
-                          asl.w         #3,d2
-                          divs          d3,d2 
-                          ext.l         d2
-                          asl.l         #5,d2
-                          swap          d1
+                          moveq              #0,d1
+                          move.w             sbr,d1
+                          move.w             fbr,d2
+                          sub.w              d1,d2
+                          ext.l              d2
+                          asl.w              #8,d2
+                          asl.w              #3,d2
+                          divs               d3,d2 
+                          ext.l              d2
+                          asl.l              #5,d2
+                          swap               d1
 
 .pixlopleft:
-                          swap          d1
-                          move.w        d1,(a4)+
-                          swap          d1
-                          add.l         d2,d1
+                          swap               d1
+                          move.w             d1,(a4)+
+                          swap               d1
+                          add.l              d2,d1
 
-                          sub.w         a5,d4
-                          bge.s         .nobigstepl
-                          sub.w         a6,d0
-                          add.w         d3,d4
-                          move.w        d0,(a3)+
-                          dbra          d5,.pixlopleft
-                          bra           lineflatGOUR
+                          sub.w              a5,d4
+                          bge.s              .nobigstepl
+                          sub.w              a6,d0
+                          add.w              d3,d4
+                          move.w             d0,(a3)+
+                          dbra               d5,.pixlopleft
+                          bra                lineflatGOUR
  
 .nobigstepl:
-                          sub.w         d6,d0
-                          move.w        d0,(a3)+
-                          dbra          d5,.pixlopleft
-                          bra           lineflatGOUR
+                          sub.w              d6,d0
+                          move.w             d0,(a3)+
+                          dbra               d5,.pixlopleft
+                          bra                lineflatGOUR
  
 lineonrightGOUR:
-                          lea           (a3,d1*2),a3
+                          lea                (a3,d1*2),a3
  
-                          lea           rightbrighttab-rightsidetab(a3),a4
+                          lea                rightbrighttab-rightsidetab(a3),a4
  
-                          cmp.w         top(pc),d1
-                          bge.s         .nonewtop
-                          move.w        d1,top
+                          cmp.w              top(pc),d1
+                          bge.s              .nonewtop
+                          move.w             d1,top
 
 .nonewtop:
-                          cmp.w         bottom(pc),d3
-                          ble.s         .nonewbot
-                          move.w        d3,bottom
+                          cmp.w              bottom(pc),d3
+                          ble.s              .nonewbot
+                          move.w             d3,bottom
 
 .nonewbot:
-                          sub.w         d1,d3                                                                ; dy
-                          sub.w         d0,d2                                                                ; dx
-                          blt.b         .linegoingleft
+                          sub.w              d1,d3                                                                ; dy
+                          sub.w              d0,d2                                                                ; dx
+                          blt.b              .linegoingleft
                           ; addq #1,d0
-                          ext.l         d2
-                          divs          d3,d2
-                          move.w        d2,d6
-                          swap          d2
+                          ext.l              d2
+                          divs               d3,d2
+                          move.w             d2,d6
+                          swap               d2
 
 ****************************************************
                         ; moveq #0,d6
@@ -6120,55 +6214,55 @@ lineonrightGOUR:
                         ; add.w d3,d2
 ****************************************************
 
-                          move.w        d3,d4
-                          move.w        d3,d5
-                          subq          #1,d5
-                          move.w        d6,d1
-                          addq          #1,d1
+                          move.w             d3,d4
+                          move.w             d3,d5
+                          subq               #1,d5
+                          move.w             d6,d1
+                          addq               #1,d1
 
-                          move.w        d1,a6
-                          move.w        d2,a5
+                          move.w             d1,a6
+                          move.w             d2,a5
 
-                          moveq         #0,d1
-                          move.w        fbr,d1
-                          move.w        sbr,d2
-                          sub.w         d1,d2
-                          ext.l         d2
-                          asl.w         #8,d2
-                          asl.w         #3,d2
-                          divs          d3,d2 
-                          ext.l         d2
-                          asl.l         #5,d2
-                          swap          d1
+                          moveq              #0,d1
+                          move.w             fbr,d1
+                          move.w             sbr,d2
+                          sub.w              d1,d2
+                          ext.l              d2
+                          asl.w              #8,d2
+                          asl.w              #3,d2
+                          divs               d3,d2 
+                          ext.l              d2
+                          asl.l              #5,d2
+                          swap               d1
 
 .pixlopright:
-                          swap          d1
-                          move.w        d1,(a4)+
-                          swap          d1
-                          add.l         d2,d1
+                          swap               d1
+                          move.w             d1,(a4)+
+                          swap               d1
+                          add.l              d2,d1
 
-                          sub.w         a5,d4
-                          bge.s         .nobigstep
-                          add.w         a6,d0
-                          add.w         d3,d4
-                          move.w        d0,(a3)+
-                          dbra          d5,.pixlopright
-                          bra.b         lineflatGOUR
+                          sub.w              a5,d4
+                          bge.s              .nobigstep
+                          add.w              a6,d0
+                          add.w              d3,d4
+                          move.w             d0,(a3)+
+                          dbra               d5,.pixlopright
+                          bra.b              lineflatGOUR
  
 .nobigstep:
-                          add.w         d6,d0
-                          move.w        d0,(a3)+
-                          dbra          d5,.pixlopright
-                          bra.b         lineflatGOUR
+                          add.w              d6,d0
+                          move.w             d0,(a3)+
+                          dbra               d5,.pixlopright
+                          bra.b              lineflatGOUR
 
 .linegoingleft:
                           ; addq #1,d0
-                          neg.w         d2
+                          neg.w              d2
 
-                          ext.l         d2
-                          divs          d3,d2
-                          move.w        d2,d6
-                          swap          d2
+                          ext.l              d2
+                          divs               d3,d2
+                          move.w             d2,d6
+                          swap               d2
 
 ****************************************************
                           ; moveq #0,d6
@@ -6182,226 +6276,226 @@ lineonrightGOUR:
                           ; add.w d3,d2
 ****************************************************
 
-                          move.w        d3,d4
-                          move.w        d3,d5
-                          subq          #1,d5
-                          move.w        d6,d1
-                          addq          #1,d1
-                          move.w        d1,a6
-                          move.w        d2,a5
+                          move.w             d3,d4
+                          move.w             d3,d5
+                          subq               #1,d5
+                          move.w             d6,d1
+                          addq               #1,d1
+                          move.w             d1,a6
+                          move.w             d2,a5
 
-                          moveq         #0,d1
-                          move.w        fbr,d1
-                          move.w        sbr,d2
-                          sub.w         d1,d2
-                          ext.l         d2
-                          asl.w         #8,d2
-                          asl.w         #3,d2
-                          divs          d3,d2 
-                          ext.l         d2
-                          asl.l         #5,d2
-                          swap          d1
+                          moveq              #0,d1
+                          move.w             fbr,d1
+                          move.w             sbr,d2
+                          sub.w              d1,d2
+                          ext.l              d2
+                          asl.w              #8,d2
+                          asl.w              #3,d2
+                          divs               d3,d2 
+                          ext.l              d2
+                          asl.l              #5,d2
+                          swap               d1
 
 .pixlopleft:
-                          swap          d1
-                          move.w        d1,(a4)+
-                          swap          d1
-                          add.l         d2,d1
+                          swap               d1
+                          move.w             d1,(a4)+
+                          swap               d1
+                          add.l              d2,d1
 
-                          move.w        d0,(a3)+
-                          sub.w         a5,d4
-                          bge.s         .nobigstepl
-                          sub.w         a6,d0
-                          add.w         d3,d4
-                          dbra          d5,.pixlopleft
-                          bra.b         lineflatGOUR
+                          move.w             d0,(a3)+
+                          sub.w              a5,d4
+                          bge.s              .nobigstepl
+                          sub.w              a6,d0
+                          add.w              d3,d4
+                          dbra               d5,.pixlopleft
+                          bra.b              lineflatGOUR
  
 .nobigstepl:
-                          sub.w         d6,d0
-                          dbra          d5,.pixlopleft
+                          sub.w              d6,d0
+                          dbra               d5,.pixlopleft
 
 lineflatGOUR:
 bothbehindGOUR:
-                          dbra          d7,sideloopGOUR
+                          dbra               d7,sideloopGOUR
 
 pastsides:
-                          addq          #2,a0
+                          addq               #2,a0
  
-                          move.w        #104*4,linedir
-                          move.l        frompt,a6
-                          lea           104*4*41(a6),a6
-                          move.w        (a0)+,scaleval
-                          move.w        (a0)+,whichtile
-                          move.w        (a0)+,d6
-                          add.w         ZoneBright,d6
-                          move.w        d6,lighttype
-                          move.w        above(pc),d6
-                          beq.b         groundfloor
+                          move.w             #widthOffset,linedir
+                          move.l             frompt,a6                                                            ; Copper chunky
+                          lea                widthOffset*41(a6),a6
+                          move.w             (a0)+,scaleval
+                          move.w             (a0)+,whichtile
+                          move.w             (a0)+,d6
+                          add.w              ZoneBright,d6
+                          move.w             d6,lighttype
+                          move.w             above(pc),d6
+                          beq.b              groundfloor
 ; on ceiling:
-                          move.w        #-104*4,linedir
-                          suba.w        #104*4,a6
+                          move.w             #-(widthOffset),linedir
+                          suba.w             #widthOffset,a6
 
 groundfloor:
-                          move.w        xoff,d6
-                          move.w        zoff,d7
-                          add.w         xwobxoff,d7
-                          add.w         xwobzoff,d6
-                          swap          d6
-                          swap          d7
-                          clr.w         d6
-                          clr.w         d7
-                          move.w        scaleval(pc),d3
-                          beq.s         .samescale
-                          bgt.s         .scaledown
-                          neg.w         d3
-                          asr.l         d3,d7
-                          asr.l         d3,d6
-                          bra.s         .samescale
+                          move.w             xoff,d6
+                          move.w             zoff,d7
+                          add.w              xwobxoff,d7
+                          add.w              xwobzoff,d6
+                          swap               d6
+                          swap               d7
+                          clr.w              d6
+                          clr.w              d7
+                          move.w             scaleval(pc),d3
+                          beq.s              .samescale
+                          bgt.s              .scaledown
+                          neg.w              d3
+                          asr.l              d3,d7
+                          asr.l              d3,d6
+                          bra.s              .samescale
 
 .scaledown:
-                          asl.l         d3,d6
-                          asl.l         d3,d7
+                          asl.l              d3,d6
+                          asl.l              d3,d7
 
 .samescale
-                          move.l        d6,sxoff
-                          move.l        d7,szoff
-                          bra           pastscale 
+                          move.l             d6,sxoff
+                          move.l             d7,szoff
+                          bra                pastscale 
 
 *********************************************************************************************
 
-top:                      dc.w          0
-bottom:                   dc.w          0
-ypos:                     dc.l          0
-nfloors:                  dc.w          0
-lighttype:                dc.w          0
-above:                    dc.w          0 
-linedir:                  dc.w          0
-distaddr:                 dc.w          0
+top:                      dc.w               0
+bottom:                   dc.w               0
+ypos:                     dc.l               0
+nfloors:                  dc.w               0
+lighttype:                dc.w               0
+above:                    dc.w               0 
+linedir:                  dc.w               0
+distaddr:                 dc.w               0
  
-minz:                     dc.w          0
-leftsidetab:              ds.w          180
-rightsidetab:             ds.w          180
-leftbrighttab:            ds.w          180
-rightbrighttab:           ds.w          180
+minz:                     dc.w               0
+leftsidetab:              ds.w               180
+rightsidetab:             ds.w               180
+leftbrighttab:            ds.w               180
+rightbrighttab:           ds.w               180
  
-PointBrights:             dc.l          0
-CurrentPointBrights:      ds.l          1000
+PointBrights:             dc.l               0
+CurrentPointBrights:      ds.l               1000
 
-movespd:                  dc.w          0
-largespd:                 dc.l          0
-disttobot:                dc.w          0
+movespd:                  dc.w               0
+largespd:                 dc.l               0
+disttobot:                dc.w               0
 
 *********************************************************************************************
 
 pastscale:
 
-                          tst.b         drawit(pc)
-                          beq           dontdrawfloor
+                          tst.b              drawit(pc)
+                          beq                dontdrawfloor
 
-                          move.l        a0,-(a7)
+                          move.l             a0,-(a7)
 
-                          move.l        #leftsidetab,a4
-                          move.w        top(pc),d1
+                          move.l             #leftsidetab,a4
+                          move.w             top(pc),d1
  
-                          move.w        #39,d7
-                          sub.w         d1,d7
-                          move.w        d7,disttobot
+                          move.w             #39,d7
+                          sub.w              d1,d7
+                          move.w             d7,disttobot
  
-                          move.w        bottom(pc),d7
-                          tst.w         above
-                          beq.s         clipfloor
+                          move.w             bottom(pc),d7
+                          tst.w              above
+                          beq.s              clipfloor
  
-                          move.w        #40,d3
-                          move.w        d3,d4
-                          sub.w         topclip,d3
-                          sub.w         botclip,d4
-                          cmp.w         d3,d1
-                          bge           predontdrawfloor
-                          cmp.w         d4,d7
-                          blt           predontdrawfloor
-                          cmp.w         d4,d1
-                          bge.s         .nocliptoproof
-                          move.w        d4,d1
+                          move.w             #40,d3
+                          move.w             d3,d4
+                          sub.w              topclip,d3
+                          sub.w              botclip,d4
+                          cmp.w              d3,d1
+                          bge                predontdrawfloor
+                          cmp.w              d4,d7
+                          blt                predontdrawfloor
+                          cmp.w              d4,d1
+                          bge.s              .nocliptoproof
+                          move.w             d4,d1
 
 .nocliptoproof:
-                          cmp.w         d3,d7
-                          blt.b         doneclip
-                          move.w        d3,d7
-                          bra.b         doneclip
+                          cmp.w              d3,d7
+                          blt.b              doneclip
+                          move.w             d3,d7
+                          bra.b              doneclip
  
 clipfloor:
-                          move.w        botclip,d4
-                          sub.w         #40,d4
-                          cmp.w         d4,d1
-                          bge           predontdrawfloor
-                          move.w        topclip,d3
-                          sub.w         #40,d3
-                          cmp.w         d3,d1
-                          bge.s         .nocliptopfloor
-                          move.w        d3,d1
+                          move.w             botclip,d4
+                          sub.w              #40,d4
+                          cmp.w              d4,d1
+                          bge                predontdrawfloor
+                          move.w             topclip,d3
+                          sub.w              #40,d3
+                          cmp.w              d3,d1
+                          bge.s              .nocliptopfloor
+                          move.w             d3,d1
 
 .nocliptopfloor: 
-                          cmp.w         d3,d7
-                          ble           predontdrawfloor
-                          cmp.w         d4,d7
-                          blt.s         .noclipbotfloor
-                          move.w        d4,d7
+                          cmp.w              d3,d7
+                          ble                predontdrawfloor
+                          cmp.w              d4,d7
+                          blt.s              .noclipbotfloor
+                          move.w             d4,d7
 
 .noclipbotfloor:
 doneclip:
-                          lea           (a4,d1*2),a4
+                          lea                (a4,d1*2),a4
                           ; move.l #dists,a2
-                          move.w        distaddr,d0
-                          muls          #64,d0
-                          move.l        d0,a2
+                          move.w             distaddr,d0
+                          muls               #64,d0
+                          move.l             d0,a2
                           ; muls #25,d0
                           ; adda.w d0,a2
                           ; lea (a2,d1*2),a2
-                          sub.w         d1,d7
-                          ble           predontdrawfloor 
-                          move.w        d1,d0
-                          bne.s         .notzero
-                          moveq         #1,d0
+                          sub.w              d1,d7
+                          ble                predontdrawfloor 
+                          move.w             d1,d0
+                          bne.s              .notzero
+                          moveq              #1,d0
 
 .notzero:
-                          muls          linedir,d1
-                          add.l         d1,a6
-                          move.l        #floorscalecols,a1
-                          move.l        LineRoutineToUse,a5
+                          muls               linedir,d1
+                          add.l              d1,a6
+                          move.l             #floorscalecols,a1
+                          move.l             LineRoutineToUse,a5
  
-                          tst.b         gourfloor
-                          bne           dogourfloor
+                          tst.b              gourfloor
+                          bne                dogourfloor
  
-                          tst.b         anyclipping
-                          beq.b         dofloornoclip
+                          tst.b              anyclipping
+                          beq.b              dofloornoclip
  
 dofloor:
                           ; move.w (a2)+,d0
-                          move.w        leftclip(pc),d3
-                          move.w        rightclip(pc),d4
-                          move.w        rightsidetab-leftsidetab(a4),d2
+                          move.w             leftclip(pc),d3
+                          move.w             rightclip(pc),d4
+                          move.w             rightsidetab-leftsidetab(a4),d2
  
-                          addq          #1,d2
-                          cmp.w         d3,d2
-                          ble.s         nodrawline
-                          cmp.w         d4,d2
-                          ble.s         noclipright
-                          move.w        d4,d2
+                          addq               #1,d2
+                          cmp.w              d3,d2
+                          ble.s              nodrawline
+                          cmp.w              d4,d2
+                          ble.s              noclipright
+                          move.w             d4,d2
 
 noclipright:
-                          move.w        (a4),d1
-                          cmp.w         d4,d1
-                          bge.s         nodrawline
-                          cmp.w         d3,d1
-                          bge.s         noclipleft
-                          move.w        d3,d1
+                          move.w             (a4),d1
+                          cmp.w              d4,d1
+                          bge.s              nodrawline
+                          cmp.w              d3,d1
+                          bge.s              noclipleft
+                          move.w             d3,d1
 
 noclipleft:
-                          cmp.w         d1,d2
-                          ble.s         nodrawline
+                          cmp.w              d1,d2
+                          ble.s              nodrawline
 
-                          move.w        d1,leftedge
-                          move.w        d2,rightedge
+                          move.w             d1,leftedge
+                          move.w             d2,rightedge
 
 **************************************************** 
                           ; moveq #0,d1
@@ -6435,41 +6529,41 @@ noclipleft:
                           ; move.l d3,brightspd
 ****************************************************
 
-                          move.l        a6,a3
-                          movem.l       d0/d7/a2/a4/a5/a6,-(a7)
-                          move.l        a2,d7
-                          divs          d0,d7
-                          move.w        d7,d0
-                          jsr           (a5)
-                          movem.l       (a7)+,d0/d7/a2/a4/a5/a6
+                          move.l             a6,a3
+                          movem.l            d0/d7/a2/a4/a5/a6,-(a7)
+                          move.l             a2,d7
+                          divs               d0,d7
+                          move.w             d7,d0
+                          jsr                (a5)
+                          movem.l            (a7)+,d0/d7/a2/a4/a5/a6
 
 nodrawline:
-                          subq.w        #1,disttobot
-                          adda.w        linedir(pc),a6
-                          addq          #2,a4
-                          addq          #1,d0
-                          subq          #1,d7
-                          bgt.b         dofloor
+                          subq.w             #1,disttobot
+                          adda.w             linedir(pc),a6
+                          addq               #2,a4
+                          addq               #1,d0
+                          subq               #1,d7
+                          bgt.b              dofloor
 
 predontdrawfloor:
-                          move.l        (a7)+,a0
+                          move.l             (a7)+,a0
 
 dontdrawfloor:
                           rts
 
 *********************************************************************************************
 
-anyclipping:              dc.w          0
+anyclipping:              dc.w               0
 
 *********************************************************************************************
 
 dofloornoclip:
                           ; move.w (a2)+,d0
-                          move.w        rightsidetab-leftsidetab(a4),d2
-                          addq          #1,d2
-                          move.w        (a4)+,d1
-                          move.w        d1,leftedge
-                          move.w        d2,rightedge
+                          move.w             rightsidetab-leftsidetab(a4),d2
+                          addq               #1,d2
+                          move.w             (a4)+,d1
+                          move.w             d1,leftedge
+                          move.w             d2,rightedge
 
 ****************************************************
                           ; sub.w d1,d2
@@ -6499,232 +6593,232 @@ dofloornoclip:
                           ; move.l d3,brightspd
 ****************************************************
 
-                          move.l        a6,a3
-                          movem.l       d0/d7/a2/a4/a5/a6,-(a7)
-                          move.l        a2,d7
-                          divs          d0,d7
-                          move.w        d7,d0
-                          jsr           (a5)
-                          movem.l       (a7)+,d0/d7/a2/a4/a5/a6
-                          subq.w        #1,disttobot
-                          adda.w        linedir(pc),a6
-                          addq          #1,d0
-                          subq          #1,d7
-                          bgt.b         dofloornoclip
+                          move.l             a6,a3
+                          movem.l            d0/d7/a2/a4/a5/a6,-(a7)
+                          move.l             a2,d7
+                          divs               d0,d7
+                          move.w             d7,d0
+                          jsr                (a5)
+                          movem.l            (a7)+,d0/d7/a2/a4/a5/a6
+                          subq.w             #1,disttobot
+                          adda.w             linedir(pc),a6
+                          addq               #1,d0
+                          subq               #1,d7
+                          bgt.b              dofloornoclip
 
-                          bra.b         predontdrawfloor
+                          bra.b              predontdrawfloor
 
 dogourfloor:
-                          tst.b         anyclipping
-                          beq           dofloornoclipGOUR
+                          tst.b              anyclipping
+                          beq                dofloornoclipGOUR
  
 dofloorGOUR:
                           ; move.w (a2)+,d0
-                          move.w        leftclip(pc),d3
-                          move.w        rightclip(pc),d4
-                          move.w        rightsidetab-leftsidetab(a4),d2
+                          move.w             leftclip(pc),d3
+                          move.w             rightclip(pc),d4
+                          move.w             rightsidetab-leftsidetab(a4),d2
 
-                          move.w        d2,d5
-                          sub.w         (a4),d5
-                          addq          #1,d5
-                          moveq         #0,d6
+                          move.w             d2,d5
+                          sub.w              (a4),d5
+                          addq               #1,d5
+                          moveq              #0,d6
  
-                          addq          #1,d2
-                          cmp.w         d3,d2
-                          ble           nodrawlineGOUR
-                          cmp.w         d4,d2
-                          ble.s         nocliprightGOUR
-                          move.w        d4,d2
+                          addq               #1,d2
+                          cmp.w              d3,d2
+                          ble                nodrawlineGOUR
+                          cmp.w              d4,d2
+                          ble.s              nocliprightGOUR
+                          move.w             d4,d2
 
 nocliprightGOUR:
-                          move.w        (a4),d1
-                          cmp.w         d4,d1
-                          bge           nodrawlineGOUR
-                          cmp.w         d3,d1
-                          bge.s         noclipleftGOUR
-                          move.w        d3,d6
-                          subq          #1,d6
-                          sub.w         d1,d6
-                          move.w        d3,d1
+                          move.w             (a4),d1
+                          cmp.w              d4,d1
+                          bge                nodrawlineGOUR
+                          cmp.w              d3,d1
+                          bge.s              noclipleftGOUR
+                          move.w             d3,d6
+                          subq               #1,d6
+                          sub.w              d1,d6
+                          move.w             d3,d1
 
 noclipleftGOUR:
-                          cmp.w         d1,d2
-                          ble           nodrawlineGOUR
+                          cmp.w              d1,d2
+                          ble                nodrawlineGOUR
 
-                          move.w        d1,leftedge
-                          move.w        d2,rightedge
+                          move.w             d1,leftedge
+                          move.w             d2,rightedge
 
-                          move.l        a2,d2
-                          divs          d0,d2
-                          move.w        d2,dst
-                          asr.w         #7,d2
+                          move.l             a2,d2
+                          divs               d0,d2
+                          move.w             d2,dst
+                          asr.w              #7,d2
                           ; addq #5,d2
                           ; add.w lighttype,d2
  
-                          moveq         #0,d1
-                          moveq         #0,d3
-                          move.w        leftbrighttab-leftsidetab(a4),d1
-                          add.w         d2,d1
-                          bge.s         .okbl
-                          moveq         #0,d1
+                          moveq              #0,d1
+                          moveq              #0,d3
+                          move.w             leftbrighttab-leftsidetab(a4),d1
+                          add.w              d2,d1
+                          bge.s              .okbl
+                          moveq              #0,d1
 
 .okbl:
-                          asr.w         #1,d1
-                          cmp.w         #14,d1
-                          ble.s         .okdl
-                          move.w        #14,d1
+                          asr.w              #1,d1
+                          cmp.w              #14,d1
+                          ble.s              .okdl
+                          move.w             #14,d1
 
 .okdl:
-                          move.w        rightbrighttab-leftsidetab(a4),d3
-                          add.w         d2,d3
-                          bge.s         .okbr
-                          moveq         #0,d3
+                          move.w             rightbrighttab-leftsidetab(a4),d3
+                          add.w              d2,d3
+                          bge.s              .okbr
+                          moveq              #0,d3
 
 .okbr:
-                          asr.w         #1,d3
-                          cmp.w         #14,d3
-                          ble.s         .okdr
-                          move.w        #14,d3
+                          asr.w              #1,d3
+                          cmp.w              #14,d3
+                          ble.s              .okdr
+                          move.w             #14,d3
 
 .okdr:
-                          sub.w         d1,d3
-                          asl.w         #8,d1
-                          move.l        d1,leftbright
-                          swap          d3
-                          tst.l         d3
-                          bgt.s         .OKITSPOSALREADY 
-                          neg.l         d3
-                          asr.l         #5,d3
-                          divs          d5,d3
-                          neg.w         d3
-                          bra.s         .OKNOWITSNEG
+                          sub.w              d1,d3
+                          asl.w              #8,d1
+                          move.l             d1,leftbright
+                          swap               d3
+                          tst.l              d3
+                          bgt.s              .OKITSPOSALREADY 
+                          neg.l              d3
+                          asr.l              #5,d3
+                          divs               d5,d3
+                          neg.w              d3
+                          bra.s              .OKNOWITSNEG
  
 .OKITSPOSALREADY:
-                          asr.l         #5,d3
-                          divs          d5,d3
+                          asr.l              #5,d3
+                          divs               d5,d3
 
 .OKNOWITSNEG:
-                          muls          d3,d6
-                          add.w         #256*8,d6
-                          asr.w         #3,d6
-                          clr.b         d6
-                          add.w         d6,leftbright+2
+                          muls               d3,d6
+                          add.w              #256*8,d6
+                          asr.w              #3,d6
+                          clr.b              d6
+                          add.w              d6,leftbright+2
  
-                          ext.l         d3
-                          asl.l         #5,d3
-                          swap          d3
-                          asl.w         #8,d3
-                          move.l        d3,brightspd
+                          ext.l              d3
+                          asl.l              #5,d3
+                          swap               d3
+                          asl.w              #8,d3
+                          move.l             d3,brightspd
  
-                          move.l        a6,a3
-                          movem.l       d0/d7/a2/a4/a5/a6,-(a7)
-                          move.w        dst,d0
-                          lea           floorscalecols,a1
-                          move.l        floortile,a0
-                          adda.w        whichtile,a0
-                          jsr           pastfloorbright
-                          movem.l       (a7)+,d0/d7/a2/a4/a5/a6
+                          move.l             a6,a3
+                          movem.l            d0/d7/a2/a4/a5/a6,-(a7)
+                          move.w             dst,d0
+                          lea                floorscalecols,a1
+                          move.l             floortile,a0
+                          adda.w             whichtile,a0
+                          jsr                pastfloorbright
+                          movem.l            (a7)+,d0/d7/a2/a4/a5/a6
 
 nodrawlineGOUR:
-                          subq.w        #1,disttobot
+                          subq.w             #1,disttobot
 
-                          adda.w        linedir(pc),a6
-                          addq          #2,a4
-                          addq          #1,d0
-                          subq          #1,d7
-                          bgt           dofloorGOUR
+                          adda.w             linedir(pc),a6
+                          addq               #2,a4
+                          addq               #1,d0
+                          subq               #1,d7
+                          bgt                dofloorGOUR
 
 predontdrawfloorGOUR:
-                          move.l        (a7)+,a0
+                          move.l             (a7)+,a0
 
 dontdrawfloorGOUR:
                           rts
 
 dofloornoclipGOUR:
                           ; move.w (a2)+,d0
-                          move.w        rightsidetab-leftsidetab(a4),d2
-                          addq          #1,d2
-                          move.w        (a4),d1
-                          move.w        d1,leftedge
-                          move.w        d2,rightedge
+                          move.w             rightsidetab-leftsidetab(a4),d2
+                          addq               #1,d2
+                          move.w             (a4),d1
+                          move.w             d1,leftedge
+                          move.w             d2,rightedge
 
-                          sub.w         d1,d2
+                          sub.w              d1,d2
 
-                          move.l        a2,d6
-                          divs          d0,d6
-                          move.w        d6,d5
-                          asr.w         #7,d5
+                          move.l             a2,d6
+                          divs               d0,d6
+                          move.w             d6,d5
+                          asr.w              #7,d5
                           ; addq #5,d5
                           ; add.w lighttype,d5
 
-                          moveq         #0,d1
-                          moveq         #0,d3
-                          move.w        leftbrighttab-leftsidetab(a4),d1
-                          add.w         d5,d1
-                          bge.s         .okbl
-                          moveq         #0,d1
+                          moveq              #0,d1
+                          moveq              #0,d3
+                          move.w             leftbrighttab-leftsidetab(a4),d1
+                          add.w              d5,d1
+                          bge.s              .okbl
+                          moveq              #0,d1
 
 .okbl:
-                          asr.w         #1,d1
-                          cmp.w         #14,d1
-                          ble.s         .okdl
-                          move.w        #14,d1
+                          asr.w              #1,d1
+                          cmp.w              #14,d1
+                          ble.s              .okdl
+                          move.w             #14,d1
 
 .okdl: 
-                          move.w        rightbrighttab-leftsidetab(a4),d3
-                          add.w         d5,d3
-                          bge.s         .okbr
-                          moveq         #0,d3
+                          move.w             rightbrighttab-leftsidetab(a4),d3
+                          add.w              d5,d3
+                          bge.s              .okbr
+                          moveq              #0,d3
 
 .okbr:
-                          asr.w         #1,d3
-                          cmp.w         #14,d3
-                          ble.s         .okdr
-                          move.w        #14,d3
+                          asr.w              #1,d3
+                          cmp.w              #14,d3
+                          ble.s              .okdr
+                          move.w             #14,d3
 
 .okdr:
-                          sub.w         d1,d3
-                          asl.w         #8,d1
-                          move.l        d1,leftbright
-                          swap          d3
-                          asr.l         #5,d3
-                          divs          d2,d3
-                          ext.l         d3
-                          asl.l         #5,d3
-                          swap          d3
-                          asl.w         #8,d3
-                          move.l        d3,brightspd
+                          sub.w              d1,d3
+                          asl.w              #8,d1
+                          move.l             d1,leftbright
+                          swap               d3
+                          asr.l              #5,d3
+                          divs               d2,d3
+                          ext.l              d3
+                          asl.l              #5,d3
+                          swap               d3
+                          asl.w              #8,d3
+                          move.l             d3,brightspd
 
 
-                          move.l        a6,a3
-                          movem.l       d0/d7/a2/a4/a5/a6,-(a7)
-                          move.w        d6,d0
-                          move.w        d0,dst
-                          lea           floorscalecols,a1
-                          move.l        floortile,a0
-                          adda.w        whichtile,a0
-                          jsr           pastfloorbright
-                          movem.l       (a7)+,d0/d7/a2/a4/a5/a6
-                          subq.w        #1,disttobot
-                          adda.w        linedir(pc),a6
-                          addq          #2,a4
-                          addq          #1,d0
-                          subq          #1,d7
-                          bgt           dofloornoclipGOUR
+                          move.l             a6,a3
+                          movem.l            d0/d7/a2/a4/a5/a6,-(a7)
+                          move.w             d6,d0
+                          move.w             d0,dst
+                          lea                floorscalecols,a1
+                          move.l             floortile,a0
+                          adda.w             whichtile,a0
+                          jsr                pastfloorbright
+                          movem.l            (a7)+,d0/d7/a2/a4/a5/a6
+                          subq.w             #1,disttobot
+                          adda.w             linedir(pc),a6
+                          addq               #2,a4
+                          addq               #1,d0
+                          subq               #1,d7
+                          bgt                dofloornoclipGOUR
 
-                          bra           predontdrawfloorGOUR
+                          bra                predontdrawfloorGOUR
 
 *********************************************************************************************
 
 dists:                    ; incbin "floordists"
-drawit:                   dc.w          0
+drawit:                   dc.w               0
 
-dst:                      dc.w          0
+dst:                      dc.w               0
 
 *********************************************************************************************
 ; Ptr to routine
 
-LineRoutineToUse:         dc.l          0
+LineRoutineToUse:         dc.l               0
 
 *********************************************************************************************
 
@@ -6736,58 +6830,58 @@ SimpleFloorLine:
 ; and sinval+cosval must be set up.
 ; See LineRoutineToUse
 
-                          SUPERVISOR    SetInstCacheOff
+                          SUPERVISOR         SetInstCacheOff
 
-                          move.l        #doacrossline,a1                                                     
-                          clr.l         d1
-                          clr.l         d3
+                          move.l             #doacrossline,a1                                                     
+                          clr.l              d1
+                          clr.l              d3
 
-                          move.w        leftedge(pc),d1     
-                          move.w        rightedge(pc),d3
+                          move.w             leftedge(pc),d1     
+                          move.w             rightedge(pc),d3
                           
-                          sub.w         d1,d3                                                            
-                          lea           (a1,d1.w*4),a1                                                       ; Start "move.w d0,n(a1)" = $3740,n           
+                          sub.w              d1,d3                                                            
+                          lea                (a1,d1.w*4),a1                                                       ; Start "move.w d0,n(a1)" = $3740,n           
 
-                          move.w        (a1,d3.w*4),d4                                                       ; Backup
-                          move.w        #$4e75,(a1,d3.w*4)                                                   ; End "rts" = $4e75
+                          move.w             (a1,d3.w*4),d4                                                       ; Backup
+                          move.w             #$4e75,(a1,d3.w*4)                                                   ; End "rts" = $4e75
 
-                          tst.b         CLRNOFLOOR
-                          beq           notBlackFloor
+                          tst.b              CLRNOFLOOR
+                          beq                notBlackFloor
 
-                          moveq         #0,d0
-                          bra           doBlack
+                          moveq              #0,d0
+                          bra                doBlack
 
 notBlackFloor:
-                          move.l        #PLAINSCALE,a2
+                          move.l             #PLAINSCALE,a2
  
-                          move.w        d0,d2
-                          move.w        lighttype,d1
-                          asr.w         #8,d2
-                          addq.w        #5,d1
-                          add.w         d2,d1
-                          bge.s         .fixedbright
-                          moveq         #0,d1
+                          move.w             d0,d2
+                          move.w             lighttype,d1
+                          asr.w              #8,d2
+                          addq.w             #5,d1
+                          add.w              d2,d1
+                          bge.s              .fixedbright
+                          moveq              #0,d1
 .fixedbright:
-                          cmp.w         #28,d1
-                          ble.s         .smallbright
-                          move.w        #28,d1
+                          cmp.w              #28,d1
+                          ble.s              .smallbright
+                          move.w             #28,d1
 .smallbright:
-                          lea           (a2,d1.w*2),a2
+                          lea                (a2,d1.w*2),a2
  
-                          move.w        whichtile,d0
-                          move.w        d0,d1
-                          and.w         #$3,d1
-                          and.w         #$300,d0
-                          lsl.b         #6,d1
-                          move.b        d1,d0
-                          move.w        d0,tstwhich
-                          move.w        (a2,d0.w),d0
+                          move.w             whichtile,d0
+                          move.w             d0,d1
+                          and.w              #$3,d1
+                          and.w              #$300,d0
+                          lsl.b              #6,d1
+                          move.b             d1,d0
+                          move.w             d0,tstwhich
+                          move.w             (a2,d0.w),d0
  
 doBlack:
-                          jsr           (a1)                                                                 
-                          move.w        d4,(a1,d3.w*4)                                                       ; Restore
+                          jsr                (a1)                                                                 
+                          move.w             d4,(a1,d3.w*4)                                                       ; Restore
 
-                          SUPERVISOR    SetInstCacheOn
+                          SUPERVISOR         SetInstCacheOn
                           rts
 
 *********************************************************************************************
@@ -6798,40 +6892,40 @@ doBlack:
 
 doacrossline:
 
-val                       SET           0
-                          REPT          32
-                          dc.w          $3740,val
-val                       SET           val+4
+val                       SET                0
+                          REPT               32
+                          dc.w               $3740,val
+val                       SET                val+4
                           ENDR
                           
-val                       SET           val+4
-                          REPT          32
-                          dc.w          $3740,val
-val                       SET           val+4
+val                       SET                val+4
+                          REPT               32
+                          dc.w               $3740,val
+val                       SET                val+4
                           ENDR
 
-val                       SET           val+4
-                          REPT          32
-                          dc.w          $3740,val
-val                       SET           val+4
+val                       SET                val+4
+                          REPT               32
+                          dc.w               $3740,val
+val                       SET                val+4
                           ENDR
 
                           rts
 
 *********************************************************************************************
 
-tstwhich:                 dc.w          0
-whichtile:                dc.w          0
+tstwhich:                 dc.w               0
+whichtile:                dc.w               0
 
 *********************************************************************************************
 
-leftedge:                 dc.w          0
-rightedge:                dc.w          0
+leftedge:                 dc.w               0
+rightedge:                dc.w               0
 
 *********************************************************************************************
 
-PLAINSCALE:               incbin        "data/plainscale"
-                          cnop          0,32
+PLAINSCALE:               incbin             "data/plainscale"
+                          cnop               0,32
 
 *********************************************************************************************
 
@@ -6839,16 +6933,16 @@ FloorLine:
 ; d0=Current zone
 ; see LineRoutineToUse
 
-                          move.l        floortile,a0
-                          adda.w        whichtile,a0
-                          move.w        lighttype,d1
-                          move.w        d0,dst
-                          move.w        d0,d2
+                          move.l             floortile,a0
+                          adda.w             whichtile,a0
+                          move.w             lighttype,d1
+                          move.w             d0,dst
+                          move.w             d0,d2
 
 *****************************************************
 ; Old version
-                          asr.w         #8,d2
-                          addq.w        #5,d1
+                          asr.w              #8,d2
+                          addq.w             #5,d1
 
 *****************************************************
                           ; asr.w #3,d2
@@ -6859,59 +6953,59 @@ FloorLine:
                           ;flbrbr:
 *****************************************************
 
-                          add.w         d2,d1
-                          bge.s         .fixedbright
-                          moveq         #0,d1
+                          add.w              d2,d1
+                          bge.s              .fixedbright
+                          moveq              #0,d1
 
 .fixedbright:
-                          cmp.w         #28,d1
-                          ble.s         .smallbright
-                          move.w        #28,d1
+                          cmp.w              #28,d1
+                          ble.s              .smallbright
+                          move.w             #28,d1
 
 .smallbright:
-                          lea           floorscalecols,a1
-                          add.l         floorbright(pc,d1.w*4),a1
-                          bra           pastfloorbright
+                          lea                floorscalecols,a1
+                          add.l              floorbright(pc,d1.w*4),a1
+                          bra                pastfloorbright
 
 *********************************************************************************************
 
-ConstCol:                 dc.w          0
+ConstCol:                 dc.w               0
 
 *********************************************************************************************
 
 BumpLine:
 
-                          tst.b         smoothbumps
-                          beq.s         Chunky
+                          tst.b              smoothbumps
+                          beq.s              Chunky
  
-                          move.l        #SmoothTile,a0
-                          lea           Smoothscalecols,a1
-                          bra.b         pastast
+                          move.l             #SmoothTile,a0
+                          lea                Smoothscalecols,a1
+                          bra.b              pastast
  
 Chunky:
-                          moveq         #0,d2
-                          move.l        #Bumptile,a0
-                          move.w        whichtile,d2
-                          adda.w        d2,a0
-                          ror.l         #2,d2
-                          lsr.w         #6,d2
-                          rol.l         #2,d2
-                          and.w         #15,d2
-                          move.l        #ConstCols,a1
-                          move.w        (a1,d2.w*2),ConstCol
-                          lea           Bumpscalecols,a1
+                          moveq              #0,d2
+                          move.l             #Bumptile,a0
+                          move.w             whichtile,d2
+                          adda.w             d2,a0
+                          ror.l              #2,d2
+                          lsr.w              #6,d2
+                          rol.l              #2,d2
+                          and.w              #15,d2
+                          move.l             #ConstCols,a1
+                          move.w             (a1,d2.w*2),ConstCol
+                          lea                Bumpscalecols,a1
  
 pastast:
-                          move.w        lighttype,d1
+                          move.w             lighttype,d1
  
-                          move.w        d0,dst
+                          move.w             d0,dst
  
-                          move.w        d0,d2
+                          move.w             d0,d2
 
 *****************************************************
 ; Old version
-                          asr.w         #8,d2
-                          addq.w        #5,d1
+                          asr.w              #8,d2
+                          addq.w             #5,d1
 
 *****************************************************
                           ; asr.w #3,d2
@@ -6922,458 +7016,458 @@ pastast:
                           ;flbrbr:
 *****************************************************
 
-                          add.w         d2,d1
-                          bge.s         .fixedbright
-                          moveq         #0,d1
+                          add.w              d2,d1
+                          bge.s              .fixedbright
+                          moveq              #0,d1
 
 .fixedbright:
-                          cmp.w         #28,d1
-                          ble.s         .smallbright
-                          move.w        #28,d1
+                          cmp.w              #28,d1
+                          ble.s              .smallbright
+                          move.w             #28,d1
 
 .smallbright:
-                          add.l         floorbright(pc,d1.w*4),a1
-                          bra           pastfloorbright
+                          add.l              floorbright(pc,d1.w*4),a1
+                          bra                pastfloorbright
  
 *********************************************************************************************
 
 floorbright:
-                          dc.l          512*0
-                          dc.l          512*1
-                          dc.l          512*1
-                          dc.l          512*2
-                          dc.l          512*2
+                          dc.l               512*0
+                          dc.l               512*1
+                          dc.l               512*1
+                          dc.l               512*2
+                          dc.l               512*2
  
-                          dc.l          512*3
-                          dc.l          512*3
-                          dc.l          512*4
-                          dc.l          512*4
-                          dc.l          512*5
+                          dc.l               512*3
+                          dc.l               512*3
+                          dc.l               512*4
+                          dc.l               512*4
+                          dc.l               512*5
  
-                          dc.l          512*5
-                          dc.l          512*6
-                          dc.l          512*6
-                          dc.l          512*7
-                          dc.l          512*7
+                          dc.l               512*5
+                          dc.l               512*6
+                          dc.l               512*6
+                          dc.l               512*7
+                          dc.l               512*7
  
-                          dc.l          512*8
-                          dc.l          512*8
-                          dc.l          512*9
-                          dc.l          512*9
-                          dc.l          512*10
+                          dc.l               512*8
+                          dc.l               512*8
+                          dc.l               512*9
+                          dc.l               512*9
+                          dc.l               512*10
  
-                          dc.l          512*10
-                          dc.l          512*11
-                          dc.l          512*11
-                          dc.l          512*12
-                          dc.l          512*12
+                          dc.l               512*10
+                          dc.l               512*11
+                          dc.l               512*11
+                          dc.l               512*12
+                          dc.l               512*12
  
-                          dc.l          512*13
-                          dc.l          512*13
-                          dc.l          512*14
-                          dc.l          512*14
+                          dc.l               512*13
+                          dc.l               512*13
+                          dc.l               512*14
+                          dc.l               512*14
 
 *********************************************************************************************
 
-widthleft:                dc.w          0
-scaleval:                 dc.w          0
-sxoff:                    dc.l          0
-szoff:                    dc.l          0
-xoff34:                   dc.w          0
-zoff34:                   dc.w          0
-scosval:                  dc.w          0
-ssinval:                  dc.w          0
+widthleft:                dc.w               0
+scaleval:                 dc.w               0
+sxoff:                    dc.l               0
+szoff:                    dc.l               0
+xoff34:                   dc.w               0
+zoff34:                   dc.w               0
+scosval:                  dc.w               0
+ssinval:                  dc.w               0
 
 *********************************************************************************************
 
 floorsetbright:
 ; d0=Current zone
-                          move.l        #walltiles,a0
+                          move.l             #walltiles,a0
 
-pastfloorbright
+pastfloorbright:
 ; d0=Current zone
 
-                          move.w        d0,d1
-                          muls          cosval,d1                                                            ; change in x across whole width
-                          move.w        d0,d2
-                          muls          sinval,d2                                                            ; change in z across whole width
-                          neg.l         d2
+                          move.w             d0,d1
+                          muls               cosval,d1                                                            ; change in x across whole width
+                          move.w             d0,d2
+                          muls               sinval,d2                                                            ; change in z across whole width
+                          neg.l              d2
 
 scaleprog:
-                          move.w        scaleval(pc),d3
-                          beq.s         .samescale
-                          bgt.s         .scaledown
-                          neg.w         d3
-                          asr.l         d3,d1
-                          asr.l         d3,d2
-                          bra.s         .samescale
+                          move.w             scaleval(pc),d3
+                          beq.s              .samescale
+                          bgt.s              .scaledown
+                          neg.w              d3
+                          asr.l              d3,d1
+                          asr.l              d3,d2
+                          bra.s              .samescale
 
 .scaledown:
-                          asl.l         d3,d1
-                          asl.l         d3,d2
+                          asl.l              d3,d1
+                          asl.l              d3,d2
 
 .samescale:
-                          move.l        d1,d3                                                                ;	z cos
-                          move.l        d3,d6
-                          move.l        d3,d5
-                          asr.l         #1,d6
-                          add.l         d6,d3
-                          asr.l         #1,d3
+                          move.l             d1,d3                                                                ;	z cos
+                          move.l             d3,d6
+                          move.l             d3,d5
+                          asr.l              #1,d6
+                          add.l              d6,d3
+                          asr.l              #1,d3
 
-                          move.l        d2,d4                                                                ; z sin
-                          move.l        d4,d6
-                          asr.l         #1,d6
-                          add.l         d4,d6
-                          add.l         d3,d4
-                          neg.l         d4                                                                   ; start x
+                          move.l             d2,d4                                                                ; z sin
+                          move.l             d4,d6
+                          asr.l              #1,d6
+                          add.l              d4,d6
+                          add.l              d3,d4
+                          neg.l              d4                                                                   ; start x
  
-                          asr.l         #1,d6                                                                ; zsin/2
-                          sub.l         d6,d5                                                                ; start z
+                          asr.l              #1,d6                                                                ; zsin/2
+                          sub.l              d6,d5                                                                ; start z
  
-                          add.l         sxoff,d4
-                          add.l         szoff,d5
+                          add.l              sxoff,d4
+                          add.l              szoff,d5
 
-                          moveq         #0,d6
-                          move.w        leftedge(pc),d6
-                          beq.s         nomultleft
+                          moveq              #0,d6
+                          move.w             leftedge(pc),d6
+                          beq.s              nomultleft
  
-                          move.l        d1,a4
-                          move.l        d2,a5
+                          move.l             d1,a4
+                          move.l             d2,a5
  
-                          muls.l        d6,d3:d1
-                          asr.l         #6,d1
-                          add.l         d1,d4
+                          muls.l             d6,d3:d1
+                          asr.l              #6,d1
+                          add.l              d1,d4
 
-                          muls.l        d6,d3:d2
-                          asr.l         #6,d2
-                          add.l         d2,d5
-                          move.l        a4,d1
-                          move.l        a5,d2
+                          muls.l             d6,d3:d2
+                          asr.l              #6,d2
+                          add.l              d2,d5
+                          move.l             a4,d1
+                          move.l             a5,d2
  
 nomultleft:
-                          move.w        d4,startsmoothx
-                          move.w        d5,startsmoothz
+                          move.w             d4,startsmoothx
+                          move.w             d5,startsmoothz
 
-                          swap          d4
-                          asr.l         #8,d5
+                          swap               d4
+                          asr.l              #8,d5
                           ; add.w szoff,d5
                           ; add.w sxoff,d4
-                          and.w         #63,d4
-                          and.w         #63*256,d5
-                          move.b        d4,d5
+                          and.w              #63,d4
+                          and.w              #63*256,d5
+                          move.b             d4,d5
 
-                          asr.l         #6,d1
-                          asr.l         #6,d2
-                          move.w        d1,a4
-                          move.w        d2,a5
-                          asr.l         #8,d2
-                          and.w         #%0011111100000000,d2
-                          swap          d1
-                          add.w         d1,d2
-                          move.w        #%11111100111111,d1
-                          and.w         d1,d5
-                          swap          d5
-                          move.w        startsmoothz,d5
-                          swap          d5
-                          swap          d2
-                          move.w        a5,d2
-                          swap          d2
+                          asr.l              #6,d1
+                          asr.l              #6,d2
+                          move.w             d1,a4
+                          move.w             d2,a5
+                          asr.l              #8,d2
+                          and.w              #%0011111100000000,d2
+                          swap               d1
+                          add.w              d1,d2
+                          move.w             #%11111100111111,d1
+                          and.w              d1,d5
+                          swap               d5
+                          move.w             startsmoothz,d5
+                          swap               d5
+                          swap               d2
+                          move.w             a5,d2
+                          swap               d2
  
 ***********************************
  
-                          move.w        d6,a2
-                          move.l        d2,d6
-                          add.w         #256,d6
+                          move.w             d6,a2
+                          move.l             d2,d6
+                          add.w              #256,d6
  
-                          moveq         #0,d0
+                          moveq              #0,d0
 
-                          tst.w         a2
-                          beq           startatleftedge
+                          tst.w              a2
+                          beq                startatleftedge
  
-                          move.w        widthleft(pc),d4
+                          move.w             widthleft(pc),d4
  
-                          move.w        rightedge(pc),d3
-                          cmp.w         #31,a2
-                          bgt.s         notinfirststrip
-                          lea           (a3,a2.w*4),a3
-                          cmp.w         #32,d3
-                          ble.s         allinfirststrip
-                          move.w        #32,d7
-                          sub.w         d7,d3
-                          sub.w         a2,d7
-                          bra           intofirststrip
+                          move.w             rightedge(pc),d3
+                          cmp.w              #31,a2
+                          bgt.s              notinfirststrip
+                          lea                (a3,a2.w*4),a3
+                          cmp.w              #32,d3
+                          ble.s              allinfirststrip
+                          move.w             #32,d7
+                          sub.w              d7,d3
+                          sub.w              a2,d7
+                          bra                intofirststrip
 
 allinfirststrip:
-                          sub.w         a2,d3
-                          move.w        d3,d7
-                          move.w        #0,d4
-                          bra.b         allintofirst
+                          sub.w              a2,d3
+                          move.w             d3,d7
+                          move.w             #0,d4
+                          bra.b              allintofirst
 
 notinfirststrip:
-                          sub.w         #32,a2
-                          sub.w         #32,d3
-                          adda.w        #33*4,a3
-                          cmp.w         #31,a2
-                          bgt.s         notstartinsec
-                          lea           (a3,a2.w*4),a3
-                          cmp.w         #32,d3
-                          ble.s         allinsecstrip
-                          move.w        #32,d7
-                          sub.w         d7,d3
-                          sub.w         a2,d7
-                          move.w        d3,d4
-                          bra.b         allintofirst
+                          sub.w              #32,a2
+                          sub.w              #32,d3
+                          adda.w             #33*4,a3
+                          cmp.w              #31,a2
+                          bgt.s              notstartinsec
+                          lea                (a3,a2.w*4),a3
+                          cmp.w              #32,d3
+                          ble.s              allinsecstrip
+                          move.w             #32,d7
+                          sub.w              d7,d3
+                          sub.w              a2,d7
+                          move.w             d3,d4
+                          bra.b              allintofirst
 
 allinsecstrip:
-                          sub.w         a2,d3
-                          move.w        d3,d7
-                          move.w        #0,d4
-                          bra.b         allintofirst
+                          sub.w              a2,d3
+                          move.w             d3,d7
+                          move.w             #0,d4
+                          bra.b              allintofirst
                           rts
 
 *********************************************************************************************
 
 notstartinsec:
 
-                          sub.w         #32,a2
-                          sub.w         #32,d3
-                          adda.w        #33*4,a3
-                          lea           (a3,a2.w*4),a3
-                          cmp.w         #32,d3
-                          ble.s         allinthirdstrip
-                          move.w        #32,d7
-                          sub.w         d7,d3
-                          sub.w         a2,d7
-                          move.w        d3,d4
-                          bra.b         allintofirst
+                          sub.w              #32,a2
+                          sub.w              #32,d3
+                          adda.w             #33*4,a3
+                          lea                (a3,a2.w*4),a3
+                          cmp.w              #32,d3
+                          ble.s              allinthirdstrip
+                          move.w             #32,d7
+                          sub.w              d7,d3
+                          sub.w              a2,d7
+                          move.w             d3,d4
+                          bra.b              allintofirst
                           rts
 
 allinthirdstrip:
-                          sub.w         a2,d3
-                          move.w        d3,d7
-                          move.w        #0,d4
-                          bra.b         allintofirst
+                          sub.w              a2,d3
+                          move.w             d3,d7
+                          move.w             #0,d4
+                          bra.b              allintofirst
                           rts
 
 startatleftedge:
-                          move.w        rightedge(pc),d3
-                          sub.w         a2,d3
+                          move.w             rightedge(pc),d3
+                          sub.w              a2,d3
  
-                          move.w        d3,d7
-                          cmp.w         #32,d7
-                          ble.s         .notoowide
-                          move.w        #32,d7
+                          move.w             d3,d7
+                          cmp.w              #32,d7
+                          ble.s              .notoowide
+                          move.w             #32,d7
 
 .notoowide:
-                          sub.w         d7,d3
+                          sub.w              d7,d3
 
 intofirststrip:
-                          move.w        d3,d4
+                          move.w             d3,d4
 
 allintofirst:
-                          move.w        startsmoothx,d3
+                          move.w             startsmoothx,d3
 
 ****************************************************************
 
-                          tst.b         gourfloor
-                          bne           gouraudfloor
+                          tst.b              gourfloor
+                          bne                gouraudfloor
 
 ****************************************************************
 ; Water
 
-                          tst.b         usewater
-                          bne           texturedwater
+                          tst.b              usewater
+                          bne                texturedwater
  
 ****************************************************************
 ; BumpMap the floor/ceiling! 
 
-                          tst.b         usebumps
-                          bne.s         BumpMap
+                          tst.b              usebumps
+                          bne.s              BumpMap
 
 ****************************************************************
 
 ordinary:
-                          moveq         #0,d0
+                          moveq              #0,d0
 
-                          dbra          d7,acrossscrn
+                          dbra               d7,acrossscrn
                           rts
 
 *********************************************************************************************
 
-usebumps:                 dc.w          $0
-smoothbumps:              dc.w          $0
-gourfloor:                dc.w          0
+usebumps:                 dc.w               $0
+smoothbumps:              dc.w               $0
+gourfloor:                dc.w               0
 
 *********************************************************************************************
 
-                          include       "BumpMap.s"
-                          CNOP          0,4
+                          include            "BumpMap.s"
+                          CNOP               0,4
 
 *********************************************************************************************
 
 backbefore:
-                          and.w         d1,d5
-                          move.b        (a0,d5.w*4),d0
-                          add.w         a4,d3
-                          move.w        (a1,d0.w*2),(a3)
-                          addq          #4,a3
-                          addx.l        d6,d5
-                          dbcs          d7,acrossscrn
-                          dbcc          d7,backbefore
-                          bra.s         past1
+                          and.w              d1,d5
+                          move.b             (a0,d5.w*4),d0
+                          add.w              a4,d3
+                          move.w             (a1,d0.w*2),(a3)
+                          addq               #4,a3
+                          addx.l             d6,d5
+                          dbcs               d7,acrossscrn
+                          dbcc               d7,backbefore
+                          bra.s              past1
  
 acrossscrn:
-                          and.w         d1,d5
-                          move.b        (a0,d5.w*4),d0
-                          add.w         a4,d3
-                          move.w        (a1,d0.w*2),(a3)
-                          addq          #4,a3
-                          addx.l        d2,d5
-                          dbcs          d7,acrossscrn
-                          dbcc          d7,backbefore
+                          and.w              d1,d5
+                          move.b             (a0,d5.w*4),d0
+                          add.w              a4,d3
+                          move.w             (a1,d0.w*2),(a3)
+                          addq               #4,a3
+                          addx.l             d2,d5
+                          dbcs               d7,acrossscrn
+                          dbcc               d7,backbefore
 
 past1:
-                          bcc.s         gotoacross
+                          bcc.s              gotoacross
 
-                          move.w        d4,d7
-                          bne.s         .notdoneyet
+                          move.w             d4,d7
+                          bne.s              .notdoneyet
                           rts
 
 .notdoneyet:
-                          cmp.w         #32,d7
-                          ble.s         .notoowide
-                          move.w        #32,d7
+                          cmp.w              #32,d7
+                          ble.s              .notoowide
+                          move.w             #32,d7
 
 .notoowide:
-                          sub.w         d7,d4  
-                          addq          #4,a3
+                          sub.w              d7,d4  
+                          addq               #4,a3
  
-                          dbra          d7,backbefore
+                          dbra               d7,backbefore
                           rts
 
 gotoacross:
-                          move.w        d4,d7
-                          bne.s         .notdoneyet
+                          move.w             d4,d7
+                          bne.s              .notdoneyet
                           rts
 
 .notdoneyet:
-                          cmp.w         #32,d7
-                          ble.s         .notoowide
-                          move.w        #32,d7
+                          cmp.w              #32,d7
+                          ble.s              .notoowide
+                          move.w             #32,d7
 
-.notoowide
-                          sub.w         d7,d4  
-                          addq          #4,a3
+.notoowide:
+                          sub.w              d7,d4  
+                          addq               #4,a3
  
-                          dbra          d7,acrossscrn
+                          dbra               d7,acrossscrn
                           rts
 
 *********************************************************************************************
 
-leftbright:               dc.l          0
-brightspd:                dc.l          0
+leftbright:               dc.l               0
+brightspd:                dc.l               0
 
 *********************************************************************************************
 
 gouraudfloor:
 
-                          move.l        leftbright,d0
-                          move.l        brightspd,d1
-                          dbra          d7,acrossscrngour
+                          move.l             leftbright,d0
+                          move.l             brightspd,d1
+                          dbra               d7,acrossscrngour
                           rts
 
 *********************************************************************************************
                           
-                          CNOP          0,4
+                          CNOP               0,4
 
 ********************************************************************************************* 
 
 backbeforegour:
 
-                          and.w         #63*256+63,d5
-                          move.b        (a0,d5.w*4),d0
-                          add.l         d1,d0
-                          bcc.s         .nomoreb
-                          add.w         #256,d0
+                          and.w              #63*256+63,d5
+                          move.b             (a0,d5.w*4),d0
+                          add.l              d1,d0
+                          bcc.s              .nomoreb
+                          add.w              #256,d0
 
 .nomoreb:
-                          add.w         a4,d3
-                          move.w        (a1,d0.w*2),(a3)
-                          addq          #4,a3 
-                          addx.l        d6,d5
-                          dbcs          d7,acrossscrngour
-                          dbcc          d7,backbeforegour
-                          bra.s         past1gour
+                          add.w              a4,d3
+                          move.w             (a1,d0.w*2),(a3)
+                          addq               #4,a3 
+                          addx.l             d6,d5
+                          dbcs               d7,acrossscrngour
+                          dbcc               d7,backbeforegour
+                          bra.s              past1gour
  
 acrossscrngour:
-                          and.w         #63*256+63,d5
-                          move.b        (a0,d5.w*4),d0
-                          add.l         d1,d0
-                          bcc.s         .nomoreb
-                          add.w         #256,d0
+                          and.w              #63*256+63,d5
+                          move.b             (a0,d5.w*4),d0
+                          add.l              d1,d0
+                          bcc.s              .nomoreb
+                          add.w              #256,d0
 
 .nomoreb:
-                          add.w         a4,d3
-                          move.w        (a1,d0.w*2),(a3)
-                          addq          #4,a3
-                          addx.l        d2,d5
-                          dbcs          d7,acrossscrngour
-                          dbcc          d7,backbeforegour
+                          add.w              a4,d3
+                          move.w             (a1,d0.w*2),(a3)
+                          addq               #4,a3
+                          addx.l             d2,d5
+                          dbcs               d7,acrossscrngour
+                          dbcc               d7,backbeforegour
 
 past1gour:
-                          bcc.s         gotoacrossgour
+                          bcc.s              gotoacrossgour
 
-                          move.w        d4,d7
-                          bne.s         .notdoneyet
-                          move.l        d0,leftbright
+                          move.w             d4,d7
+                          bne.s              .notdoneyet
+                          move.l             d0,leftbright
  
                           rts
 
 .notdoneyet:
-                          cmp.w         #32,d7
-                          ble.s         .notoowide
-                          move.w        #32,d7
+                          cmp.w              #32,d7
+                          ble.s              .notoowide
+                          move.w             #32,d7
 
-.notoowide
-                          sub.w         d7,d4  
-                          addq          #4,a3
+.notoowide:
+                          sub.w              d7,d4  
+                          addq               #4,a3
  
-                          dbra          d7,backbeforegour
+                          dbra               d7,backbeforegour
                           rts
 
 gotoacrossgour:
-                          move.w        d4,d7
-                          bne.s         .notdoneyet
+                          move.w             d4,d7
+                          bne.s              .notdoneyet
                           rts
 
 .notdoneyet:
-                          cmp.w         #32,d7
-                          ble.s         .notoowide
-                          move.w        #32,d7
+                          cmp.w              #32,d7
+                          ble.s              .notoowide
+                          move.w             #32,d7
 
-.notoowide
-                          sub.w         d7,d4  
-                          addq          #4,a3
+.notoowide:
+                          sub.w              d7,d4  
+                          addq               #4,a3
  
-                          dbra          d7,acrossscrngour
+                          dbra               d7,acrossscrngour
                           rts
 
 *********************************************************************************************
 ; Water variables
 
-watertouse:               dc.l          waterfile
+watertouse:               dc.l               waterfile
 
-waterpt:                  dc.l          waterlist
+waterpt:                  dc.l               waterlist
 
 waterlist:
-                          dc.l          waterfile
-                          dc.l          waterfile+2
-                          dc.l          waterfile+256
-                          dc.l          waterfile+256+2
-                          dc.l          waterfile+512
-                          dc.l          waterfile+512+2
-                          dc.l          waterfile+768
-                          dc.l          waterfile+768+2
+                          dc.l               waterfile
+                          dc.l               waterfile+2
+                          dc.l               waterfile+256
+                          dc.l               waterfile+256+2
+                          dc.l               waterfile+512
+                          dc.l               waterfile+512+2
+                          dc.l               waterfile+768
+                          dc.l               waterfile+768+2
                         ; dc.l waterfile+768
                         ; dc.l waterfile+512+2
                         ; dc.l waterfile+512
@@ -7382,8 +7476,8 @@ waterlist:
                         ; dc.l waterfile+2
 endwaterlist:
 
-wtan:                     dc.w          0
-wateroff:                 dc.w          0
+wtan:                     dc.w               0
+wateroff:                 dc.w               0
 
 *********************************************************************************************
 
@@ -7391,38 +7485,38 @@ texturedwater:
 ; d1=Current zone
 ; a3=frompt (copper list)
 
-                          add.w         wateroff,d5
+                          add.w              wateroff,d5
 
-                          move.l        #brightentab,a1                                                      
-                          move.w        dst,d0
-                          clr.b         d0
+                          move.l             #brightentab,a1                                                      
+                          move.w             dst,d0
+                          clr.b              d0
  
-                          add.w         d0,d0
-                          cmp.w         #12*512,d0
-                          blt.s         .notoowater
-                          move.w        #12*512,d0
+                          add.w              d0,d0
+                          cmp.w              #12*512,d0
+                          blt.s              .notoowater
+                          move.w             #12*512,d0
  
 .notoowater:
-                          adda.w        d0,a1
+                          adda.w             d0,a1
 
-                          move.w        dst,d0
-                          asl.w         #7,d0
-                          add.w         wtan,d0
-                          and.w         #8191,d0
-                          move.l        #SineTable,a0
-                          move.w        (a0,d0.w),d0
-                          ext.l         d0
+                          move.w             dst,d0
+                          asl.w              #7,d0
+                          add.w              wtan,d0
+                          and.w              #8191,d0
+                          move.l             #SineTable,a0
+                          move.w             (a0,d0.w),d0
+                          ext.l              d0
  
-                          move.w        dst,d3
-                          add.w         #300,d3
-                          divs          d3,d0
-                          asr.w         #6,d0
-                          addq          #2,d0
-                          cmp.w         disttobot,d0
-                          blt.s         oknotoffbototot
+                          move.w             dst,d3
+                          add.w              #300,d3
+                          divs               d3,d0
+                          asr.w              #6,d0
+                          addq               #2,d0
+                          cmp.w              disttobot,d0
+                          blt.s              oknotoffbototot
 
-                          move.w        disttobot,d0
-                          subq          #1,d0
+                          move.w             disttobot,d0
+                          subq               #1,d0
 
 oknotoffbototot:
 
@@ -7432,117 +7526,119 @@ oknotoffbototot:
                           ;add.w d3,d0
 ***********************************************************
 
-                          muls          #104*4,d0                                                            ; * CopLineSpace
-                          tst.w         above
-                          beq.s         nonnnnneg
-                          neg.l         d0
+                          muls               #widthOffset,d0                                                      ; * CopLineSpace
+                          tst.w              above
+                          beq.s              nonnnnneg
+                          neg.l              d0
 
 nonnnnneg:
-                          move.l        d0,a6
-                          move.l        watertouse,a0
-                          move.w        startsmoothx,d3
-                          dbra          d7,acrossscrnw
+                          move.l             d0,a6
+                          move.l             watertouse,a0
+                          move.w             startsmoothx,d3
+                          dbra               d7,acrossscrnw
                           rts
 
 ***********************************************************
 
 backbeforew:
-                          and.w         d1,d5
-                          move.w        (a0,d5.w*4),d0                                                       ; a0 = watertouse
-                          move.b        1(a3,a6.w),d0                                                       
-                          move.w        (a1,d0.w*2),(a3)                                                     ; From brightentab to screen
-                          addq          #4,a3                                                                ; skip colval + colreg
+                          and.w              d1,d5
+                          move.w             (a0,d5.w*4),d0                                                       ; a0 = watertouse
+                          move.b             1(a3,a6.w),d0                                                       
+                          move.w             (a1,d0.w*2),(a3)                                                     ; From brightentab to screen
+                          addq               #4,a3                                                                ; skip colval + colreg
 
-                          add.w         a4,d3
-                          addx.l        d6,d5
-                          dbcs          d7,acrossscrnw
-                          dbcc          d7,backbeforew
-                          bcc.s         past1w
-                          add.w         #256,d5 
-                          bra.s         past1w
+                          add.w              a4,d3
+                          addx.l             d6,d5
+                          dbcs               d7,acrossscrnw
+                          dbcc               d7,backbeforew
+                          bcc.s              past1w
+                          add.w              #256,d5 
+                          bra.s              past1w
  
 acrossscrnw:
-                          and.w         d1,d5
-                          move.w        (a0,d5.w*4),d0
-                          move.b        1(a3,a6.w),d0                                                                                
-                          move.w        (a1,d0.w*2),(a3)                                                     ; From brightentab to screen
-                          addq          #4,a3                                                                ; skip colval + colreg
+                          and.w              d1,d5
+                          move.w             (a0,d5.w*4),d0
+                          move.b             1(a3,a6.w),d0                                                                                
+                          move.w             (a1,d0.w*2),(a3)                                                     ; From brightentab to screen
+                          addq               #4,a3                                                                ; skip colval + colreg
 
-                          add.w         a4,d3
-                          addx.l        d2,d5
-                          dbcs          d7,acrossscrnw
-                          dbcc          d7,backbeforew
-                          bcc.s         past1w
-                          add.w         #256,d5 
+                          add.w              a4,d3
+                          addx.l             d2,d5
+                          dbcs               d7,acrossscrnw
+                          dbcc               d7,backbeforew
+                          bcc.s              past1w
+                          add.w              #256,d5 
 
 past1w:
-                          move.w        d4,d7
-                          bne.s         .notdoneyet
+                          move.w             d4,d7
+                          bne.s              .notdoneyet
                           rts
 
 ***********************************************************
 
 .notdoneyet:
-                          cmp.w         #32,d7
-                          ble.s         .notoowide
-                          move.w        #32,d7
+                          cmp.w              #32,d7
+                          ble.s              .notoowide
+                          move.w             #32,d7
 
 .notoowide:
-                          sub.w         d7,d4  
-                          addq          #4,a3                                                                ; skip colval + colreg
+                          sub.w              d7,d4  
+                          addq               #4,a3                                                                ; skip colval + colreg
  
-                          dbra          d7,acrossscrnw
+                          dbra               d7,acrossscrnw
                           rts
 
 *********************************************************************************************
 
-usewater:                 dc.w          0
-                          dc.w          0
+usewater:                 dc.w               0
+                          dc.w               0
 
 ****************************************************************
 
-startsmoothx:             dc.w          0
-                          dc.w          0
+startsmoothx:             dc.w               0
+                          dc.w               0
 
  ****************************************************************
 
-startsmoothz:             dc.w          0
-                          dc.w          0
+startsmoothz:             dc.w               0
+                          dc.w               0
 
 *********************************************************************************************
 
-                          include       "ObjDraw3.ChipRam.s"
+                          include            "ObjDraw3.ChipRam.s"
 
 *********************************************************************************************
 
-numframes:                dc.w          0
+numframes:                dc.w               0
+alframe:                  dc.l               0
 
-alframe:                  dc.l          0
- 
-alan:                     dcb.l         8,0
-                          dcb.l         8,1
-                          dcb.l         8,2
-                          dcb.l         8,3
+*********************************************************************************************
+
+alan:                     dcb.l              8,0
+                          dcb.l              8,1
+                          dcb.l              8,2
+                          dcb.l              8,3
 endalan:
 
-alanptr:                  dc.l          alan
+alanptr:                  dc.l               alan
 
-Time2:                    dc.l          0
-dispco:                   dc.w          0
+*********************************************************************************************
+
+Time2:                    dc.l               0
+dispco:                   dc.w               0
 
 *********************************************************************************************
 
 key_interrupt:
+                          SAVEREGS
 
-                          movem.l       d0-d7/a0-a6,-(sp)
-
-                          ;	move.w	INTREQR,d0
+                          ;	move.w	intreqr,d0
                           ;	btst	#3,d0
                           ;	beq	.not_key
 
-                          move.b        $bfdd00,d0
-                          btst          #0,d0
-                          bne.b         .key_cont
+                          move.b             $bfdd00,d0
+                          btst               #0,d0
+                          bne.b              .key_cont
 
                           ;	move.b	$bfed01,d0
                           ;	btst	#0,d0
@@ -7551,33 +7647,33 @@ key_interrupt:
                           ;	btst	#3,d0
                           ;	beq	.key_cont
 
-                          move.b        $bfec01,d0
-                          clr.b         $bfec01
+                          move.b             $bfec01,d0
+                          clr.b              $bfec01
 
-                          tst.b         d0
-                          beq.b         .key_cont
+                          tst.b              d0
+                          beq.b              .key_cont
 
                           ;	bset	#6,$bfee01
                           ;	move.b	#$f0,$bfe401
                           ;	move.b	#$00,$bfe501
                           ;	bset	#0,$bfee01
 
-                          not.b         d0
-                          ror.b         #1,d0
-                          lea.l         KeyMap,a0
-                          tst.b         d0
-                          bmi.b         .key_up
-                          and.w         #$7f,d0
+                          not.b              d0
+                          ror.b              #1,d0
+                          lea.l              KeyMap,a0
+                          tst.b              d0
+                          bmi.b              .key_up
+                          and.w              #$7f,d0
                           ;	add.w	#1,d0
-                          move.b        #$ff,(a0,d0.w)
-                          move.b        d0,lastpressed
+                          move.b             #$ff,(a0,d0.w)
+                          move.b             d0,lastpressed
 
-                          bra.b         .key_cont2
+                          bra.b              .key_cont2
 
 .key_up:
-                          and.w         #$7f,d0
+                          and.w              #$7f,d0
                           ;	add.w	#1,d0
-                          move.b        #$00,(a0,d0.w)
+                          move.b             #$00,(a0,d0.w)
 
 .key_cont2:
                           ;	btst	#0,$bfed01
@@ -7588,7 +7684,7 @@ key_interrupt:
 ; alt keys should not be independent so overlay ralt on lalt
 
 .key_cont:
-                          ;	move.w	#$0008,INTREQ
+                          ;	move.w	#$0008,intreq
 
 .not_key:	
                           ; lea.l	$dff000,a5
@@ -7598,312 +7694,302 @@ key_interrupt:
                           ;	or.b	102(a0),d0	;blend it with RALT
                           ;	move.b	d0,127(a0)	;save in combined position
 
-                          movem.l       (sp)+,d0-d7/a0-a6
+                          GETREGS
                           rts
 
 *********************************************************************************************
 
-lastpressed:              dc.b          0
-KInt_CCode                Ds.b          1
-KInt_Askey                Ds.b          1
-KInt_OCode                Ds.w          1
+lastpressed:              dc.b               0
+KInt_CCode:               ds.b               1
+KInt_Askey:               ds.b               1
+KInt_OCode:               ds.w               1
 
 *********************************************************************************************
  
-OldSpace:                 dc.b          0
-SpaceTapped:              dc.b          0
-PLR1_SPCTAP:              dc.b          0
-PLR2_SPCTAP:              dc.b          0
-PLR1_Ducked:              dc.b          0
-PLR2_Ducked:              dc.b          0
+OldSpace:                 dc.b               0
+SpaceTapped:              dc.b               0
+PLR1_SPCTAP:              dc.b               0
+PLR2_SPCTAP:              dc.b               0
+PLR1_Ducked:              dc.b               0
+PLR2_Ducked:              dc.b               0
                           even
 
 *********************************************************************************************
 
-                          include       "Plr1Control.s"
-                          include       "Plr2Control.s"
-                          include       "Fall.s"
+                          include            "Plr1Control.s"
+                          include            "Plr2Control.s"
+                          include            "Fall.s"
+                          cnop               0,4
 
 *********************************************************************************************
 
-GOTTOSEND:                dc.w          0
-
-*********************************************************************************************
-
-OtherInter:
-                          move.w        #$0010,$dff000+intreq
-                          movem.l       d0-d7/a0-a6,-(a7)
-                          bra.s         justshake
-
-*********************************************************************************************
-
-                          cnop          0,4
-
-*********************************************************************************************
-
-Chan0inter:
+cop_interrupt:
 
                           FILTER
-                          tst.b         doanything
-                          bne.s         dosomething
-                          moveq         #0,d0
+
+                          tst.b              doAnything
+                          bne.s              doSomething
+
+                          moveq              #0,d0
                           rts
 
 ***********************************************************************
 
-dosomething:
+doSomething:
 
-                          addq.w        #1,FramesToDraw
+                          addq.w             #1,FramesToDraw
 
 ***********************************************************************
 ; Timer
 
-                          IFNE          ENABLETIMER
-                          tst.b         counting
-                          beq           nostopcounter
-                          JSR           STOPCOUNTNOADD
-nostopcounter:
+                          IFNE               ENABLETIMER
+                          tst.b              counting
+                          beq                noStopCounter
+                          jsr                STOPCOUNTNOADD
+noStopCounter:
                           ENDC
 
 ***********************************************************************
 
-                          movem.l       d0-d7/a0-a6,-(a7)
+                          SAVEREGS
  
-                          ; jsr INITREC
-                          ; jsr RECEIVE
-                          
-                          ; tst.l BUFFER
-                          ; beq.s justshake
-                          ; st GOTTOSEND
-                          ; move.l #OtherInter,$6c
-
-justshake:
-                          cmp.b         #'b',Prefsfile+3
-                          bne.s         .noback
-                          jsr           mt_music
+                          cmp.b              #'b',Prefsfile+3
+                          bne.s              .noback
+                          jsr                mt_music
 
 .noback:
 
 ***********************************************************************
 ; Timer
 
-                          IFNE          ENABLETIMER
-                          tst.b         oktodisplay
-                          beq           dontshowtime
+                          IFNE               ENABLETIMER
+                          tst.b              oktodisplay
+                          beq                dontshowtime
                           
-                          clr.b         oktodisplay 
-                          move.l        #TimerScr+17+24*8,a0
-                          move.l        TimeCount,d0
-                          bge.s         timenotneg
-                          move.l        #1111*256,d0
+                          clr.b              oktodisplay 
+                          move.l             #TimerScr+17+24*8,a0
+                          move.l             TimeCount,d0
+                          bge.s              timenotneg
+                          move.l             #1111*256,d0
 
 timenotneg:
-                          asr.l         #8,d0
-                          move.l        #digits,a1
-                          move.w        #7,d2
+                          asr.l              #8,d0
+                          move.l             #digits,a1
+                          move.w             #7,d2
 
 digitlop:
-                          divs          #10,d0
-                          swap          d0
-                          lea           (a1,d0.w*8),a2
-                          move.b        (a2)+,(a0)
-                          move.b        (a2)+,24(a0)
-                          move.b        (a2)+,24*2(a0)
-                          move.b        (a2)+,24*3(a0)
-                          move.b        (a2)+,24*4(a0)
-                          move.b        (a2)+,24*5(a0)
-                          move.b        (a2)+,24*6(a0)
-                          move.b        (a2)+,24*7(a0)
-                          subq          #1,a0
-                          swap          d0
-                          ext.l         d0
-                          dbra          d2,digitlop
+                          divs               #10,d0
+                          swap               d0
+                          lea                (a1,d0.w*8),a2
+                          move.b             (a2)+,(a0)
+                          move.b             (a2)+,24(a0)
+                          move.b             (a2)+,24*2(a0)
+                          move.b             (a2)+,24*3(a0)
+                          move.b             (a2)+,24*4(a0)
+                          move.b             (a2)+,24*5(a0)
+                          move.b             (a2)+,24*6(a0)
+                          move.b             (a2)+,24*7(a0)
+                          subq               #1,a0
+                          swap               d0
+                          ext.l              d0
+                          dbra               d2,digitlop
 
-                          move.l        #TimerScr+17+24*18,a0
-                          move.l        NumTimes,d0
-                          move.l        #digits,a1
-                          move.w        #3,d2
+                          move.l             #TimerScr+17+24*18,a0
+                          move.l             NumTimes,d0
+                          move.l             #digits,a1
+                          move.w             #3,d2
 
 digitlop2:
-                          divs          #10,d0
-                          swap          d0
-                          lea           (a1,d0.w*8),a2
-                          move.b        (a2)+,(a0)
-                          move.b        (a2)+,24(a0)
-                          move.b        (a2)+,24*2(a0)
-                          move.b        (a2)+,24*3(a0)
-                          move.b        (a2)+,24*4(a0)
-                          move.b        (a2)+,24*5(a0)
-                          move.b        (a2)+,24*6(a0)
-                          move.b        (a2)+,24*7(a0)
-                          subq          #1,a0
-                          swap          d0
-                          ext.l         d0
-                          dbra          d2,digitlop2
+                          divs               #10,d0
+                          swap               d0
+                          lea                (a1,d0.w*8),a2
+                          move.b             (a2)+,(a0)
+                          move.b             (a2)+,24(a0)
+                          move.b             (a2)+,24*2(a0)
+                          move.b             (a2)+,24*3(a0)
+                          move.b             (a2)+,24*4(a0)
+                          move.b             (a2)+,24*5(a0)
+                          move.b             (a2)+,24*6(a0)
+                          move.b             (a2)+,24*7(a0)
+                          subq               #1,a0
+                          swap               d0
+                          ext.l              d0
+                          dbra               d2,digitlop2
 
-                          move.l        #TimerScr+17+24*28,a0
-                          moveq         #0,d0
-                          move.w        FramesToDraw,d0
-                          move.l        #digits,a1
-                          move.w        #2,d2
+                          move.l             #TimerScr+17+24*28,a0
+                          moveq              #0,d0
+                          move.w             FramesToDraw,d0
+                          move.l             #digits,a1
+                          move.w             #2,d2
 
 digitlop3:
-                          divs          #10,d0
-                          swap          d0
-                          lea           (a1,d0.w*8),a2
-                          move.b        (a2)+,(a0)
-                          move.b        (a2)+,24(a0)
-                          move.b        (a2)+,24*2(a0)
-                          move.b        (a2)+,24*3(a0)
-                          move.b        (a2)+,24*4(a0)
-                          move.b        (a2)+,24*5(a0)
-                          move.b        (a2)+,24*6(a0)
-                          move.b        (a2)+,24*7(a0)
-                          subq          #1,a0
-                          swap          d0
-                          ext.l         d0
-                          dbra          d2,digitlop3
+                          divs               #10,d0
+                          swap               d0
+                          lea                (a1,d0.w*8),a2
+                          move.b             (a2)+,(a0)
+                          move.b             (a2)+,24(a0)
+                          move.b             (a2)+,24*2(a0)
+                          move.b             (a2)+,24*3(a0)
+                          move.b             (a2)+,24*4(a0)
+                          move.b             (a2)+,24*5(a0)
+                          move.b             (a2)+,24*6(a0)
+                          move.b             (a2)+,24*7(a0)
+                          subq               #1,a0
+                          swap               d0
+                          ext.l              d0
+                          dbra               d2,digitlop3
 
 dontshowtime:          
                           ENDC
 
 ***********************************************************************
+; ?
 
-                          move.l        alanptr,a0
-                          move.l        (a0)+,alframe
-                          cmp.l         #endalan,a0
-                          blt.s         nostartalan
-                          move.l        #alan,a0
+                          move.l             alanptr,a0
+                          move.l             (a0)+,alframe
+                          cmp.l              #endalan,a0
+                          blt.s              nostartalan
+                          move.l             #alan,a0
 
 nostartalan:
-                          move.l        a0,alanptr
+                          move.l             a0,alanptr
  
 ***********************************************************************
 
-                          tst.b         READCONTROLS
-                          beq.s         nocontrols
+                          tst.b              READCONTROLS
+                          beq.s              nocontrols
 
 ***********************************************************************
 
-                          cmp.b         #'s',mors
-                          beq.s         control2
+                          cmp.b              #'s',mors
+                          beq.s              control2
 
 ***********************************************************************
+; Master and single controls
 
-                          tst.b         PLR1MOUSE
-                          beq.s         PLR1_nomouse
-                          bsr           PLR1_mouse_control
+                          tst.b              PLR1MOUSE
+                          beq.s              PLR1_nomouse
+                          bsr                PLR1_mouse_control
 
 PLR1_nomouse:
 
 ***********************************************************************
 
-                          tst.b         PLR1MOUSEKBD
-                          beq.s         PLR1_nomousekbd
-                          bsr           PLR1_mousekbd_control
+                          tst.b              PLR1MOUSEKBD
+                          beq.s              PLR1_nomousekbd
+                          bsr                PLR1_mousekbd_control
 
 PLR1_nomousekbd:
 
 ***********************************************************************
 
-                          tst.b         PLR1KEYS
-                          beq.s         PLR1_nokeys
-                          bsr           PLR1_keyboard_control
+                          tst.b              PLR1KEYS
+                          beq.s              PLR1_nokeys
+                          bsr                PLR1_keyboard_control
 
 PLR1_nokeys:
 
 ***********************************************************************
 ; Path
 
-                          IFNE          ENABLEPATH
-                          tst.b         PLR1PATH
-                          beq.s         PLR1_nopath
-                          bsr           PLR1_follow_path
+                          IFNE               ENABLEPATH
+                          tst.b              PLR1PATH
+                          beq.s              PLR1_nopath
+                          bsr                PLR1_follow_path
 
 PLR1_nopath:
                           ENDC
 
 ***********************************************************************
 
-                          tst.b         PLR1JOY
-                          beq.s         PLR1_nojoy
-                          bsr           PLR1_JoyStick_control
+                          tst.b              PLR1JOY
+                          beq.s              PLR1_nojoy
+                          bsr                PLR1_JoyStick_control
 
 PLR1_nojoy: 
-                          bra.s         nocontrols
+                          bra.s              nocontrols
 
 ***********************************************************************
+; Slave controls
 
 control2:
-                          tst.b         PLR2MOUSE
-                          beq.s         PLR2_nomouse
-                          bsr           PLR2_mouse_control
+                          tst.b              PLR2MOUSE
+                          beq.s              PLR2_nomouse
+                          bsr                PLR2_mouse_control
 
 PLR2_nomouse:
 
 ***********************************************************************
 
-                          tst.b         PLR2KEYS
-                          beq.s         PLR2_nokeys
-                          bsr           PLR2_keyboard_control
+                          tst.b              PLR2MOUSEKBD
+                          beq.s              PLR2_nomousekbd
+                          bsr                PLR2_mousekbd_control
+
+PLR2_nomousekbd:
+
+***********************************************************************
+
+                          tst.b              PLR2KEYS
+                          beq.s              PLR2_nokeys
+                          bsr                PLR2_keyboard_control
 
 PLR2_nokeys:
 
 ***********************************************************************
 ; Path
 
-                          IFNE          ENABLEPATH
-                          tst.b         PLR2PATH
-                          beq.s         PLR2_nopath
-                          bsr           PLR1_follow_path
+                          IFNE               ENABLEPATH
+                          tst.b              PLR2PATH
+                          beq.s              PLR2_nopath
+                          bsr                PLR1_follow_path
 
 PLR2_nopath:
                           ENDC
 
 ***********************************************************************
 
-                          tst.b         PLR2JOY
-                          beq.s         PLR2_nojoy
-                          bsr           PLR2_JoyStick_control
+                          tst.b              PLR2JOY
+                          beq.s              PLR2_nojoy
+                          bsr                PLR2_JoyStick_control
 
 PLR2_nojoy: 
 
 ***********************************************************************
 
 nocontrols:
-                          move.l        #$dff000,a6
+                          lea                $dff000,a6
 
-                          cmp.b         #'4',Prefsfile+1
-                          bne.s         nomuckabout
+                          cmp.b              #'4',Prefsfile+1
+                          bne.s              nomuckabout
  
-                          move.w        #$0,d0 
-                          tst.b         NoiseMade0LEFT
-                          beq.s         noturnoff0
-                          move.w        #1,d0
+                          move.w             #$0,d0 
+                          tst.b              NoiseMade0LEFT
+                          beq.s              noturnoff0
+                          move.w             #1,d0
 
 noturnoff0:
-                          tst.b         NoiseMade0RIGHT
-                          beq.s         noturnoff1
-                          or.w          #2,d0
+                          tst.b              NoiseMade0RIGHT
+                          beq.s              noturnoff1
+                          or.w               #2,d0
 
 noturnoff1:
-                          tst.b         NoiseMade1RIGHT
-                          beq.s         noturnoff2
-                          or.w          #4,d0
+                          tst.b              NoiseMade1RIGHT
+                          beq.s              noturnoff2
+                          or.w               #4,d0
 
 noturnoff2:
-                          tst.b         NoiseMade1LEFT
-                          beq.s         noturnoff3
-                          or.w          #8,d0
+                          tst.b              NoiseMade1LEFT
+                          beq.s              noturnoff3
+                          or.w               #8,d0
 
 noturnoff3:
-                          move.w        d0,dmacon(a6)
+                          move.w             d0,dmacon(a6)
  
 nomuckabout:
                           ; tst.b PLR2_fire
                           ; beq.s firenotpressed2
-                          ; fire was pressed last time.
-                          ; btst #7,$bfe001
+                          ; fire was pressed last time. 
+                          ; btst #7,$bfe001 ; LMB port 2
                           ; bne.s firenownotpressed2
                           ; fire is still pressed this time.
                           ; st PLR2_fire
@@ -7917,7 +8003,7 @@ firenownotpressed2:
 firenotpressed2:
                           ; fire was not pressed last frame...
 
-                          ; btst #7,$bfe001
+                          ; btst #7,$bfe001 ; LMB port 2
                           ; if it has still not been pressed, go back above
                           ; bne.s firenownotpressed2
                           ; fire was not pressed last time, and was this time, so has
@@ -7927,411 +8013,413 @@ firenotpressed2:
  
 dointer:
 
-                          cmp.b         #'4',Prefsfile+1
-                          beq           fourchannel
+                          cmp.b              #'4',Prefsfile+1
+                          beq                fourchannel
  
-                          btst          #1,$dff000+intreqr
-                          bne.s         newsampbitl
+                          lea                $dff000,a6
+                          btst               #1,intreqr(a6)                                                       ; 1 = AUDIO1
+                          bne.s              newSampBitl
 
-                          movem.l       (a7)+,d0-d7/a0-a6
+                          GETREGS
 
-                          IFNE          ENABLETIMER
-                          tst.b         counting
-                          beq.b         .nostartcounter1
-                          jsr           STARTCOUNT
+                          IFNE               ENABLETIMER
+                          tst.b              counting
+                          beq.b              .nostartcounter1
+                          jsr                STARTCOUNT
 .nostartcounter1:
                           ENDC
 
-                          moveq         #0,d0
+                          moveq              #0,d0
                           rts
  
 *********************************************************************************************
 
-swappedem:                dc.w          0
+swappedem:                dc.w               0
 
 *********************************************************************************************
+; Called from coppper interrrupt
 
-newsampbitl:
-
-                          move.w        #$820f,$dff000+dmacon
-                          move.w        #$200,$dff000+intreq
+newSampBitl:
+                          lea                $dff000,a6
+                          move.w             #$820f,dmacon(a6)                                                    ; Enable audio + master
+                          move.w             #$200,intreq(a6)                                                     ; 9 = AUD2
  
                           ; tst.b CHANNELDATA
                           ; bne nochannel0
  
-                          move.l        pos0LEFT,a0
-                          move.l        pos2LEFT,a1
+                          move.l             pos0LEFT,a0
+                          move.l             pos2LEFT,a1
 
-                          move.l        #tab,a2
+                          move.l             #tab,a2
  
-                          moveq         #0,d0
-                          moveq         #0,d1
-                          move.b        vol0left,d0
-                          move.b        vol2left,d1
-                          cmp.b         d1,d0
-                          slt           swappedem
-                          bge.s         fbig0
+                          moveq              #0,d0
+                          moveq              #0,d1
+                          move.b             vol0left,d0
+                          move.b             vol2left,d1
+                          cmp.b              d1,d0
+                          slt                swappedem
+                          bge.s              fbig0
 
 ; d1 is bigger so scale d0 and use d1 as audiochannel volume.
 
-                          exg           a0,a1
-                          asl.w         #6,d0
-                          divs          d1,d0
-                          lsl.w         #8,d0
-                          adda.w        d0,a2
-                          move.w        d1,$dff0a8
-                          bra.s         donechan0
+                          exg                a0,a1
+                          asl.w              #6,d0
+                          divs               d1,d0
+                          lsl.w              #8,d0
+                          adda.w             d0,a2
+                          move.w             d1,$dff0a8
+                          bra.s              donechan0
 
 fbig0:
-                          tst.w         d0
-                          beq.s         donechan0
-                          asl.w         #6,d1
-                          divs          d0,d1
-                          lsl.w         #8,d1
-                          adda.w        d1,a2
-                          move.w        d0,$dff0a8
+                          tst.w              d0
+                          beq.s              donechan0
+                          asl.w              #6,d1
+                          divs               d0,d1
+                          lsl.w              #8,d1
+                          adda.w             d1,a2
+                          move.w             d0,$dff0a8
 
 donechan0:
-                          move.l        Aupt0,a3
-                          move.l        a3,$dff0a0
-                          move.l        Auback0,Aupt0
-                          move.l        a3,Auback0
+                          move.l             Aupt0,a3
+                          move.l             a3,$dff0a0
+                          move.l             Auback0,Aupt0
+                          move.l             a3,Auback0
  
-                          move.l        Auback0,a3
+                          move.l             Auback0,a3
  
-                          moveq         #0,d0
-                          moveq         #0,d1
-                          moveq         #0,d2
-                          moveq         #0,d3
-                          moveq         #0,d4
-                          moveq         #0,d5
-                          move.w        #49,d7
+                          moveq              #0,d0
+                          moveq              #0,d1
+                          moveq              #0,d2
+                          moveq              #0,d3
+                          moveq              #0,d4
+                          moveq              #0,d5
+                          move.w             #49,d7
 
 loop:
-                          move.l        (a0)+,d0
-                          move.b        (a1)+,d1
-                          move.b        (a1)+,d2
-                          move.b        (a1)+,d3
-                          move.b        (a1)+,d4
-                          move.b        (a2,d3.w),d5
-                          swap          d5
-                          move.b        (a2,d1.w),d5
-                          asl.l         #8,d5
-                          move.b        (a2,d2.w),d5
-                          swap          d5
-                          move.b        (a2,d4.w),d5
-                          add.l         d5,d0
-                          move.l        d0,(a3)+
-                          dbra          d7,loop
+                          move.l             (a0)+,d0
+                          move.b             (a1)+,d1
+                          move.b             (a1)+,d2
+                          move.b             (a1)+,d3
+                          move.b             (a1)+,d4
+                          move.b             (a2,d3.w),d5
+                          swap               d5
+                          move.b             (a2,d1.w),d5
+                          asl.l              #8,d5
+                          move.b             (a2,d2.w),d5
+                          swap               d5
+                          move.b             (a2,d4.w),d5
+                          add.l              d5,d0
+                          move.l             d0,(a3)+
+                          dbra               d7,loop
 
-                          tst.b         swappedem
-                          beq.s         .ok23
-                          exg           a0,a1
+                          tst.b              swappedem
+                          beq.s              .ok23
+                          exg                a0,a1
 
 .ok23:
-                          cmp.l         Samp0endLEFT,a0
-                          blt.s         .notoffendsamp1
-                          move.l        SampleList+6*8,a0
-                          move.l        SampleList+6*8+4,Samp0endLEFT
-                          move.b        #63,vol0left
-                          st            LEFTCHANDATA+1
-                          move.w        #0,LEFTCHANDATA+2
+                          cmp.l              Samp0endLEFT,a0
+                          blt.s              .notoffendsamp1
+                          move.l             SampleList+6*8,a0
+                          move.l             SampleList+6*8+4,Samp0endLEFT
+                          move.b             #63,vol0left
+                          st                 LEFTCHANDATA+1
+                          move.w             #0,LEFTCHANDATA+2
 
 .notoffendsamp1:
-                          cmp.l         Samp2endLEFT,a1
-                          blt.s         .notoffendsamp2
-                          move.l        #empty,a1
-                          move.l        #emptyend,Samp2endLEFT
-                          move.b        #0,vol2left
-                          st            LEFTCHANDATA+1+8
-                          move.w        #0,LEFTCHANDATA+2+8
+                          cmp.l              Samp2endLEFT,a1
+                          blt.s              .notoffendsamp2
+                          move.l             #empty,a1
+                          move.l             #emptyend,Samp2endLEFT
+                          move.b             #0,vol2left
+                          st                 LEFTCHANDATA+1+8
+                          move.w             #0,LEFTCHANDATA+2+8
 
 .notoffendsamp2:
-                          move.l        a0,pos0LEFT
-                          move.l        a1,pos2LEFT
+                          move.l             a0,pos0LEFT
+                          move.l             a1,pos2LEFT
 
 nochannel0:
-                          tst.b         CHANNELDATA+16
-                          bne           nochannel1
+                          tst.b              CHANNELDATA+16
+                          bne                nochannel1
 
-                          move.l        pos0RIGHT,a0
-                          move.l        pos2RIGHT,a1
+                          move.l             pos0RIGHT,a0
+                          move.l             pos2RIGHT,a1
 
-                          move.l        Aupt1,a3
-                          move.l        a3,$dff0b0
-                          move.l        Auback1,Aupt1
-                          move.l        a3,Auback1
+                          move.l             Aupt1,a3
+                          move.l             a3,$dff0b0
+                          move.l             Auback1,Aupt1
+                          move.l             a3,Auback1
 
-                          move.l        #tab,a2
+                          move.l             #tab,a2
  
-                          moveq         #0,d0
-                          moveq         #0,d1
-                          move.b        vol0right,d0
-                          move.b        vol2right,d1
-                          cmp.b         d1,d0
-                          slt           swappedem
-                          bge.s         fbig1
+                          moveq              #0,d0
+                          moveq              #0,d1
+                          move.b             vol0right,d0
+                          move.b             vol2right,d1
+                          cmp.b              d1,d0
+                          slt                swappedem
+                          bge.s              fbig1
 
 ; d1 is bigger so scale d0 and use d1 as audiochannel volume.
 
-                          exg           a0,a1
-                          asl.w         #6,d0
-                          divs          d1,d0
-                          lsl.w         #8,d0
-                          adda.w        d0,a2
-                          move.w        d1,$dff0b8
-                          bra.s         donechan1
+                          exg                a0,a1
+                          asl.w              #6,d0
+                          divs               d1,d0
+                          lsl.w              #8,d0
+                          adda.w             d0,a2
+                          move.w             d1,$dff0b8
+                          bra.s              donechan1
 
 fbig1:
-                          tst.w         d0
-                          beq.s         donechan1
-                          asl.w         #6,d1
-                          divs          d0,d1
-                          lsl.w         #8,d1
-                          adda.w        d1,a2
-                          move.w        d0,$dff0b8
+                          tst.w              d0
+                          beq.s              donechan1
+                          asl.w              #6,d1
+                          divs               d0,d1
+                          lsl.w              #8,d1
+                          adda.w             d1,a2
+                          move.w             d0,$dff0b8
 
 donechan1:
-                          moveq         #0,d0
-                          moveq         #0,d1
-                          moveq         #0,d2
-                          moveq         #0,d3
-                          moveq         #0,d4
-                          moveq         #0,d5
-                          move.w        #49,d7
+                          moveq              #0,d0
+                          moveq              #0,d1
+                          moveq              #0,d2
+                          moveq              #0,d3
+                          moveq              #0,d4
+                          moveq              #0,d5
+                          move.w             #49,d7
 
 loop2:
-                          move.l        (a0)+,d0
-                          move.b        (a1)+,d1
-                          move.b        (a1)+,d2
-                          move.b        (a1)+,d3
-                          move.b        (a1)+,d4
-                          move.b        (a2,d3.w),d5
-                          swap          d5
-                          move.b        (a2,d1.w),d5
-                          asl.l         #8,d5
-                          move.b        (a2,d2.w),d5
-                          swap          d5
-                          move.b        (a2,d4.w),d5
-                          add.l         d5,d0
-                          move.l        d0,(a3)+
-                          dbra          d7,loop2
+                          move.l             (a0)+,d0
+                          move.b             (a1)+,d1
+                          move.b             (a1)+,d2
+                          move.b             (a1)+,d3
+                          move.b             (a1)+,d4
+                          move.b             (a2,d3.w),d5
+                          swap               d5
+                          move.b             (a2,d1.w),d5
+                          asl.l              #8,d5
+                          move.b             (a2,d2.w),d5
+                          swap               d5
+                          move.b             (a2,d4.w),d5
+                          add.l              d5,d0
+                          move.l             d0,(a3)+
+                          dbra               d7,loop2
  
-                          tst.b         swappedem
-                          beq.s         ok01
-                          exg           a0,a1
+                          tst.b              swappedem
+                          beq.s              ok01
+                          exg                a0,a1
 
 ok01:
-                          cmp.l         Samp0endRIGHT,a0
-                          blt.s         .notoffendsamp1
-                          move.l        #empty,a0
-                          move.l        #emptyend,Samp0endRIGHT
-                          move.b        #0,vol0right
-                          st            RIGHTCHANDATA+1
-                          move.w        #0,RIGHTCHANDATA+2
+                          cmp.l              Samp0endRIGHT,a0
+                          blt.s              .notoffendsamp1
+                          move.l             #empty,a0
+                          move.l             #emptyend,Samp0endRIGHT
+                          move.b             #0,vol0right
+                          st                 RIGHTCHANDATA+1
+                          move.w             #0,RIGHTCHANDATA+2
 
 .notoffendsamp1:
-                          cmp.l         Samp2endRIGHT,a1
-                          blt.s         .notoffendsamp2
-                          move.l        #empty,a1
-                          move.l        #emptyend,Samp2endRIGHT
-                          move.b        #0,vol2right
-                          st            RIGHTCHANDATA+1+8
-                          move.w        #0,RIGHTCHANDATA+2+8
+                          cmp.l              Samp2endRIGHT,a1
+                          blt.s              .notoffendsamp2
+                          move.l             #empty,a1
+                          move.l             #emptyend,Samp2endRIGHT
+                          move.b             #0,vol2right
+                          st                 RIGHTCHANDATA+1+8
+                          move.w             #0,RIGHTCHANDATA+2+8
 
 .notoffendsamp2:
-                          move.l        a0,pos0RIGHT
-                          move.l        a1,pos2RIGHT
+                          move.l             a0,pos0RIGHT
+                          move.l             a1,pos2RIGHT
 
 nochannel1:
 ; Other two channels
 
-                          move.l        pos1LEFT,a0
-                          move.l        pos3LEFT,a1
+                          move.l             pos1LEFT,a0
+                          move.l             pos3LEFT,a1
 
-                          move.l        #tab,a2
+                          move.l             #tab,a2
  
-                          moveq         #0,d0
-                          moveq         #0,d1
-                          move.b        vol1left,d0
-                          move.b        vol3left,d1
-                          cmp.b         d1,d0
-                          slt           swappedem
-                          bge.s         fbig2
+                          moveq              #0,d0
+                          moveq              #0,d1
+                          move.b             vol1left,d0
+                          move.b             vol3left,d1
+                          cmp.b              d1,d0
+                          slt                swappedem
+                          bge.s              fbig2
 
 ; d1 is bigger so scale d0 and use d1 as audiochannel volume.
 
-                          exg           a0,a1
-                          asl.w         #6,d0
-                          divs          d1,d0
-                          lsl.w         #8,d0
-                          adda.w        d0,a2
-                          move.w        d1,$dff0d8
-                          bra.s         donechan2
+                          exg                a0,a1
+                          asl.w              #6,d0
+                          divs               d1,d0
+                          lsl.w              #8,d0
+                          adda.w             d0,a2
+                          move.w             d1,$dff0d8
+                          bra.s              donechan2
 
 fbig2:
-                          tst.w         d0
-                          beq.s         donechan2
-                          asl.w         #6,d1
-                          divs          d0,d1
-                          lsl.w         #8,d1
-                          adda.w        d1,a2
-                          move.w        d0,$dff0d8
+                          tst.w              d0
+                          beq.s              donechan2
+                          asl.w              #6,d1
+                          divs               d0,d1
+                          lsl.w              #8,d1
+                          adda.w             d1,a2
+                          move.w             d0,$dff0d8
 
 donechan2:
-                          move.l        Aupt2,a3
-                          move.l        a3,$dff0d0
-                          move.l        Auback2,Aupt2
-                          move.l        a3,Auback2
+                          move.l             Aupt2,a3
+                          move.l             a3,$dff0d0
+                          move.l             Auback2,Aupt2
+                          move.l             a3,Auback2
  
-                          moveq         #0,d0
-                          moveq         #0,d1
-                          moveq         #0,d2
-                          moveq         #0,d3
-                          moveq         #0,d4
-                          moveq         #0,d5
-                          move.w        #49,d7
+                          moveq              #0,d0
+                          moveq              #0,d1
+                          moveq              #0,d2
+                          moveq              #0,d3
+                          moveq              #0,d4
+                          moveq              #0,d5
+                          move.w             #49,d7
 
 loop3:
-                          move.l        (a0)+,d0
-                          move.b        (a1)+,d1
-                          move.b        (a1)+,d2
-                          move.b        (a1)+,d3
-                          move.b        (a1)+,d4
-                          move.b        (a2,d3.w),d5
-                          swap          d5
-                          move.b        (a2,d1.w),d5
-                          asl.l         #8,d5
-                          move.b        (a2,d2.w),d5
-                          swap          d5
-                          move.b        (a2,d4.w),d5
-                          add.l         d5,d0
-                          move.l        d0,(a3)+
-                          dbra          d7,loop3
+                          move.l             (a0)+,d0
+                          move.b             (a1)+,d1
+                          move.b             (a1)+,d2
+                          move.b             (a1)+,d3
+                          move.b             (a1)+,d4
+                          move.b             (a2,d3.w),d5
+                          swap               d5
+                          move.b             (a2,d1.w),d5
+                          asl.l              #8,d5
+                          move.b             (a2,d2.w),d5
+                          swap               d5
+                          move.b             (a2,d4.w),d5
+                          add.l              d5,d0
+                          move.l             d0,(a3)+
+                          dbra               d7,loop3
 
-                          tst.b         swappedem
-                          beq.s         .ok23
-                          exg           a0,a1
+                          tst.b              swappedem
+                          beq.s              .ok23
+                          exg                a0,a1
 
 .ok23:
-                          cmp.l         Samp1endLEFT,a0
-                          blt.s         .notoffendsamp3
-                          move.l        #empty,a0
-                          move.l        #emptyend,Samp1endLEFT
-                          move.b        #0,vol1left
-                          st            LEFTCHANDATA+1+4
-                          move.w        #0,LEFTCHANDATA+2+4
+                          cmp.l              Samp1endLEFT,a0
+                          blt.s              .notoffendsamp3
+                          move.l             #empty,a0
+                          move.l             #emptyend,Samp1endLEFT
+                          move.b             #0,vol1left
+                          st                 LEFTCHANDATA+1+4
+                          move.w             #0,LEFTCHANDATA+2+4
 
 .notoffendsamp3:
-                          cmp.l         Samp3endLEFT,a1
-                          blt.s         .notoffendsamp4
-                          move.l        #empty,a1
-                          move.l        #emptyend,Samp3endLEFT
-                          move.b        #0,vol3left
-                          st            LEFTCHANDATA+1+12
-                          move.w        #0,LEFTCHANDATA+2+12
+                          cmp.l              Samp3endLEFT,a1
+                          blt.s              .notoffendsamp4
+                          move.l             #empty,a1
+                          move.l             #emptyend,Samp3endLEFT
+                          move.b             #0,vol3left
+                          st                 LEFTCHANDATA+1+12
+                          move.w             #0,LEFTCHANDATA+2+12
 
 .notoffendsamp4:
-                          move.l        a0,pos1LEFT
-                          move.l        a1,pos3LEFT
+                          move.l             a0,pos1LEFT
+                          move.l             a1,pos3LEFT
  
-                          move.l        pos1RIGHT,a0
-                          move.l        pos3RIGHT,a1
+                          move.l             pos1RIGHT,a0
+                          move.l             pos3RIGHT,a1
 
-                          move.l        Aupt3,a3
-                          move.l        a3,$dff0c0
-                          move.l        Auback3,Aupt3
-                          move.l        a3,Auback3
+                          move.l             Aupt3,a3
+                          move.l             a3,$dff0c0
+                          move.l             Auback3,Aupt3
+                          move.l             a3,Auback3
 
-                          move.l        #tab,a2
+                          move.l             #tab,a2
  
-                          moveq         #0,d0
-                          moveq         #0,d1
-                          move.b        vol1right,d0
-                          move.b        vol3right,d1
-                          cmp.b         d1,d0
-                          slt           swappedem
-                          bge.s         fbig3
+                          moveq              #0,d0
+                          moveq              #0,d1
+                          move.b             vol1right,d0
+                          move.b             vol3right,d1
+                          cmp.b              d1,d0
+                          slt                swappedem
+                          bge.s              fbig3
 
-                          exg           a0,a1
-                          asl.w         #6,d0
-                          divs          d1,d0
-                          lsl.w         #8,d0
-                          adda.w        d0,a2
-                          move.w        d1,$dff0c8
-                          bra.s         donechan3
+                          exg                a0,a1
+                          asl.w              #6,d0
+                          divs               d1,d0
+                          lsl.w              #8,d0
+                          adda.w             d0,a2
+                          move.w             d1,$dff0c8
+                          bra.s              donechan3
 
 fbig3:
-                          tst.w         d0
-                          beq.s         donechan3
-                          asl.w         #6,d1
-                          divs          d0,d1
-                          lsl.w         #8,d1
-                          adda.w        d1,a2
-                          move.w        d0,$dff0c8
+                          tst.w              d0
+                          beq.s              donechan3
+                          asl.w              #6,d1
+                          divs               d0,d1
+                          lsl.w              #8,d1
+                          adda.w             d1,a2
+                          move.w             d0,$dff0c8
 
 donechan3:
-                          moveq         #0,d0
-                          moveq         #0,d1
-                          moveq         #0,d2
-                          moveq         #0,d3
-                          moveq         #0,d4
-                          moveq         #0,d5
-                          move.w        #49,d7
+                          moveq              #0,d0
+                          moveq              #0,d1
+                          moveq              #0,d2
+                          moveq              #0,d3
+                          moveq              #0,d4
+                          moveq              #0,d5
+                          move.w             #49,d7
 
 loop4:
-                          move.l        (a0)+,d0
-                          move.b        (a1)+,d1
-                          move.b        (a1)+,d2
-                          move.b        (a1)+,d3
-                          move.b        (a1)+,d4
-                          move.b        (a2,d3.w),d5
-                          swap          d5
-                          move.b        (a2,d1.w),d5
-                          asl.l         #8,d5
-                          move.b        (a2,d2.w),d5
-                          swap          d5
-                          move.b        (a2,d4.w),d5
-                          add.l         d5,d0
-                          move.l        d0,(a3)+
-                          dbra          d7,loop4
+                          move.l             (a0)+,d0
+                          move.b             (a1)+,d1
+                          move.b             (a1)+,d2
+                          move.b             (a1)+,d3
+                          move.b             (a1)+,d4
+                          move.b             (a2,d3.w),d5
+                          swap               d5
+                          move.b             (a2,d1.w),d5
+                          asl.l              #8,d5
+                          move.b             (a2,d2.w),d5
+                          swap               d5
+                          move.b             (a2,d4.w),d5
+                          add.l              d5,d0
+                          move.l             d0,(a3)+
+                          dbra               d7,loop4
  
-                          tst.b         swappedem
-                          beq.s         .ok23
-                          exg           a0,a1
+                          tst.b              swappedem
+                          beq.s              .ok23
+                          exg                a0,a1
 
 .ok23:
-                          cmp.l         Samp1endRIGHT,a0
-                          blt.s         notoffendsamp3
-                          move.l        #empty,a0
-                          move.l        #emptyend,Samp1endRIGHT
-                          move.b        #0,vol1right
-                          st            RIGHTCHANDATA+1+4
-                          move.w        #0,RIGHTCHANDATA+2+4
+                          cmp.l              Samp1endRIGHT,a0
+                          blt.s              notoffendsamp3
+                          move.l             #empty,a0
+                          move.l             #emptyend,Samp1endRIGHT
+                          move.b             #0,vol1right
+                          st                 RIGHTCHANDATA+1+4
+                          move.w             #0,RIGHTCHANDATA+2+4
 
 notoffendsamp3:
-                          cmp.l         Samp3endRIGHT,a1
-                          blt.s         notoffendsamp4
-                          move.l        #empty,a1
-                          move.l        #emptyend,Samp3endRIGHT
-                          move.b        #0,vol3right
-                          st            RIGHTCHANDATA+1+12
-                          move.w        #0,RIGHTCHANDATA+2+12
+                          cmp.l              Samp3endRIGHT,a1
+                          blt.s              notoffendsamp4
+                          move.l             #empty,a1
+                          move.l             #emptyend,Samp3endRIGHT
+                          move.b             #0,vol3right
+                          st                 RIGHTCHANDATA+1+12
+                          move.w             #0,RIGHTCHANDATA+2+12
 
 notoffendsamp4:
-                          move.l        a0,pos1RIGHT
-                          move.l        a1,pos3RIGHT
+                          move.l             a0,pos1RIGHT
+                          move.l             a1,pos3RIGHT
 
-                          movem.l       (a7)+,d0-d7/a0-a6
+                          GETREGS
 
-                          IFNE          ENABLETIMER
-                          tst.b         counting
-                          beq.b         .nostartcounter2
-                          jsr           STARTCOUNT
+                          IFNE               ENABLETIMER
+                          tst.b              counting
+                          beq.b              .nostartcounter2
+                          jsr                STARTCOUNT
 .nostartcounter2:
                           ENDC
 
-                          moveq         #0,d0
+                          moveq              #0,d0
                           rts
 
 *********************************************************************************************
@@ -8339,107 +8427,109 @@ notoffendsamp4:
 
 fourchannel:
 
-                          move.l        #$dff000,a6
+                          lea                $dff000,a6
 
-                          btst          #7,intreqrl(a6)
-                          beq.s         nofinish0
+                          btst               #7,intreqrl(a6)                                                      ; 7 = Audi 0 block not finnished
+                          beq.s              nofinish0
+
                           ; move.w #0,LEFTCHANDATA+2
                           ; st LEFTCHANDATA+1
-                          move.l        #null,$a0(a6)
-                          move.w        #100,$a4(a6) 
-                          move.w        #$0080,intreq(a6)
+
+                          move.l             #null,$0a0(a6)                                                       ; aud0
+                          move.w             #100,$0a4(a6)                                                        ; aud0 + ac_len  
+                          move.w             #$0080,intreq(a6)                                                    ; 7 = aud0 block finnished
 nofinish0:
  
-                          tst.b         NoiseMade0pLEFT
-                          beq.s         NoChan0sound
+                          tst.b              NoiseMade0pLEFT
+                          beq.s              NoChan0sound
 
-                          move.l        Samp0endLEFT,d0
-                          move.l        pos0LEFT,d1
-                          sub.l         d1,d0
-                          lsr.l         #1,d0
-                          move.w        d0,$a4(a6)
-                          move.l        d1,$a0(a6)
-                          move.w        #$8201,dmacon(a6)
-                          moveq         #0,d0
-                          move.b        vol0left,d0
-                          move.w        d0,$a8(a6)
+                          move.l             Samp0endLEFT,d0
+                          move.l             pos0LEFT,d1
+                          sub.l              d1,d0
+                          lsr.l              #1,d0
+                          move.w             d0,$a4(a6)
+                          move.l             d1,$a0(a6)
+                          move.w             #$8201,dmacon(a6)
+                          moveq              #0,d0
+                          move.b             vol0left,d0
+                          move.w             d0,$a8(a6)
 
 NoChan0sound:
-                          btst          #0,intreqr(a6)
-                          beq.s         nofinish1
-                          move.l        #null,$b0(a6)
-                          move.w        #100,$b4(a6)
-                          move.w        #$0100,intreq(a6)
+                          btst               #0,intreqr(a6)                                                       ; 0 = AUD1
+                          beq.s              nofinish1
+                          move.l             #null,$b0(a6)
+                          move.w             #100,$b4(a6)
+                          move.w             #$0100,intreq(a6)                                                    ; 0 = AUD1
 
 nofinish1:
-                          tst.b         NoiseMade0pRIGHT
-                          beq.s         NoChan1sound
+                          tst.b              NoiseMade0pRIGHT
+                          beq.s              NoChan1sound
 
-                          move.l        Samp0endRIGHT,d0
-                          move.l        pos0RIGHT,d1
-                          sub.l         d1,d0
-                          lsr.l         #1,d0
-                          move.w        d0,$b4(a6)
-                          move.l        d1,$b0(a6)
-                          move.w        d0,playnull1
-                          move.w        #$8202,dmacon(a6)
-                          moveq         #0,d0
-                          move.b        vol0right,d0
-                          move.w        d0,$b8(a6)
+                          move.l             Samp0endRIGHT,d0
+                          move.l             pos0RIGHT,d1
+                          sub.l              d1,d0
+                          lsr.l              #1,d0
+                          move.w             d0,$b4(a6)
+                          move.l             d1,$b0(a6)
+                          move.w             d0,playnull1
+                          move.w             #$8202,dmacon(a6)
+                          moveq              #0,d0
+                          move.b             vol0right,d0
+                          move.w             d0,$b8(a6)
 
 NoChan1sound:
-                          btst          #1,intreqr(a6)
-                          beq.s         nofinish2
-                          move.l        #null,$c0(a6)
-                          move.w        #100,$c4(a6)
-                          move.w        #$0200,intreq(a6)
+                          btst               #1,intreqr(a6)                                                       ; 0 = AUD2
+                          beq.s              nofinish2
+                          move.l             #null,$c0(a6)
+                          move.w             #100,$c4(a6)
+                          move.w             #$0200,intreq(a6)                                                    ; 0 = AUD2
 
 nofinish2:
-                          tst.b         NoiseMade1pRIGHT
-                          beq.s         NoChan2sound
+                          tst.b              NoiseMade1pRIGHT
+                          beq.s              NoChan2sound
 
-                          move.l        Samp1endRIGHT,d0
-                          move.l        pos1RIGHT,d1
-                          sub.l         d1,d0
-                          lsr.l         #1,d0
-                          move.w        d0,$c4(a6)
-                          move.w        d0,playnull2
+                          move.l             Samp1endRIGHT,d0
+                          move.l             pos1RIGHT,d1
+                          sub.l              d1,d0
+                          lsr.l              #1,d0
+                          move.w             d0,$c4(a6)
+                          move.w             d0,playnull2
  
-                          move.l        d1,$c0(a6)
-                          move.w        #$8204,dmacon(a6)
-                          moveq         #0,d0
-                          move.b        vol1right,d0
-                          move.w        d0,$c8(a6)
+                          move.l             d1,$c0(a6)
+                          move.w             #$8204,dmacon(a6)
+                          moveq              #0,d0
+                          move.b             vol1right,d0
+                          move.w             d0,$c8(a6)
 
 NoChan2sound:
-                          btst          #2,intreqr(a6)
-                          beq.s         nofinish3
-                          move.l        #null,$d0(a6)
-                          move.w        #100,$d4(a6)
-                          move.w        #$0400,intreq(a6)
+                          btst               #2,intreqr(a6)                                                       ; 0 = AUD3
+                          beq.s              nofinish3
+                          move.l             #null,$d0(a6)
+                          move.w             #100,$d4(a6)
+                          move.w             #$0400,intreq(a6)                                                    ; 0 = AUD3
 
 nofinish3:
-                          tst.b         NoiseMade1pLEFT
-                          beq.s         NoChan3sound
+                          tst.b              NoiseMade1pLEFT
+                          beq.s              NoChan3sound
 
-                          move.l        Samp1endLEFT,d0
-                          move.l        pos1LEFT,d1
-                          sub.l         d1,d0
-                          lsr.l         #1,d0
-                          move.w        d0,$d4(a6)
-                          move.w        d0,playnull3
-                          move.l        d1,$d0(a6)
-                          move.w        #$8208,dmacon(a6)
-                          moveq         #0,d0
-                          move.b        vol1left,d0
-                          move.w        d0,$d8(a6)
+                          move.l             Samp1endLEFT,d0
+                          move.l             pos1LEFT,d1
+                          sub.l              d1,d0
+                          lsr.l              #1,d0
+                          move.w             d0,$d4(a6)
+                          move.w             d0,playnull3
+                          move.l             d1,$d0(a6)
+                          move.w             #$8208,dmacon(a6)
+                          moveq              #0,d0
+                          move.b             vol1left,d0
+                          move.w             d0,$d8(a6)
  
 NoChan3sound:
 nomorechannels:
-                          move.l        NoiseMade0LEFT,NoiseMade0pLEFT
-                          move.l        #0,NoiseMade0LEFT
-                          move.l        NoiseMade0RIGHT,NoiseMade0pRIGHT
-                          move.l        #0,NoiseMade0RIGHT
+                          move.l             NoiseMade0LEFT,NoiseMade0pLEFT
+                          move.l             #0,NoiseMade0LEFT
+                          move.l             NoiseMade0RIGHT,NoiseMade0pRIGHT
+                          move.l             #0,NoiseMade0RIGHT
 
                           ; tst.b playnull0
                           ; beq.s .nnul
@@ -8449,113 +8539,113 @@ nomorechannels:
                           ; 
                           ;chan0still:
 
-                          tst.b         NoiseMade0pLEFT
-                          bne.s         chan0still
-                          tst.w         playnull0
-                          beq.s         nnul0
-                          sub.w         #100,playnull0
-                          bra.s         chan0still
+                          tst.b              NoiseMade0pLEFT
+                          bne.s              chan0still
+                          tst.w              playnull0
+                          beq.s              nnul0
+                          sub.w              #100,playnull0
+                          bra.s              chan0still
 
 nnul0:
-                          move.w        #0,LEFTCHANDATA+2
-                          st            LEFTCHANDATA+1
+                          move.w             #0,LEFTCHANDATA+2
+                          st                 LEFTCHANDATA+1
 
 chan0still:
-                          tst.b         NoiseMade0pRIGHT
-                          bne.s         chan1still
-                          tst.w         playnull1
-                          beq.s         nnul1
-                          sub.w         #100,playnull1
-                          bra.s         chan1still
+                          tst.b              NoiseMade0pRIGHT
+                          bne.s              chan1still
+                          tst.w              playnull1
+                          beq.s              nnul1
+                          sub.w              #100,playnull1
+                          bra.s              chan1still
 
 nnul1:
-                          move.w        #0,RIGHTCHANDATA+2
-                          st            RIGHTCHANDATA+1
+                          move.w             #0,RIGHTCHANDATA+2
+                          st                 RIGHTCHANDATA+1
 
 chan1still:
-                          tst.b         NoiseMade1pRIGHT
-                          bne.s         chan2still
-                          tst.w         playnull2
-                          beq.s         nnul2
-                          sub.w         #100,playnull2
-                          bra.s         chan2still
+                          tst.b              NoiseMade1pRIGHT
+                          bne.s              chan2still
+                          tst.w              playnull2
+                          beq.s              nnul2
+                          sub.w              #100,playnull2
+                          bra.s              chan2still
 
 nnul2:
-                          move.w        #0,RIGHTCHANDATA+2+4
-                          st            RIGHTCHANDATA+1+4
+                          move.w             #0,RIGHTCHANDATA+2+4
+                          st                 RIGHTCHANDATA+1+4
 
 chan2still:
-                          tst.b         NoiseMade1pLEFT
-                          bne.s         chan3still
-                          tst.w         playnull3
-                          beq.s         nnul3
-                          sub.w         #100,playnull3
-                          bra.s         chan3still
+                          tst.b              NoiseMade1pLEFT
+                          bne.s              chan3still
+                          tst.w              playnull3
+                          beq.s              nnul3
+                          sub.w              #100,playnull3
+                          bra.s              chan3still
 
 nnul3:
-                          move.w        #0,LEFTCHANDATA+2+4
-                          st            LEFTCHANDATA+1+4
+                          move.w             #0,LEFTCHANDATA+2+4
+                          st                 LEFTCHANDATA+1+4
  
 chan3still:
-                          movem.l       (a7)+,d0-d7/a0-a6
+                          GETREGS
 
-                          IFNE          ENABLETIMER
-                          tst.b         counting
-                          beq.b         .nostartcounter3
-                          jsr           STARTCOUNT
+                          IFNE               ENABLETIMER
+                          tst.b              counting
+                          beq.b              .nostartcounter3
+                          jsr                STARTCOUNT
 .nostartcounter3:
                           ENDC
 
-                          moveq         #0,d0
+                          moveq              #0,d0
                           rts
 
 *********************************************************************************************
 
-backbeat:                 dc.w          0
+backbeat:                 dc.w               0
 
-playnull0:                dc.w          0
-playnull1:                dc.w          0
-playnull2:                dc.w          0
-playnull3:                dc.w          0
+playnull0:                dc.w               0
+playnull1:                dc.w               0
+playnull2:                dc.w               0
+playnull3:                dc.w               0
 
 *********************************************************************************************
 
-Samp0endRIGHT:            dc.l          emptyend
-Samp1endRIGHT:            dc.l          emptyend
-Samp2endRIGHT:            dc.l          emptyend
-Samp3endRIGHT:            dc.l          emptyend
-Samp0endLEFT:             dc.l          emptyend
-Samp1endLEFT:             dc.l          emptyend
-Samp2endLEFT:             dc.l          emptyend
-Samp3endLEFT:             dc.l          emptyend
+Samp0endRIGHT:            dc.l               emptyend
+Samp1endRIGHT:            dc.l               emptyend
+Samp2endRIGHT:            dc.l               emptyend
+Samp3endRIGHT:            dc.l               emptyend
+Samp0endLEFT:             dc.l               emptyend
+Samp1endLEFT:             dc.l               emptyend
+Samp2endLEFT:             dc.l               emptyend
+Samp3endLEFT:             dc.l               emptyend
 
-Aupt0:                    dc.l          null
-Auback0:                  dc.l          null+500
-Aupt2:                    dc.l          null3
-Auback2:                  dc.l          null3+500
-Aupt3:                    dc.l          null4
-Auback3:                  dc.l          null4+500
-Aupt1:                    dc.l          null2
-Auback1:                  dc.l          null2+500
+Aupt0:                    dc.l               null
+Auback0:                  dc.l               null+500
+Aupt2:                    dc.l               null3
+Auback2:                  dc.l               null3+500
+Aupt3:                    dc.l               null4
+Auback3:                  dc.l               null4+500
+Aupt1:                    dc.l               null2
+Auback1:                  dc.l               null2+500
 
-NoiseMade0LEFT:           dc.b          0
-NoiseMade1LEFT:           dc.b          0
-NoiseMade2LEFT:           dc.b          0
-NoiseMade3LEFT:           dc.b          0
-NoiseMade0pLEFT:          dc.b          0
-NoiseMade1pLEFT:          dc.b          0
-NoiseMade2pLEFT:          dc.b          0
-NoiseMade3pLEFT:          dc.b          0
-NoiseMade0RIGHT:          dc.b          0
-NoiseMade1RIGHT:          dc.b          0
-NoiseMade2RIGHT:          dc.b          0
-NoiseMade3RIGHT:          dc.b          0
-NoiseMade0pRIGHT:         dc.b          0
-NoiseMade1pRIGHT:         dc.b          0
-NoiseMade2pRIGHT:         dc.b          0
-NoiseMade3pRIGHT:         dc.b          0
+NoiseMade0LEFT:           dc.b               0
+NoiseMade1LEFT:           dc.b               0
+NoiseMade2LEFT:           dc.b               0
+NoiseMade3LEFT:           dc.b               0
+NoiseMade0pLEFT:          dc.b               0
+NoiseMade1pLEFT:          dc.b               0
+NoiseMade2pLEFT:          dc.b               0
+NoiseMade3pLEFT:          dc.b               0
+NoiseMade0RIGHT:          dc.b               0
+NoiseMade1RIGHT:          dc.b               0
+NoiseMade2RIGHT:          dc.b               0
+NoiseMade3RIGHT:          dc.b               0
+NoiseMade0pRIGHT:         dc.b               0
+NoiseMade1pRIGHT:         dc.b               0
+NoiseMade2pRIGHT:         dc.b               0
+NoiseMade3pRIGHT:         dc.b               0
 
-empty:                    ds.l          100
+empty:                    ds.l               100
 emptyend:
 
 *********************************************************************************************
@@ -8564,30 +8654,30 @@ emptyend:
 ; work, given say position of noise, volume
 ; and sample number.
 
-Samplenum:                dc.w          0
-Noisex:                   dc.w          0
-Noisez:                   dc.w          0
-Noisevol:                 dc.w          0
-chanpick:                 dc.w          0
-IDNUM:                    dc.w          0
-needleft:                 dc.b          0
-needright:                dc.b          0
-STEREO:                   dc.b          $0
+Samplenum:                dc.w               0
+Noisex:                   dc.w               0
+Noisez:                   dc.w               0
+Noisevol:                 dc.w               0
+chanpick:                 dc.w               0
+IDNUM:                    dc.w               0
+needleft:                 dc.b               0
+needright:                dc.b               0
+STEREO:                   dc.b               $0
                           even
  
 CHANNELDATA:
-LEFTCHANDATA:             dc.l          $00000000
-                          dc.l          $00000000
-                          dc.l          $FF000000
-                          dc.l          $FF000000
+LEFTCHANDATA:             dc.l               $00000000
+                          dc.l               $00000000
+                          dc.l               $FF000000
+                          dc.l               $FF000000
 
-RIGHTCHANDATA:            dc.l          $00000000
-                          dc.l          $00000000
-                          dc.l          $FF000000
-                          dc.l          $FF000000
+RIGHTCHANDATA:            dc.l               $00000000
+                          dc.l               $00000000
+                          dc.l               $FF000000
+                          dc.l               $FF000000
  
-RIGHTPLAYEDTAB:           ds.l          20
-LEFTPLAYEDTAB:            ds.l          20
+RIGHTPLAYEDTAB:           ds.l               20
+LEFTPLAYEDTAB:            ds.l               20
 
 *********************************************************************************************
 
@@ -8616,32 +8706,32 @@ MakeSomeNoise:
 ; the sound channels
 
 
-                          tst.b         notifplaying
-                          beq.s         dontworry
+                          tst.b              notifplaying
+                          beq.s              dontworry
 
 ; find if we are already playing
 
-                          move.b        IDNUM,d0
-                          move.w        #7,d1
-                          lea           CHANNELDATA,a3
+                          move.b             IDNUM,d0
+                          move.w             #7,d1
+                          lea                CHANNELDATA,a3
 
 findsameasme:
-                          tst.b         (a3)
-                          bne.s         notavail
-                          cmp.b         1(a3),d0
-                          beq.b         SameAsMe
+                          tst.b              (a3)
+                          bne.s              notavail
+                          cmp.b              1(a3),d0
+                          beq.b              SameAsMe
 
 notavail:
-                          add.w         #4,a3
-                          dbra          d1,findsameasme
-                          bra.b         dontworry
+                          add.w              #4,a3
+                          dbra               d1,findsameasme
+                          bra.b              dontworry
 
 SameAsMe:
                           rts
 
 *********************************************************************************************
 
-noiseloud:                dc.w          0
+noiseloud:                dc.w               0
 
 *********************************************************************************************
 
@@ -8650,330 +8740,330 @@ dontworry:
 ; Ok its fine for us to play a sound.
 ; So calculate left/right volume.
 
-                          move.w        Noisex,d1
-                          muls          d1,d1
-                          move.w        Noisez,d2
-                          muls          d2,d2
-                          move.w        #64,d3
-                          move.w        #32767,noiseloud
-                          moveq         #1,d0
-                          add.l         d1,d2
-                          beq.b         pastcalc
+                          move.w             Noisex,d1
+                          muls               d1,d1
+                          move.w             Noisez,d2
+                          muls               d2,d2
+                          move.w             #64,d3
+                          move.w             #32767,noiseloud
+                          moveq              #1,d0
+                          add.l              d1,d2
+                          beq.b              pastcalc
 
-                          move.w        #31,d0
+                          move.w             #31,d0
 
 .findhigh:
-                          btst          d0,d2
-                          bne.b         .foundhigh
-                          dbra          d0,.findhigh
+                          btst               d0,d2
+                          bne.b              .foundhigh
+                          dbra               d0,.findhigh
 
 .foundhigh:
-                          asr.w         #1,d0
-                          clr.l         d3
-                          bset          d0,d3
-                          move.l        d3,d0
+                          asr.w              #1,d0
+                          clr.l              d3
+                          bset               d0,d3
+                          move.l             d3,d0
 
-                          move.w        d0,d3
-                          muls          d3,d3                                                                ; x*x
-                          sub.l         d2,d3                                                                ; x*x-a
-                          asr.l         #1,d3                                                                ; (x*x-a)/2
-                          divs          d0,d3                                                                ; (x*x-a)/2x
-                          sub.w         d3,d0                                                                ; second approx
-                          bgt.b         .stillnot0
-                          move.w        #1,d0
+                          move.w             d0,d3
+                          muls               d3,d3                                                                ; x*x
+                          sub.l              d2,d3                                                                ; x*x-a
+                          asr.l              #1,d3                                                                ; (x*x-a)/2
+                          divs               d0,d3                                                                ; (x*x-a)/2x
+                          sub.w              d3,d0                                                                ; second approx
+                          bgt.b              .stillnot0
+                          move.w             #1,d0
 
 .stillnot0:
-                          move.w        d0,d3
-                          muls          d3,d3
-                          sub.l         d2,d3
-                          asr.l         #1,d3
-                          divs          d0,d3
-                          sub.w         d3,d0                                                                ; second approx
-                          bgt.b         .stillnot02
-                          move.w        #1,d0
+                          move.w             d0,d3
+                          muls               d3,d3
+                          sub.l              d2,d3
+                          asr.l              #1,d3
+                          divs               d0,d3
+                          sub.w              d3,d0                                                                ; second approx
+                          bgt.b              .stillnot02
+                          move.w             #1,d0
 
 .stillnot02:
-                          move.w        Noisevol,d3
-                          ext.l         d3
-                          asl.l         #6,d3
-                          cmp.l         #32767,d3
-                          ble.s         .nnnn
-                          move.l        #32767,d3
+                          move.w             Noisevol,d3
+                          ext.l              d3
+                          asl.l              #6,d3
+                          cmp.l              #32767,d3
+                          ble.s              .nnnn
+                          move.l             #32767,d3
 
 .nnnn:
-                          asr.w         #2,d0
-                          addq          #1,d0
-                          divs          d0,d3
+                          asr.w              #2,d0
+                          addq               #1,d0
+                          divs               d0,d3
  
-                          move.w        d3,noiseloud
+                          move.w             d3,noiseloud
 
-                          cmp.w         #64,d3
-                          ble.s         notooloud
-                          move.w        #64,d3
+                          cmp.w              #64,d3
+                          ble.s              notooloud
+                          move.w             #64,d3
 
 notooloud:
 pastcalc:
 	; d3 contains volume of noise.
 	
-                          move.w        d3,d4
+                          move.w             d3,d4
  
-                          move.w        d3,d2
-                          muls          Noisex,d2
-                          asl.w         #3,d0
-                          divs          d0,d2
+                          move.w             d3,d2
+                          muls               Noisex,d2
+                          asl.w              #3,d0
+                          divs               d0,d2
  
-                          bgt.s         quietleft
-                          add.w         d2,d4
-                          bge.s         donequiet
-                          move.w        #0,d4
-                          bra.s         donequiet
+                          bgt.s              quietleft
+                          add.w              d2,d4
+                          bge.s              donequiet
+                          move.w             #0,d4
+                          bra.s              donequiet
 
 quietleft:
-                          sub.w         d2,d3
-                          bge.s         donequiet
-                          move.w        #0,d3
+                          sub.w              d2,d3
+                          bge.s              donequiet
+                          move.w             #0,d3
 
 donequiet:
 ; d3=leftvol?
 ; d4=rightvol?
 
-                          clr.w         needleft
+                          clr.w              needleft
 
-                          cmp.b         d3,d4
-                          bgt.s         RightLouder
+                          cmp.b              d3,d4
+                          bgt.s              RightLouder
  
 ; Left is louder; is it MUCH louder?
 
-                          st            needleft
-                          move.w        d3,d2
-                          sub.w         d4,d2
-                          cmp.w         #32,d2
-                          slt           needright
-                          bra.b         aboutsame
+                          st                 needleft
+                          move.w             d3,d2
+                          sub.w              d4,d2
+                          cmp.w              #32,d2
+                          slt                needright
+                          bra.b              aboutsame
  
 RightLouder:
-                          st            needright
-                          move.w        d4,d2
-                          sub.w         d3,d2
-                          cmp.w         #32,d2
-                          slt           needleft
+                          st                 needright
+                          move.w             d4,d2
+                          sub.w              d3,d2
+                          cmp.w              #32,d2
+                          slt                needleft
  
 aboutsame:
-                          tst.b         STEREO
-                          beq           NOSTEREO
+                          tst.b              STEREO
+                          beq                NOSTEREO
 
 ; Find least important sound on left
 
-                          move.l        #0,a2
-                          move.l        #0,d5
-                          move.w        #32767,d2
-                          move.b        IDNUM,d0
-                          lea           LEFTCHANDATA,a3
-                          move.w        #3,d1
+                          move.l             #0,a2
+                          move.l             #0,d5
+                          move.w             #32767,d2
+                          move.b             IDNUM,d0
+                          lea                LEFTCHANDATA,a3
+                          move.w             #3,d1
 
 FindLeftChannel
-                          tst.b         (a3)
-                          bne.s         .notactive
-                          cmp.b         1(a3),d0
-                          beq.s         FOUNDLEFT
-                          cmp.w         2(a3),d2
-                          blt.s         .notactive
-                          move.w        2(a3),d2
-                          move.l        a3,a2
-                          move.w        d5,d6
+                          tst.b              (a3)
+                          bne.s              .notactive
+                          cmp.b              1(a3),d0
+                          beq.s              FOUNDLEFT
+                          cmp.w              2(a3),d2
+                          blt.s              .notactive
+                          move.w             2(a3),d2
+                          move.l             a3,a2
+                          move.w             d5,d6
 
 .notactive:
-                          add.w         #4,a3
-                          add.w         #1,d5
-                          dbra          d1,FindLeftChannel
-                          move.l        a2,a3
-                          bra.s         gopastleft
+                          add.w              #4,a3
+                          add.w              #1,d5
+                          dbra               d1,FindLeftChannel
+                          move.l             a2,a3
+                          bra.s              gopastleft
 
 FOUNDLEFT:
-                          move.w        d5,d6
+                          move.w             d5,d6
 
 gopastleft:
-                          tst.l         a3
-                          bne.s         FOUNDALEFT
+                          tst.l              a3
+                          bne.s              FOUNDALEFT
                           rts
 
 FOUNDALEFT:
 ; d6 = channel number
-                          move.b        d0,1(a3)
-                          move.w        d3,2(a3)
+                          move.b             d0,1(a3)
+                          move.w             d3,2(a3)
 
-                          move.w        Samplenum,d5
-                          move.l        #SampleList,a3
-                          move.l        (a3,d5.w*8),a1
-                          move.l        4(a3,d5.w*8),a2
+                          move.w             Samplenum,d5
+                          move.l             #SampleList,a3
+                          move.l             (a3,d5.w*8),a1
+                          move.l             4(a3,d5.w*8),a2
 
-                          tst.b         d6
-                          seq           NoiseMade0LEFT
-                          beq.s         .chan0
-                          cmp.b         #2,d6
-                          slt           NoiseMade1LEFT
-                          blt.b         .chan1
-                          seq           NoiseMade2LEFT
-                          beq.b         .chan2
-                          st            NoiseMade3LEFT
+                          tst.b              d6
+                          seq                NoiseMade0LEFT
+                          beq.s              .chan0
+                          cmp.b              #2,d6
+                          slt                NoiseMade1LEFT
+                          blt.b              .chan1
+                          seq                NoiseMade2LEFT
+                          beq.b              .chan2
+                          st                 NoiseMade3LEFT
 
-                          move.b        d5,LEFTPLAYEDTAB+9
-                          move.b        d3,LEFTPLAYEDTAB+1+9
-                          move.b        d4,LEFTPLAYEDTAB+2+9
-                          move.b        d3,vol3left
-                          move.l        a1,pos3LEFT
-                          move.l        a2,Samp3endLEFT
-                          bra.b         dorightchan
+                          move.b             d5,LEFTPLAYEDTAB+9
+                          move.b             d3,LEFTPLAYEDTAB+1+9
+                          move.b             d4,LEFTPLAYEDTAB+2+9
+                          move.b             d3,vol3left
+                          move.l             a1,pos3LEFT
+                          move.l             a2,Samp3endLEFT
+                          bra.b              dorightchan
  
 .chan0: 
-                          move.b        d5,LEFTPLAYEDTAB
-                          move.b        d3,LEFTPLAYEDTAB+1
-                          move.b        d4,LEFTPLAYEDTAB+2
-                          move.l        a1,pos0LEFT
-                          move.l        a2,Samp0endLEFT
-                          move.b        d3,vol0left
-                          bra.b         dorightchan
+                          move.b             d5,LEFTPLAYEDTAB
+                          move.b             d3,LEFTPLAYEDTAB+1
+                          move.b             d4,LEFTPLAYEDTAB+2
+                          move.l             a1,pos0LEFT
+                          move.l             a2,Samp0endLEFT
+                          move.b             d3,vol0left
+                          bra.b              dorightchan
  
 .chan1:
-                          move.b        d5,LEFTPLAYEDTAB+3
-                          move.b        d3,LEFTPLAYEDTAB+1+3
-                          move.b        d4,LEFTPLAYEDTAB+2+3
-                          move.b        d3,vol1left
-                          move.l        a1,pos1LEFT
-                          move.l        a2,Samp1endLEFT
-                          bra.b         dorightchan
+                          move.b             d5,LEFTPLAYEDTAB+3
+                          move.b             d3,LEFTPLAYEDTAB+1+3
+                          move.b             d4,LEFTPLAYEDTAB+2+3
+                          move.b             d3,vol1left
+                          move.l             a1,pos1LEFT
+                          move.l             a2,Samp1endLEFT
+                          bra.b              dorightchan
 
 .chan2: 
-                          move.b        d5,LEFTPLAYEDTAB+6
-                          move.b        d3,LEFTPLAYEDTAB+1+6
-                          move.b        d4,LEFTPLAYEDTAB+2+6
-                          move.l        a1,pos2LEFT
-                          move.l        a2,Samp2endLEFT
-                          move.b        d3,vol2left
+                          move.b             d5,LEFTPLAYEDTAB+6
+                          move.b             d3,LEFTPLAYEDTAB+1+6
+                          move.b             d4,LEFTPLAYEDTAB+2+6
+                          move.l             a1,pos2LEFT
+                          move.l             a2,Samp2endLEFT
+                          move.b             d3,vol2left
  
 dorightchan:
 ; Find least important sound on right
 
-                          move.l        #0,a2
-                          move.l        #0,d5
-                          move.w        #10000,d2
-                          move.b        IDNUM,d0
-                          lea           RIGHTCHANDATA,a3
-                          move.w        #3,d1
+                          move.l             #0,a2
+                          move.l             #0,d5
+                          move.w             #10000,d2
+                          move.b             IDNUM,d0
+                          lea                RIGHTCHANDATA,a3
+                          move.w             #3,d1
 
 FindRightChannel:
-                          tst.b         (a3)
-                          bne.s         .notactive
-                          cmp.b         1(a3),d0
-                          beq.s         FOUNDRIGHT
-                          cmp.w         2(a3),d2
-                          blt.s         .notactive
-                          move.w        2(a3),d2
-                          move.l        a3,a2
-                          move.w        d5,d6
+                          tst.b              (a3)
+                          bne.s              .notactive
+                          cmp.b              1(a3),d0
+                          beq.s              FOUNDRIGHT
+                          cmp.w              2(a3),d2
+                          blt.s              .notactive
+                          move.w             2(a3),d2
+                          move.l             a3,a2
+                          move.w             d5,d6
 
 .notactive:
-                          add.w         #4,a3
-                          add.w         #1,d5
-                          dbra          d1,FindRightChannel
-                          move.l        a2,a3
-                          bra.s         gopastright
+                          add.w              #4,a3
+                          add.w              #1,d5
+                          dbra               d1,FindRightChannel
+                          move.l             a2,a3
+                          bra.s              gopastright
 FOUNDRIGHT:
-                          move.w        d5,d6
+                          move.w             d5,d6
 gopastright:
-                          tst.l         a3
-                          bne.s         FOUNDARIGHT
+                          tst.l              a3
+                          bne.s              FOUNDARIGHT
                           rts
 
 FOUNDARIGHT:
 ; d6 = channel number
-                          move.b        d0,1(a3)
-                          move.w        d3,2(a3)
+                          move.b             d0,1(a3)
+                          move.w             d3,2(a3)
 
-                          move.w        Samplenum,d5
-                          move.l        #SampleList,a3
-                          move.l        (a3,d5.w*8),a1
-                          move.l        4(a3,d5.w*8),a2
+                          move.w             Samplenum,d5
+                          move.l             #SampleList,a3
+                          move.l             (a3,d5.w*8),a1
+                          move.l             4(a3,d5.w*8),a2
 
-                          tst.b         d6
-                          seq           NoiseMade0RIGHT
-                          beq.s         .chan0
-                          cmp.b         #2,d6
-                          slt           NoiseMade1RIGHT
-                          blt.b         .chan1
-                          seq           NoiseMade2RIGHT
-                          beq.b         .chan2
-                          st            NoiseMade3RIGHT
+                          tst.b              d6
+                          seq                NoiseMade0RIGHT
+                          beq.s              .chan0
+                          cmp.b              #2,d6
+                          slt                NoiseMade1RIGHT
+                          blt.b              .chan1
+                          seq                NoiseMade2RIGHT
+                          beq.b              .chan2
+                          st                 NoiseMade3RIGHT
 
-                          move.b        d5,RIGHTPLAYEDTAB+9
-                          move.b        d3,RIGHTPLAYEDTAB+1+9
-                          move.b        d4,RIGHTPLAYEDTAB+2+9
-                          move.b        d4,vol3right
-                          move.l        a1,pos3RIGHT
-                          move.l        a2,Samp3endRIGHT
+                          move.b             d5,RIGHTPLAYEDTAB+9
+                          move.b             d3,RIGHTPLAYEDTAB+1+9
+                          move.b             d4,RIGHTPLAYEDTAB+2+9
+                          move.b             d4,vol3right
+                          move.l             a1,pos3RIGHT
+                          move.l             a2,Samp3endRIGHT
                           rts
  
 .chan0: 
-                          move.b        d5,RIGHTPLAYEDTAB
-                          move.b        d3,RIGHTPLAYEDTAB+1
-                          move.b        d4,RIGHTPLAYEDTAB+2
-                          move.l        a1,pos0RIGHT
-                          move.l        a2,Samp0endRIGHT
-                          move.b        d4,vol0right
+                          move.b             d5,RIGHTPLAYEDTAB
+                          move.b             d3,RIGHTPLAYEDTAB+1
+                          move.b             d4,RIGHTPLAYEDTAB+2
+                          move.l             a1,pos0RIGHT
+                          move.l             a2,Samp0endRIGHT
+                          move.b             d4,vol0right
                           rts
  
 .chan1:
-                          move.b        d5,RIGHTPLAYEDTAB+3
-                          move.b        d3,RIGHTPLAYEDTAB+1+3
-                          move.b        d4,RIGHTPLAYEDTAB+2+3
-                          move.b        d3,vol1right
-                          move.l        a1,pos1RIGHT
-                          move.l        a2,Samp1endRIGHT
+                          move.b             d5,RIGHTPLAYEDTAB+3
+                          move.b             d3,RIGHTPLAYEDTAB+1+3
+                          move.b             d4,RIGHTPLAYEDTAB+2+3
+                          move.b             d3,vol1right
+                          move.l             a1,pos1RIGHT
+                          move.l             a2,Samp1endRIGHT
                           rts
 
 .chan2: 
-                          move.b        d5,RIGHTPLAYEDTAB+6
-                          move.b        d3,RIGHTPLAYEDTAB+1+6
-                          move.b        d4,RIGHTPLAYEDTAB+2+6
-                          move.l        a1,pos2RIGHT
-                          move.l        a2,Samp2endRIGHT
-                          move.b        d3,vol2right
+                          move.b             d5,RIGHTPLAYEDTAB+6
+                          move.b             d3,RIGHTPLAYEDTAB+1+6
+                          move.b             d4,RIGHTPLAYEDTAB+2+6
+                          move.l             a1,pos2RIGHT
+                          move.l             a2,Samp2endRIGHT
+                          move.b             d3,vol2right
                           rts
 
 NOSTEREO:
-                          move.l        #0,a2
-                          move.l        #-1,d5
-                          move.w        #32767,d2
-                          move.b        IDNUM,d0
-                          lea           CHANNELDATA,a3
-                          move.w        #7,d1
+                          move.l             #0,a2
+                          move.l             #-1,d5
+                          move.w             #32767,d2
+                          move.b             IDNUM,d0
+                          lea                CHANNELDATA,a3
+                          move.w             #7,d1
 FindChannel
-                          tst.b         (a3)
-                          bne.s         .notactive
-                          cmp.b         1(a3),d0
-                          beq.s         FOUNDCHAN
-                          cmp.w         2(a3),d2
-                          blt.s         .notactive
-                          move.w        2(a3),d2
-                          move.l        a3,a2
-                          move.w        d5,d6
-                          add.w         #1,d6
+                          tst.b              (a3)
+                          bne.s              .notactive
+                          cmp.b              1(a3),d0
+                          beq.s              FOUNDCHAN
+                          cmp.w              2(a3),d2
+                          blt.s              .notactive
+                          move.w             2(a3),d2
+                          move.l             a3,a2
+                          move.w             d5,d6
+                          add.w              #1,d6
 
 .notactive:
-                          add.w         #4,a3
-                          add.w         #1,d5
-                          dbra          d1,FindChannel
+                          add.w              #4,a3
+                          add.w              #1,d5
+                          dbra               d1,FindChannel
  
-                          move.l        a2,a3
-                          bra.s         gopastchan
+                          move.l             a2,a3
+                          bra.s              gopastchan
 
 FOUNDCHAN:
-                          move.w        d5,d6
-                          add.w         #1,d6
+                          move.w             d5,d6
+                          add.w              #1,d6
 
 gopastchan:
-                          tst.w         d6
-                          bge.s         FOUNDACHAN
+                          tst.w              d6
+                          bge.s              FOUNDACHAN
 
 tooquiet:
                           rts
@@ -8981,518 +9071,495 @@ tooquiet:
 FOUNDACHAN:
 ; d6 = channel number
 
-                          cmp.w         noiseloud,d2
-                          bgt.s         tooquiet
+                          cmp.w              noiseloud,d2
+                          bgt.s              tooquiet
 
-                          move.b        d0,1(a3)
-                          move.w        noiseloud,2(a3)
+                          move.b             d0,1(a3)
+                          move.w             noiseloud,2(a3)
 
-                          move.w        Samplenum,d5
-                          move.l        #SampleList,a3
-                          move.l        (a3,d5.w*8),a1
-                          move.l        4(a3,d5.w*8),a2
+                          move.w             Samplenum,d5
+                          move.l             #SampleList,a3
+                          move.l             (a3,d5.w*8),a1
+                          move.l             4(a3,d5.w*8),a2
 
-                          tst.b         d6
-                          beq.b         .chan0
-                          cmp.b         #2,d6
-                          blt           .chan1
-                          beq           .chan2
-                          cmp.b         #4,d6
-                          blt.b         .chan3
-                          beq           .chan4
-                          cmp.b         #6,d6
-                          blt           .chan5
-                          beq           .chan6
-                          st            NoiseMade3RIGHT
+                          tst.b              d6
+                          beq.b              .chan0
+                          cmp.b              #2,d6
+                          blt                .chan1
+                          beq                .chan2
+                          cmp.b              #4,d6
+                          blt.b              .chan3
+                          beq                .chan4
+                          cmp.b              #6,d6
+                          blt                .chan5
+                          beq                .chan6
+                          st                 NoiseMade3RIGHT
 
-                          move.b        d5,RIGHTPLAYEDTAB+9
-                          move.b        d3,RIGHTPLAYEDTAB+1+9
-                          move.b        d4,RIGHTPLAYEDTAB+2+9
-                          move.b        d4,vol3right
-                          move.l        a1,pos3RIGHT
-                          move.l        a2,Samp3endRIGHT
+                          move.b             d5,RIGHTPLAYEDTAB+9
+                          move.b             d3,RIGHTPLAYEDTAB+1+9
+                          move.b             d4,RIGHTPLAYEDTAB+2+9
+                          move.b             d4,vol3right
+                          move.l             a1,pos3RIGHT
+                          move.l             a2,Samp3endRIGHT
                           rts
 
 .chan3:
-                          st            NoiseMade3LEFT
-                          move.b        d5,LEFTPLAYEDTAB+9
-                          move.b        d3,LEFTPLAYEDTAB+1+9
-                          move.b        d4,LEFTPLAYEDTAB+2+9
-                          move.b        d3,vol3left
-                          move.l        a1,pos3LEFT
-                          move.l        a2,Samp3endLEFT
-                          bra           dorightchan
+                          st                 NoiseMade3LEFT
+                          move.b             d5,LEFTPLAYEDTAB+9
+                          move.b             d3,LEFTPLAYEDTAB+1+9
+                          move.b             d4,LEFTPLAYEDTAB+2+9
+                          move.b             d3,vol3left
+                          move.l             a1,pos3LEFT
+                          move.l             a2,Samp3endLEFT
+                          bra                dorightchan
  
 .chan0: 
-                          st            NoiseMade0LEFT
-                          move.b        d5,LEFTPLAYEDTAB
-                          move.b        d3,LEFTPLAYEDTAB+1
-                          move.b        d4,LEFTPLAYEDTAB+2
-                          move.l        a1,pos0LEFT
-                          move.l        a2,Samp0endLEFT
-                          move.b        d3,vol0left
+                          st                 NoiseMade0LEFT
+                          move.b             d5,LEFTPLAYEDTAB
+                          move.b             d3,LEFTPLAYEDTAB+1
+                          move.b             d4,LEFTPLAYEDTAB+2
+                          move.l             a1,pos0LEFT
+                          move.l             a2,Samp0endLEFT
+                          move.b             d3,vol0left
                           rts
  
 .chan1:
-                          st            NoiseMade1LEFT
-                          move.b        d5,LEFTPLAYEDTAB+3
-                          move.b        d3,LEFTPLAYEDTAB+1+3
-                          move.b        d4,LEFTPLAYEDTAB+2+3
-                          move.b        d3,vol1left
-                          move.l        a1,pos1LEFT
-                          move.l        a2,Samp1endLEFT
+                          st                 NoiseMade1LEFT
+                          move.b             d5,LEFTPLAYEDTAB+3
+                          move.b             d3,LEFTPLAYEDTAB+1+3
+                          move.b             d4,LEFTPLAYEDTAB+2+3
+                          move.b             d3,vol1left
+                          move.l             a1,pos1LEFT
+                          move.l             a2,Samp1endLEFT
                           rts
 
 .chan2: 
-                          st            NoiseMade2LEFT
-                          move.b        d5,LEFTPLAYEDTAB+6
-                          move.b        d3,LEFTPLAYEDTAB+1+6
-                          move.b        d4,LEFTPLAYEDTAB+2+6
-                          move.l        a1,pos2LEFT
-                          move.l        a2,Samp2endLEFT
-                          move.b        d3,vol2left
+                          st                 NoiseMade2LEFT
+                          move.b             d5,LEFTPLAYEDTAB+6
+                          move.b             d3,LEFTPLAYEDTAB+1+6
+                          move.b             d4,LEFTPLAYEDTAB+2+6
+                          move.l             a1,pos2LEFT
+                          move.l             a2,Samp2endLEFT
+                          move.b             d3,vol2left
                           rts
  
 .chan4: 
-                          st            NoiseMade0RIGHT
-                          move.b        d5,RIGHTPLAYEDTAB
-                          move.b        d3,RIGHTPLAYEDTAB+1
-                          move.b        d4,RIGHTPLAYEDTAB+2
-                          move.l        a1,pos0RIGHT
-                          move.l        a2,Samp0endRIGHT
-                          move.b        d4,vol0right
+                          st                 NoiseMade0RIGHT
+                          move.b             d5,RIGHTPLAYEDTAB
+                          move.b             d3,RIGHTPLAYEDTAB+1
+                          move.b             d4,RIGHTPLAYEDTAB+2
+                          move.l             a1,pos0RIGHT
+                          move.l             a2,Samp0endRIGHT
+                          move.b             d4,vol0right
                           rts
  
 .chan5:
-                          st            NoiseMade1RIGHT
-                          move.b        d5,RIGHTPLAYEDTAB+3
-                          move.b        d3,RIGHTPLAYEDTAB+1+3
-                          move.b        d4,RIGHTPLAYEDTAB+2+3
-                          move.b        d3,vol1right
-                          move.l        a1,pos1RIGHT
-                          move.l        a2,Samp1endRIGHT
+                          st                 NoiseMade1RIGHT
+                          move.b             d5,RIGHTPLAYEDTAB+3
+                          move.b             d3,RIGHTPLAYEDTAB+1+3
+                          move.b             d4,RIGHTPLAYEDTAB+2+3
+                          move.b             d3,vol1right
+                          move.l             a1,pos1RIGHT
+                          move.l             a2,Samp1endRIGHT
                           rts
 
 .chan6: 
-                          st            NoiseMade2RIGHT
-                          move.b        d5,RIGHTPLAYEDTAB+6
-                          move.b        d3,RIGHTPLAYEDTAB+1+6
-                          move.b        d4,RIGHTPLAYEDTAB+2+6
-                          move.l        a1,pos2RIGHT
-                          move.l        a2,Samp2endRIGHT
-                          move.b        d3,vol2right
+                          st                 NoiseMade2RIGHT
+                          move.b             d5,RIGHTPLAYEDTAB+6
+                          move.b             d3,RIGHTPLAYEDTAB+1+6
+                          move.b             d4,RIGHTPLAYEDTAB+2+6
+                          move.l             a1,pos2RIGHT
+                          move.l             a2,Samp2endRIGHT
+                          move.b             d3,vol2right
                           rts
 
 *********************************************************************************************
 ; SFX memory begin, end and sample number
 
 SampleList:
-                          dc.l          Scream,EndScream                                                     ; 0
-                          dc.l          Shoot,EndShoot                                                       ; 1
-                          dc.l          Munch,EndMunch                                                       ; 2
-                          dc.l          PooGun,EndPooGun                                                     ; 3
-                          dc.l          Collect,EndCollect                                                   ; 4
+                          dc.l               Scream,EndScream                                                     ; 0
+                          dc.l               Shoot,EndShoot                                                       ; 1
+                          dc.l               Munch,EndMunch                                                       ; 2
+                          dc.l               PooGun,EndPooGun                                                     ; 3
+                          dc.l               Collect,EndCollect                                                   ; 4
 
-                          dc.l          DoorNoise,EndDoorNoise                                               ; 5
-                          dc.l          Bass,BassEnd                                                         ; 6
-                          dc.l          Stomp,EndStomp                                                       ; 7
-                          dc.l          LowScream,EndLowScream                                               ; 8
-                          dc.l          BaddieGun,EndBaddieGun                                               ; 9
+                          dc.l               DoorNoise,EndDoorNoise                                               ; 5
+                          dc.l               Bass,BassEnd                                                         ; 6
+                          dc.l               Stomp,EndStomp                                                       ; 7
+                          dc.l               LowScream,EndLowScream                                               ; 8
+                          dc.l               BaddieGun,EndBaddieGun                                               ; 9
 
-                          dc.l          SwitchNoise,EndSwitch                                                ; 10
-                          dc.l          Reload,EndReload                                                     ; 11
-                          dc.l          NoAmmo,EndNoAmmo                                                     ; 12
-                          dc.l          Splotch,EndSplotch                                                   ; 13
-                          dc.l          SplatPop,EndSplatPop                                                 ; 14
+                          dc.l               SwitchNoise,EndSwitch                                                ; 10
+                          dc.l               Reload,EndReload                                                     ; 11
+                          dc.l               NoAmmo,EndNoAmmo                                                     ; 12
+                          dc.l               Splotch,EndSplotch                                                   ; 13
+                          dc.l               SplatPop,EndSplatPop                                                 ; 14
 
-                          dc.l          Boom,EndBoom                                                         ; 15
-                          dc.l          Hiss,EndHiss                                                         ; 16
-                          dc.l          Howl1,EndHowl1                                                       ; 17
-                          dc.l          Howl2,EndHowl2                                                       ; 18
-                          dc.l          Pant,EndPant                                                         ; 19
+                          dc.l               Boom,EndBoom                                                         ; 15
+                          dc.l               Hiss,EndHiss                                                         ; 16
+                          dc.l               Howl1,EndHowl1                                                       ; 17
+                          dc.l               Howl2,EndHowl2                                                       ; 18
+                          dc.l               Pant,EndPant                                                         ; 19
 
-                          dc.l          Whoosh,EndWhoosh                                                     ; 20
-                          dc.l          ROAR,EndROAR                                                         ; 21  ShotGun
+                          dc.l               Whoosh,EndWhoosh                                                     ; 20
+                          dc.l               ROAR,EndROAR                                                         ; 21  ShotGun
 
-                          dc.l          Flame,EndFlame                                                       ; 22  
-                          dc.l          0,0                                                                  ; 23  Muffled
-                          dc.l          0,0                                                                  ; 24  Clop
-                          dc.l          0,0                                                                  ; 25  Clank
-                          dc.l          0,0                                                                  ; 26  Teleport 
-                          dc.l          0,0                                                                  ; 27  HalfWormPain
+                          dc.l               Flame,EndFlame                                                       ; 22  
+                          dc.l               0,0                                                                  ; 23  Muffled
+                          dc.l               0,0                                                                  ; 24  Clop
+                          dc.l               0,0                                                                  ; 25  Clank
+                          dc.l               0,0                                                                  ; 26  Teleport 
+                          dc.l               0,0                                                                  ; 27  HalfWormPain
 
-                          dc.l          0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-                          dc.l          0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-                          dc.l          0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-                          dc.l          0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+                          dc.l               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+                          dc.l               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+                          dc.l               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+                          dc.l               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
-                          dc.l          0
-
-*********************************************************************************************
-
-storeval:                 dc.w          0
+                          dc.l               0
 
 *********************************************************************************************
 
-                          include       "WallChunk.s"
-                          include       "LoadFromDisk.s"
-                          include       "ScreenSetup.s"
-                          include       "ControlLoop.s"
+storeval:                 dc.w               0
 
 *********************************************************************************************
 
-saveinters:               dc.w          0
+                          include            "WallChunk.s"
+                          include            "LoadFromDisk.s"
+                          include            "ScreenSetup.s"
+                          include            "ControlLoop.s"
 
-z:                        dc.w          10
+*********************************************************************************************
 
-notifplaying:             dc.w          0
+saveinters:               dc.w               0
 
-audpos1:                  dc.w          0
-audpos1b:                 dc.w          0
-audpos2:                  dc.w          0
-audpos2b:                 dc.w          0
-audpos3:                  dc.w          0
-audpos3b:                 dc.w          0
-audpos4:                  dc.w          0
-audpos4b:                 dc.w          0
+z:                        dc.w               10
 
-vol0left:                 dc.w          0
-vol0right:                dc.w          0
-vol1left:                 dc.w          0
-vol1right:                dc.w          0
-vol2left:                 dc.w          0
-vol2right:                dc.w          0
-vol3left:                 dc.w          0
-vol3right:                dc.w          0
+notifplaying:             dc.w               0
 
-pos:                      dc.l          0
+audpos1:                  dc.w               0
+audpos1b:                 dc.w               0
+audpos2:                  dc.w               0
+audpos2b:                 dc.w               0
+audpos3:                  dc.w               0
+audpos3b:                 dc.w               0
+audpos4:                  dc.w               0
+audpos4b:                 dc.w               0
 
-pos0LEFT:                 dc.l          empty
-pos1LEFT:                 dc.l          empty
-pos2LEFT:                 dc.l          empty
-pos3LEFT:                 dc.l          empty
-pos0RIGHT:                dc.l          empty
-pos1RIGHT:                dc.l          empty
-pos2RIGHT:                dc.l          empty
-pos3RIGHT:                dc.l          empty
+vol0left:                 dc.w               0
+vol0right:                dc.w               0
+vol1left:                 dc.w               0
+vol1right:                dc.w               0
+vol2left:                 dc.w               0
+vol2right:                dc.w               0
+vol3left:                 dc.w               0
+vol3right:                dc.w               0
 
-numtodo                   dc.w          0
+pos:                      dc.l               0
 
-npt:                      dc.w          0
+pos0LEFT:                 dc.l               empty
+pos1LEFT:                 dc.l               empty
+pos2LEFT:                 dc.l               empty
+pos3LEFT:                 dc.l               empty
+pos0RIGHT:                dc.l               empty
+pos1RIGHT:                dc.l               empty
+pos2RIGHT:                dc.l               empty
+pos3RIGHT:                dc.l               empty
+
+numtodo:                  dc.w               0
+
+npt:                      dc.w               0
 
 *********************************************************************************************
 
 pretab:
-val                       SET           0
-                          REPT          128
-                          dc.b          val
-val                       SET           val+1
+val                       SET                0
+                          REPT               128
+                          dc.b               val
+val                       SET                val+1
                           ENDR
-val                       SET           -128
-                          REPT          128
-                          dc.b          val
-val                       SET           val+1
+val                       SET                -128
+                          REPT               128
+                          dc.b               val
+val                       SET                val+1
                           ENDR 
 
 *********************************************************************************************
 
-tab:                      ds.b          256*65
+tab:                      ds.b               256*65
                           even
 
 *********************************************************************************************
 
-test:                     dc.l          0
-                          ds.l          30
+test:                     dc.l               0
+                          ds.l               30
 
 *********************************************************************************************
 
-ConstCols:                ; incbin "ConstCols"
+ConstCols:                ; incbin "ConstCols"      
                           even
-Smoothscalecols:          ; incbin "smoothbumppalscaled"
+Smoothscalecols:          ; incbin "smoothbumppalscaled" 
                           even
-SmoothTile:               ; incbin "smoothbumptile"
+SmoothTile:               ; incbin "smoothbumptile" 
                           even
 Bumpscalecols:            ; incbin "Bumppalscaled"
                           even
 Bumptile:                 ; incbin "bumptile"
                           even
-scalecols:                ; incbin "bytepixpalscaled"
-                          even
 
 *********************************************************************************************	
 
 floorscalecols:           ;incbin              "data/FloorPalScaled"
-                          include       "data/FloorPalScaled.s"
-                          ds.w          256*4
+                          include            "data/FloorPalScaled.s"
+                          ds.w               256*4
                           even
 
 *********************************************************************************************
 
-PaletteAddr:              dc.l          0
-ChunkAddr:                dc.l          0
+PaletteAddr:              dc.l               0
+ChunkAddr:                dc.l               0
 
 *********************************************************************************************
 
-;walltiles:
-                          ; dc.l GreenMechanicWALL
-                          ; dc.l BlueGreyMetalWALL
-                          ; dc.l TechnoDetailWALL
-                          ; dc.l BlueStoneWALL
-                          ; dc.l RedAlertWALL
-                          ; dc.l RockWALL
+floortile:                dc.l               0
 
 *********************************************************************************************
 
-                          ; GreenMechanicWALL: incbin "walls/greenmechanic.wad"
-                          ; BlueGreyMetalWALL: incbin "walls/BlueGreyMetal.wad"
-                          ; TechnoDetailWALL: incbin "walls/TechnoDetail.wad"
-                          ; BlueStoneWALL: incbin "walls/bluestone.wad"
-                          ; RedAlertWALL: incbin "walls/redalert.wad"
-                          ; RockWALL: incbin "walls/rock.wad"
- 
- *********************************************************************************************
-
-floortile:                dc.l          0
-                          ; incbin "floortile" 
-                          even
-
-*********************************************************************************************                          
-
-wallrouts:                ; incbin "2x2WallDraw" 
-                          CNOP          0,64
-
-*********************************************************************************************
-
-BackPicture:              incbin        "data/backfile"
+BackPicture:              incbin             "data/backfile"
 EndBackPicture:
-
-*********************************************************************************************
-
-drawpt:                   dc.l          0
-olddrawpt:                dc.l          0
-frompt:                   dc.l          0 
-
-*********************************************************************************************
-
-SineTable:                incbin        "data/bigsine"
-
-*********************************************************************************************
-
-angspd:                   dc.w          0
-flooryoff:                dc.w          0
-xoff:                     dc.l          0
-yoff:                     dc.l          0
-yvel:                     dc.l          0
-zoff:                     dc.l          0
-tyoff:                    dc.l          0
-xspdval:                  dc.l          0
-zspdval:                  dc.l          0
-Zone:                     dc.w          0
-
-PLR1:                     dc.b          $ff
                           even
-PLR1_energy:              dc.w          191
-PLR1_GunSelected:         dc.w          0
-PLR1_cosval:              dc.w          0
-PLR1_sinval:              dc.w          0
-PLR1_angpos:              dc.w          0
-PLR1_angspd:              dc.w          0
-PLR1_xoff:                dc.l          0
-PLR1_yoff:                dc.l          0
-PLR1_yvel:                dc.l          0
-PLR1_zoff:                dc.l          0
-PLR1_tyoff:               dc.l          0
-PLR1_xspdval:             dc.l          0
-PLR1_zspdval:             dc.l          0
-PLR1_Zone:                dc.w          0
-PLR1_Roompt:              dc.l          0
-PLR1_OldRoompt:           dc.l          0
-PLR1_PointsToRotatePtr:   dc.l          0
-PLR1_ListOfGraphRooms:    dc.l          0
-PLR1_oldxoff:             dc.l          0
-PLR1_oldzoff:             dc.l          0
-PLR1_StoodInTop:          dc.b          0
-                          even
-PLR1_height:              dc.l          0
 
-                          ds.w          4
+*********************************************************************************************
+; Copper screen
+
+drawpt:                   dc.l               0
+olddrawpt:                dc.l               0
+frompt:                   dc.l               0                                                                    ; Copper chunky
+
+*********************************************************************************************
+
+SineTable:                incbin             "data/bigsine"
+                          even
+
+*********************************************************************************************
+
+angspd:                   dc.w               0
+flooryoff:                dc.w               0
+xoff:                     dc.l               0
+yoff:                     dc.l               0
+yvel:                     dc.l               0
+zoff:                     dc.l               0
+tyoff:                    dc.l               0
+xspdval:                  dc.l               0
+zspdval:                  dc.l               0
+Zone:                     dc.w               0
+
+PLR1:                     dc.b               $ff
+                          even
+PLR1_energy:              dc.w               191
+PLR1_GunSelected:         dc.w               0
+PLR1_cosval:              dc.w               0
+PLR1_sinval:              dc.w               0
+PLR1_angpos:              dc.w               0
+PLR1_angspd:              dc.w               0
+PLR1_xoff:                dc.l               0
+PLR1_yoff:                dc.l               0
+PLR1_yvel:                dc.l               0
+PLR1_zoff:                dc.l               0
+PLR1_tyoff:               dc.l               0
+PLR1_xspdval:             dc.l               0
+PLR1_zspdval:             dc.l               0
+PLR1_Zone:                dc.w               0
+PLR1_Roompt:              dc.l               0
+PLR1_OldRoompt:           dc.l               0
+PLR1_PointsToRotatePtr:   dc.l               0
+PLR1_ListOfGraphRooms:    dc.l               0
+PLR1_oldxoff:             dc.l               0
+PLR1_oldzoff:             dc.l               0
+PLR1_StoodInTop:          dc.b               0
+                          even
+PLR1_height:              dc.l               0
+
+                          ds.w               4
  
-OLDX1:                    dc.l          0
-OLDX2:                    dc.l          0
-OLDZ1:                    dc.l          0
-OLDZ2:                    dc.l          0
+OLDX1:                    dc.l               0
+OLDX2:                    dc.l               0
+OLDZ1:                    dc.l               0
+OLDZ2:                    dc.l               0
 
-XDIFF1:                   dc.l          0
-ZDIFF1:                   dc.l          0
-XDIFF2:                   dc.l          0
-ZDIFF2:                   dc.l          0
+XDIFF1:                   dc.l               0
+ZDIFF1:                   dc.l               0
+XDIFF2:                   dc.l               0
+ZDIFF2:                   dc.l               0
 
-PLR1s_cosval:             dc.w          0
-PLR1s_sinval:             dc.w          0
-PLR1s_angpos:             dc.w          0
-PLR1s_angspd:             dc.w          0
-PLR1s_xoff:               dc.l          0
-PLR1s_yoff:               dc.l          0
-PLR1s_yvel:               dc.l          0
-PLR1s_zoff:               dc.l          0
-PLR1s_tyoff:              dc.l          0
-PLR1s_xspdval:            dc.l          0
-PLR1s_zspdval:            dc.l          0
-PLR1s_Zone:               dc.w          0
-PLR1s_Roompt:             dc.l          0
-PLR1s_OldRoompt:          dc.l          0
-PLR1s_PointsToRotatePtr:  dc.l          0
-PLR1s_ListOfGraphRooms:   dc.l          0
-PLR1s_oldxoff:            dc.l          0
-PLR1s_oldzoff:            dc.l          0
-PLR1s_height:             dc.l          0
-PLR1s_targheight:         dc.l          0
+PLR1s_cosval:             dc.w               0
+PLR1s_sinval:             dc.w               0
+PLR1s_angpos:             dc.w               0
+PLR1s_angspd:             dc.w               0
+PLR1s_xoff:               dc.l               0
+PLR1s_yoff:               dc.l               0
+PLR1s_yvel:               dc.l               0
+PLR1s_zoff:               dc.l               0
+PLR1s_tyoff:              dc.l               0
+PLR1s_xspdval:            dc.l               0
+PLR1s_zspdval:            dc.l               0
+PLR1s_Zone:               dc.w               0
+PLR1s_Roompt:             dc.l               0
+PLR1s_OldRoompt:          dc.l               0
+PLR1s_PointsToRotatePtr:  dc.l               0
+PLR1s_ListOfGraphRooms:   dc.l               0
+PLR1s_oldxoff:            dc.l               0
+PLR1s_oldzoff:            dc.l               0
+PLR1s_height:             dc.l               0
+PLR1s_targheight:         dc.l               0
 
-p1_xoff:                  dc.l          0
-p1_zoff:                  dc.l          0
-p1_yoff:                  dc.l          0
-p1_height:                dc.l          0
-p1_angpos:                dc.w          0
-p1_bobble:                dc.w          0
-p1_clicked:               dc.b          0
-p1_spctap:                dc.b          0
-p1_ducked:                dc.b          0
-p1_gunselected:           dc.b          0
-p1_fire:                  dc.b          0
+p1_xoff:                  dc.l               0
+p1_zoff:                  dc.l               0
+p1_yoff:                  dc.l               0
+p1_height:                dc.l               0
+p1_angpos:                dc.w               0
+p1_bobble:                dc.w               0
+p1_clicked:               dc.b               0
+p1_spctap:                dc.b               0
+p1_ducked:                dc.b               0
+p1_gunselected:           dc.b               0
+p1_fire:                  dc.b               0
                           even
-p1_holddown:              dc.w          0
+p1_holddown:              dc.w               0
 
-                          ds.w          4
+                          ds.w               4
 
-PLR2:                     dc.b          $ff
+PLR2:                     dc.b               $ff
                           even
-PLR2_GunSelected:         dc.w          0
-PLR2_energy:              dc.w          191
-PLR2_cosval:              dc.w          0
-PLR2_sinval:              dc.w          0
-PLR2_angpos:              dc.w          0
-PLR2_angspd:              dc.w          0
-PLR2_xoff:                dc.l          0
-PLR2_yoff:                dc.l          0
-PLR2_yvel:                dc.l          0
-PLR2_zoff:                dc.l          0
-PLR2_tyoff:               dc.l          0
-PLR2_xspdval:             dc.l          0
-PLR2_zspdval:             dc.l          0
-PLR2_Zone:                dc.w          0
-PLR2_Roompt:              dc.l          0
-PLR2_OldRoompt:           dc.l          0
-PLR2_PointsToRotatePtr:   dc.l          0
-PLR2_ListOfGraphRooms:    dc.l          0
-PLR2_oldxoff:             dc.l          0
-PLR2_oldzoff:             dc.l          0
-PLR2_StoodInTop:          dc.b          0
+PLR2_GunSelected:         dc.w               0
+PLR2_energy:              dc.w               191
+PLR2_cosval:              dc.w               0
+PLR2_sinval:              dc.w               0
+PLR2_angpos:              dc.w               0
+PLR2_angspd:              dc.w               0
+PLR2_xoff:                dc.l               0
+PLR2_yoff:                dc.l               0
+PLR2_yvel:                dc.l               0
+PLR2_zoff:                dc.l               0
+PLR2_tyoff:               dc.l               0
+PLR2_xspdval:             dc.l               0
+PLR2_zspdval:             dc.l               0
+PLR2_Zone:                dc.w               0
+PLR2_Roompt:              dc.l               0
+PLR2_OldRoompt:           dc.l               0
+PLR2_PointsToRotatePtr:   dc.l               0
+PLR2_ListOfGraphRooms:    dc.l               0
+PLR2_oldxoff:             dc.l               0
+PLR2_oldzoff:             dc.l               0
+PLR2_StoodInTop:          dc.b               0
                           even
-PLR2_height:              dc.l          0
+PLR2_height:              dc.l               0
 
-                          ds.w          4
+                          ds.w               4
 
-PLR2s_cosval:             dc.w          0
-PLR2s_sinval:             dc.w          0
-PLR2s_angpos:             dc.w          0
-PLR2s_angspd:             dc.w          0
-PLR2s_xoff:               dc.l          0
-PLR2s_yoff:               dc.l          0
-PLR2s_yvel:               dc.l          0
-PLR2s_zoff:               dc.l          0
-PLR2s_tyoff:              dc.l          0
-PLR2s_xspdval:            dc.l          0
-PLR2s_zspdval:            dc.l          0
-PLR2s_Zone:               dc.w          0
-PLR2s_Roompt:             dc.l          0
-PLR2s_OldRoompt:          dc.l          0
-PLR2s_PointsToRotatePtr:  dc.l          0
-PLR2s_ListOfGraphRooms:   dc.l          0
-PLR2s_oldxoff:            dc.l          0
-PLR2s_oldzoff:            dc.l          0
-PLR2s_height:             dc.l          0
-PLR2s_targheight:         dc.l          0
+PLR2s_cosval:             dc.w               0
+PLR2s_sinval:             dc.w               0
+PLR2s_angpos:             dc.w               0
+PLR2s_angspd:             dc.w               0
+PLR2s_xoff:               dc.l               0
+PLR2s_yoff:               dc.l               0
+PLR2s_yvel:               dc.l               0
+PLR2s_zoff:               dc.l               0
+PLR2s_tyoff:              dc.l               0
+PLR2s_xspdval:            dc.l               0
+PLR2s_zspdval:            dc.l               0
+PLR2s_Zone:               dc.w               0
+PLR2s_Roompt:             dc.l               0
+PLR2s_OldRoompt:          dc.l               0
+PLR2s_PointsToRotatePtr:  dc.l               0
+PLR2s_ListOfGraphRooms:   dc.l               0
+PLR2s_oldxoff:            dc.l               0
+PLR2s_oldzoff:            dc.l               0
+PLR2s_height:             dc.l               0
+PLR2s_targheight:         dc.l               0
 
-                          ds.w          4
+                          ds.w               4
 
-p2_xoff:                  dc.l          0
-p2_zoff:                  dc.l          0
-p2_yoff:                  dc.l          0
-p2_height:                dc.l          0
-p2_angpos:                dc.w          0
-p2_bobble:                dc.w          0
-p2_clicked:               dc.b          0
-p2_spctap:                dc.b          0
-p2_ducked:                dc.b          0
-p2_gunselected:           dc.b          0
-p2_fire:                  dc.b          0
+p2_xoff:                  dc.l               0
+p2_zoff:                  dc.l               0
+p2_yoff:                  dc.l               0
+p2_height:                dc.l               0
+p2_angpos:                dc.w               0
+p2_bobble:                dc.w               0
+p2_clicked:               dc.b               0
+p2_spctap:                dc.b               0
+p2_ducked:                dc.b               0
+p2_gunselected:           dc.b               0
+p2_fire:                  dc.b               0
                           even
-p2_holddown:              dc.w          0
+p2_holddown:              dc.w               0
 
 *********************************************************************************************
 ; Glassball
 
-glassball:                incbin        "data/glassball"
+glassball:                incbin             "data/glassball"
 endglass:                 
+                          even
                           
-glassballpt:              dc.l          glassball
+glassballpt:              dc.l               glassball
 
 *********************************************************************************************
 
-rndtab:                   incbin        "data/randfile"
+rndtab:                   incbin             "data/randfile"
 endrnd:                   even
 
 *********************************************************************************************
 
 brightanimtab:
-                          dcb.w         200,20
-                          dc.w          5
-                          dc.w          10,20
-                          dc.w          5
-                          dcb.w         30,20
-                          dc.w          7,10,10,5,10,0,5,6,5,6,5,6,5,6,0
-                          dcb.w         40,0
-                          dc.w          1,2,3,2,3,2,3,2,3,2,3,2,3,0
-                          dcb.w         300,0
-                          dc.w          1,0,1,0,2,2,2,5,5,5,5,5,5,5,5,5,6,10
-                          dc.w          -1
+                          dcb.w              200,20
+                          dc.w               5
+                          dc.w               10,20
+                          dc.w               5
+                          dcb.w              30,20
+                          dc.w               7,10,10,5,10,0,5,6,5,6,5,6,5,6,0
+                          dcb.w              40,0
+                          dc.w               1,2,3,2,3,2,3,2,3,2,3,2,3,0
+                          dcb.w              300,0
+                          dc.w               1,0,1,0,2,2,2,5,5,5,5,5,5,5,5,5,6,10
+                          dc.w               -1
 
 *********************************************************************************************
 
-Roompt:                   dc.l          0
-OldRoompt:                dc.l          0
+Roompt:                   dc.l               0
+OldRoompt:                dc.l               0
 
 *********************************************************************************************
 
-                          include       "LevelData2.s"
+                          include            "LevelData2.s"
+                          even
+                          
+*********************************************************************************************
+
+wallpt:                   dc.l               0
+floorpt:                  dc.l               0
 
 *********************************************************************************************
 
-wallpt:                   dc.l          0
-floorpt:                  dc.l          0
+Rotated:                  ds.l               2*800 
+ObjRotated:               ds.l               2*500
 
 *********************************************************************************************
 
-Rotated:                  ds.l          2*800 
-ObjRotated:               ds.l          2*500
+OnScreen:                 ds.l               2*800 
 
 *********************************************************************************************
 
-OnScreen:                 ds.l          2*800 
+startwait:                dc.w               0
+endwait:                  dc.w               0
 
 *********************************************************************************************
 
-startwait:                dc.w          0
-endwait:                  dc.w          0
-
-*********************************************************************************************
-
-Faces:                    incbin        "data/faces2raw"
+Faces:                    incbin             "data/faces2raw"
                           even
 
 *********************************************************************************************
 
-consttab:                 incbin        "data/constantfile"
+consttab:                 incbin             "data/constantfile"
                           even
 
 *********************************************************************************************
@@ -9502,555 +9569,568 @@ consttab:                 incbin        "data/constantfile"
 
 *********************************************************************************************
 
-WorkSpace:                ds.l          8192
-                          cnop          0,8
+WorkSpace:                ds.l               8192
+                          cnop               0,8
 
 *********************************************************************************************
 
-darkentab:                incbin        "data/darkenedcols"
+darkentab:                incbin             "data/darkenedcols"
                           even
 brightentab:              ;incbin              "data/OldBrightenFile"                     ; agi: from rtg version
-                          include       "data/OldBrightenFile.s"
+                          include            "data/OldBrightenFile.s"
                           even
-waterfile:                incbin        "data/waterfile"
+waterfile:                incbin             "data/waterfile"
                           even
 
 *********************************************************************************************
 
-                          SECTION       Graphs,CODE_C
+                          SECTION            GraphicsData,DATA_C
 
 *********************************************************************************************
 
-nullspr:                  dc.l          0
-                          cnop          0,8
+nullspr:                  dc.l               0
+                          cnop               0,8
 
 *********************************************************************************************
 
-borders:                  incbin        "data/newleftbord"
-                          incbin        "data/newrightbord"
+borders:                  incbin             "data/newleftbord"
+                          incbin             "data/newrightbord"
+                          even
+                          
+*********************************************************************************************
+
+health:                   incbin             "data/healthstrip"
+                          even
+                          
+*********************************************************************************************
+
+Ammunition:               incbin             "data/ammostrip"
+                          even
 
 *********************************************************************************************
 
-health:                   incbin        "data/healthstrip"
+HealthPal:                incbin             "data/HealthPal"
+                          even
 
 *********************************************************************************************
 
-Ammunition:               incbin        "data/ammostrip"
+PanelKeys:                incbin             "data/greenkey"                                                      ; 1056 bytes 
+                          incbin             "data/redkey"                                                        ; 1056 bytes 
+                          incbin             "data/yellowkey"                                                     ; 1056 bytes 
+                          incbin             "data/bluekey"                                                       ; 1056 bytes 
+                          even
 
 *********************************************************************************************
 
-HealthPal:                incbin        "data/HealthPal"
+null:                     ds.w               500
+null2:                    ds.w               500
+null3:                    ds.w               500
+null4:                    ds.w               500
 
 *********************************************************************************************
 
-PanelKeys:                incbin        "data/greenkey"                                                      ; 1056 bytes 
-                          incbin        "data/redkey"                                                        ; 1056 bytes 
-                          incbin        "data/yellowkey"                                                     ; 1056 bytes 
-                          incbin        "data/bluekey"                                                       ; 1056 bytes 
+FacePlace:                ds.l               6*32*5
 
 *********************************************************************************************
 
-null:                     ds.w          500
-null2:                    ds.w          500
-null3:                    ds.w          500
-null4:                    ds.w          500
+TEXTSCRN:                 dc.l               0
 
 *********************************************************************************************
+
+Panel:                    dc.l               0
+
+*********************************************************************************************
+
+TimerScr:                 ds.b               80*96                                                                ; 40*64
+                          even
+
+*********************************************************************************************
+
+nullline:                 ds.b               80	
+                          even
+
+*********************************************************************************************
+                          
+scrn:
+
+                          dcb.l              8,$33333333
+                          dc.l               0
+                          dc.l               0
+ 
+                          dcb.l              8,$0f0f0f0f
+                          dc.l               0
+                          dc.l               0
+
+                          dcb.l              8,$00ff00ff
+                          dc.l               0
+                          dc.l               0
+ 
+                          dcb.l              8,$0000ffff
+                          dc.l               0
+                          dc.l               0
+ 
+                          dc.l               0,-1,0,-1,0,-1,0,-1
+                          dc.l               0
+                          dc.l               0
+ 
+                          dc.l               -1,-1,0,0,-1,-1,0,0
+                          dc.l               0
+                          dc.l               0
+ 
+                          dc.l               0,0,-1,-1,-1,-1,-1,-1
+                          dc.l               0
+                          dc.l               0
+
+*********************************************************************************************
+
+                          SECTION            CopperLists,DATA_C
+
+*********************************************************************************************
+; Copper lists
 
 Blurbfield:
 
-                          dc.w          bpl1ptl
-bl1l:                     dc.w          0
-                          dc.w          bpl1pth
-bl1h:                     dc.w          0
+                          dc.w               bpl1ptl
+bl1l:                     dc.w               0
+                          dc.w               bpl1pth
+bl1h:                     dc.w               0
 
-                          dc.w          diwstart,$2c81
-                          dc.w          diwstop,$1cc1
-                          dc.w          ddfstart,$38
-                          dc.w          ddfstop,$b8
-                          dc.w          bplcon0,$9201
-                          dc.w          bplcon1,0
-                          dc.w          $106,$c40
+                          dc.w               diwstrt,$2c81
+                          dc.w               diwstop,$1cc1
+                          dc.w               ddfstrt,$38
+                          dc.w               ddfstop,$b8
+                          dc.w               bplcon0,$9201
+                          dc.w               bplcon1,0
+                          dc.w               bplcon3,$c40
 blcols:
-                          dc.w          color00,0
-                          dc.w          color00,$fff
+                          dc.w               color00,0
+                          dc.w               color00,$fff
 
-                          dc.w          $108,0
-                          dc.w          $10a,0
+                          dc.w               $108,0
+                          dc.w               $10a,0
 
-                          dc.w          $ffff,$fffe
-                          dc.w          $ffff,$fffe
-
-*********************************************************************************************
-
-nullline:                 ds.b          80	
+                          dc.w               $ffff,$fffe
+                          dc.w               $ffff,$fffe
 
 *********************************************************************************************
 
-                          include       "TitleCop.s"
+                          include            "TitleCop.s"
 
 *********************************************************************************************
+; Start of our game copper list.
 
 bigfield:    
-; Start of our copper list.
 
-                          dc.w          dmacon,$8020
-                          dc.w          intreq,$8011
-                          dc.w          $1fc,$f
-                          dc.w          diwstart
-winstart:                 dc.w          $2cb1
-                          dc.w          diwstop
-winstop:                  dc.w          $2c91
-                          dc.w          ddfstart
-fetchstart:               dc.w          $48
-                          dc.w          ddfstop
-fetchstop:                dc.w          $88
-
-***************************************************************************
-
-bordercols:               incbin        "data/borderpal"
-
-                          dc.w          spr0ptl
-s0l:                      dc.w          0
-                          dc.w          spr0pth
-s0h:                      dc.w          0
-                          dc.w          spr1ptl
-s1l:                      dc.w          0
-                          dc.w          spr1pth
-s1h:                      dc.w          0
-                          dc.w          spr2ptl
-s2l:                      dc.w          0
-                          dc.w          spr2pth
-s2h:                      dc.w          0
-                          dc.w          spr3ptl
-s3l:                      dc.w          0
-                          dc.w          spr3pth
-s3h:                      dc.w          0
-                          dc.w          spr4ptl
-s4l:                      dc.w          0
-                          dc.w          spr4pth
-s4h:                      dc.w          0
-                          dc.w          spr5ptl
-s5l:                      dc.w          0
-                          dc.w          spr5pth
-s5h:                      dc.w          0
-                          dc.w          spr6ptl
-s6l:                      dc.w          0
-                          dc.w          spr6pth
-s6h:                      dc.w          0
-                          dc.w          spr7ptl
-s7l:                      dc.w          0
-                          dc.w          spr7pth
-s7h:                      dc.w          0
+                          dc.w               dmacon,$8020                                                         ; Enable sprite
+                          dc.w               intreq,%1000000000110000                                             ; $8011 : SET 4=COPER, 5=VBLANK
+                          dc.w               fmode,$000f
+                          dc.w               diwstrt
+winstart:                 dc.w               $2cb1
+                          dc.w               diwstop
+winstop:                  dc.w               $2c91
+                          dc.w               ddfstrt
+fetchstart:               dc.w               $48
+                          dc.w               ddfstop
+fetchstop:                dc.w               $88
 
 ***************************************************************************
 
-                          dc.w          $106,$c42
-                          incbin        "data/borderpal"
+bordercols:               incbin             "data/borderpal"
 
-                          dc.w          $106,$8c42
-                          dc.w          color00
-hitcol:                   dc.w          $0
-                          dc.w          $106,$c42
-                          dc.w          color00
-hitcol2:                  dc.w          0
-
-                          dc.w          bplcon0,$7201
-                          dc.w          bplcon1
-smoff:
-                          dc.w          $0
-
-                          dc.w          $108
-modulo:                   dc.w          -24
-                          dc.w          $10a
-                          dc.w          -24
-
-                          dc.w          bpl1pth
-pl1h
-                          dc.w          0
-
-                          dc.w          bpl1ptl
-pl1l
-                          dc.w          0
-
-                          dc.w          bpl2pth
-pl2h
-                          dc.w          0
-
-                          dc.w          bpl2ptl
-pl2l
-                          dc.w          0
-
-                          dc.w          bpl3pth
-pl3h
-                          dc.w          0
-
-                          dc.w          bpl3ptl
-pl3l
-                          dc.w          0
-
-                          dc.w          bpl4pth
-pl4h
-                          dc.w          0
-
-                          dc.w          bpl4ptl
-pl4l
-                          dc.w          0
-
-                          dc.w          bpl5pth
-pl5h
-                          dc.w          0
-
-                          dc.w          bpl5ptl
-pl5l
-                          dc.w          0
-
-                          dc.w          bpl6pth
-pl6h
-                          dc.w          0
-
-                          dc.w          bpl6ptl
-pl6l
-                          dc.w          0
-
-                          dc.w          bpl7pth
-pl7h
-                          dc.w          0
-
-                          dc.w          bpl7ptl
-pl7l
-                          dc.w          0
-
-
-                          dc.w          $1001,$ff00
-                          dc.w          intreq,$11
-yposcop:
-                          dc.w          $2a11,$fffe
-                          dc.w          $8a,0
-
-                          ; ds.l 104*12
+                          dc.w               spr0ptl
+s0l:                      dc.w               0
+                          dc.w               spr0pth
+s0h:                      dc.w               0
+                          dc.w               spr1ptl
+s1l:                      dc.w               0
+                          dc.w               spr1pth
+s1h:                      dc.w               0
+                          dc.w               spr2ptl
+s2l:                      dc.w               0
+                          dc.w               spr2pth
+s2h:                      dc.w               0
+                          dc.w               spr3ptl
+s3l:                      dc.w               0
+                          dc.w               spr3pth
+s3h:                      dc.w               0
+                          dc.w               spr4ptl
+s4l:                      dc.w               0
+                          dc.w               spr4pth
+s4h:                      dc.w               0
+                          dc.w               spr5ptl
+s5l:                      dc.w               0
+                          dc.w               spr5pth
+s5h:                      dc.w               0
+                          dc.w               spr6ptl
+s6l:                      dc.w               0
+                          dc.w               spr6pth
+s6h:                      dc.w               0
+                          dc.w               spr7ptl
+s7l:                      dc.w               0
+                          dc.w               spr7pth
+s7h:                      dc.w               0
 
 ***************************************************************************
 
-;colbars:
-                          ;val SET $2a
-                          ; dcb.l 104*80,$1fe0000
-                          ; dc.w $106,$c42
-                          ; 
-                          ; dc.w $80
-                          ;pch1:
-                          ; dc.w 0
-                          ; dc.w $82
-                          ;pcl1:
-                          ; dc.w 0 
-                          ; 
-                          ; dc.w $88,0
-                          ; 
-                          ; dc.w $ffff,$fffe       ; End copper list.
+                          dc.w               bplcon3,$0c42
+                          incbin             "data/borderpal"
 
-                          ; ds.l 104*12
+                          dc.w               bplcon3,$8c42
+                          dc.w               color00
+hitcol:                   dc.w               $0
+                          dc.w               bplcon3,$0c42
+                          dc.w               color00
+hitcol2:                  dc.w               0
 
-                          ;colbars2:
-                          ;val SET $2a
-                          ; dcb.l 104*80,$1fe0000
-                          ; 
-                          ; dc.w $106,$c42
-                          ; 
-                          ; dc.w $80
-                          ;pch2:
-                          ; dc.w 0
-                          ; dc.w $82
-                          ;pcl2:
-                          ; dc.w 0
-                          ; 
-                          ; dc.w $88,0
-                          ; 
-                          ; dc.w $ffff,$fffe       ; End copper list.
+                          dc.w               bplcon0,$7201
+                          dc.w               bplcon1
+smoff:                    dc.w               $0
 
-                          ; ds.l 104*10
+                          dc.w               $108
+modulo:                   dc.w               -24
+                          dc.w               $10a
+                          dc.w               -24
+
+                          dc.w               bpl1pth
+pl1h:                     dc.w               0
+                          dc.w               bpl1ptl
+pl1l:                     dc.w               0
+
+                          dc.w               bpl2pth
+pl2h:                     dc.w               0
+                          dc.w               bpl2ptl
+pl2l:                     dc.w               0
+
+                          dc.w               bpl3pth
+pl3h:                     dc.w               0
+                          dc.w               bpl3ptl
+pl3l:                     dc.w               0
+
+                          dc.w               bpl4pth
+pl4h:                     dc.w               0
+                          dc.w               bpl4ptl
+pl4l:                     dc.w               0
+
+                          dc.w               bpl5pth
+pl5h:                     dc.w               0
+                          dc.w               bpl5ptl
+pl5l:                     dc.w               0
+
+                          dc.w               bpl6pth
+pl6h:                     dc.w               0
+                          dc.w               bpl6ptl
+pl6l:                     dc.w               0
+                          
+                          dc.w               bpl7pth
+pl7h:                     dc.w               0
+                          dc.w               bpl7ptl
+pl7l:                     dc.w               0
+
+                          dc.w               $1001,$ff00
+                          dc.w               intreq,%0000000000110000                                             ; $0011 : RESET 4=COPER, 5=VBLANK
+                          
+yposcop:                  dc.w               $2a11,$fffe
+                          dc.w               copjmp2,0                                                            ; Chunky screen
+
+                          ; ds.l               104*12
+
+***************************************************************************
+
+; colbars:
+; val                       SET                $2a
+
+;                           dcb.l              scrwidth*scrheight,copperNOP
+;                           dc.w               bplcon3,$c42
+                         
+;                           dc.w               $80
+; pch1:                     dc.w               0
+;                           dc.w               $82
+; pcl1:                     dc.w               0 
+                           
+;                           dc.w               $88,0
+                           
+;                           dc.w               $ffff,$fffe                                                          ; End copper list.
+
+;                           ds.l               104*12
+
+; colbars2:
+
+; val                       SET                $2a
+
+;                           dcb.l              scrwidth*scrheight,copperNOP                          
+;                           dc.w               bplcon3,$c42
+                           
+;                           dc.w               $80
+; pch2:                     dc.w               0
+;                           dc.w               $82
+; pcl2:                     dc.w               0
+                           
+;                           dc.w               $88,0
+                           
+;                           dc.w               $ffff,$fffe                                                          ; End copper list.
+
+;                           ds.l               104*10
 
 *********************************************************************************************
 
 PanelCop:
 
-                          dc.w          cop1lch
-och:                      dc.w          0
-                          dc.w          cop1lcl
-ocl:                      dc.w          0
+                          dc.w               cop1lch
+och:                      dc.w               0
+                          dc.w               cop1lcl
+ocl:                      dc.w               0
 
-statskip:                 dc.w          $1fe                                                                 ; NOP (large/small screen)
-                          dc.w          0
-                          dc.w          $1fe                                                                 ; NOP 
-                          dc.w          0
+statskip:                 dc.w               $1fe                                                                 ; NOP (large/small screen)
+                          dc.w               0
+                          dc.w               $1fe                                                                 ; NOP 
+                          dc.w               0
 
-                          dc.w          bplcon4
-                          dc.w          0
+                          dc.w               bplcon4
+                          dc.w               0
 
-                          dc.w          bplcon0
-                          dc.w          $1201
+                          dc.w               bplcon0
+                          dc.w               $1201
 
-                          dc.w          bpl1ptl
-n1l:                      dc.w          0
+                          dc.w               bpl1ptl
+n1l:                      dc.w               0
 
-                          dc.w          bpl1pth
-n1h:                      dc.w          0
+                          dc.w               bpl1pth
+n1h:                      dc.w               0
 
-                          incbin        "data/Panelpal"
+                          incbin             "data/Panelpal"
 
-                          dc.w          bpl2pth
-p2h:                      dc.w          0
-                          dc.w          bpl2ptl
-p2l:                      dc.w          0
+                          dc.w               bpl2pth
+p2h:                      dc.w               0
+                          dc.w               bpl2ptl
+p2l:                      dc.w               0
 
-                          dc.w          bpl3pth
-p3h:                      dc.w          0
-                          dc.w          bpl3ptl
-p3l:                      dc.w          0
+                          dc.w               bpl3pth
+p3h:                      dc.w               0
+                          dc.w               bpl3ptl
+p3l:                      dc.w               0
 
-                          dc.w          bpl4pth
-p4h:                      dc.w          0
-                          dc.w          bpl4ptl
-p4l:                      dc.w          0
+                          dc.w               bpl4pth
+p4h:                      dc.w               0
+                          dc.w               bpl4ptl
+p4l:                      dc.w               0
 
-                          dc.w          bpl5pth
-p5h:                      dc.w          0
-                          dc.w          bpl5ptl
-p5l:                      dc.w          0
-                          dc.w          bpl6pth
+                          dc.w               bpl5pth
+p5h:                      dc.w               0
+                          dc.w               bpl5ptl
+p5l:                      dc.w               0
+                          dc.w               bpl6pth
 
-p6h:                      dc.w          0
-                          dc.w          bpl6ptl
-p6l:                      dc.w          0
+p6h:                      dc.w               0
+                          dc.w               bpl6ptl
+p6l:                      dc.w               0
 
-                          dc.w          bpl7pth
-p7h:                      dc.w          0
-                          dc.w          bpl7ptl
-p7l:                      dc.w          0
+                          dc.w               bpl7pth
+p7h:                      dc.w               0
+                          dc.w               bpl7ptl
+p7l:                      dc.w               0
 
-                          dc.w          bpl8pth
-p8h:                      dc.w          0
-                          dc.w          bpl8ptl
-p8l:                      dc.w          0
+                          dc.w               bpl8pth
+p8h:                      dc.w               0
+                          dc.w               bpl8ptl
+p8l:                      dc.w               0
  
-                          dc.w          ddfstart,$38
-                          dc.w          ddfstop,$b8
-                          dc.w          diwstart,$2c81
-                          dc.w          diwstop,$2cc1
+                          dc.w               ddfstrt,$38
+                          dc.w               ddfstop,$b8
+                          dc.w               diwstrt,$2c81
+                          dc.w               diwstop,$2cc1
  
-                          dc.w          bplcon0
-Panelcon:                 dc.w          $0211
+                          dc.w               bplcon0
+Panelcon:                 dc.w               $0211
 
-                          dc.w          bpl1mod
-pMod1:                    dc.w          40*7
-                          dc.w          bpl2mod
-pMod2:                    dc.w          40*7
+                          dc.w               bpl1mod
+pMod1:                    dc.w               40*7
+                          dc.w               bpl2mod
+pMod2:                    dc.w               40*7
 
-                          dc.w          bpl1pth
-p1h:                      dc.w          0
-                          dc.w          bpl1ptl
-p1l:                      dc.w          0
+                          dc.w               bpl1pth
+p1h:                      dc.w               0
+                          dc.w               bpl1ptl
+p1l:                      dc.w               0
 
-doSkipFaces:              dc.w          $ffff,$fffe                                                          ; End
+doSkipFaces:              dc.w               $ffff,$fffe                                                          ; End of copper list
 
 ***********************************************************
 
-                          dc.w          color00,$fff
+                          dc.w               color00,$fff
 
-                          dc.w          $f801,$ff00
-                          dc.w          color01,$50
-                          dc.w          $f901,$ff00
-                          dc.w          color01,$90
-                          dc.w          $fa01,$ff00
-                          dc.w          color01,$f0
-                          dc.w          $fb01,$ff00
-                          dc.w          color01,$f0
-                          dc.w          $fc01,$ff00
-                          dc.w          color01,$90
-                          dc.w          $fd01,$ff00
-                          dc.w          color01,$50
+                          dc.w               $f801,$ff00
+                          dc.w               color01,$50
+                          dc.w               $f901,$ff00
+                          dc.w               color01,$90
+                          dc.w               $fa01,$ff00
+                          dc.w               color01,$f0
+                          dc.w               $fb01,$ff00
+                          dc.w               color01,$f0
+                          dc.w               $fc01,$ff00
+                          dc.w               color01,$90
+                          dc.w               $fd01,$ff00
+                          dc.w               color01,$50
 
-                          dc.w          $fe01,$ff00
-                          dc.w          color01,$fff
+                          dc.w               $fe01,$ff00
+                          dc.w               color01,$fff
  
-                          dc.w          $ffdf,$fffe
-                          dc.w          $a01,$ff00
+                          dc.w               $ffdf,$fffe
+                          dc.w               $a01,$ff00
                           
-                          dc.w          ddfstart,$48 
-                          dc.w          ddfstop,$88 
-                          dc.w          diwstart,$2c81
-                          dc.w          diwstop,$2cc1
+                          dc.w               ddfstrt,$48 
+                          dc.w               ddfstop,$88 
+                          dc.w               diwstrt,$2c81
+                          dc.w               diwstop,$2cc1
 
-                          dc.w          bplcon0
-                          dc.w          $201 
+                          dc.w               bplcon0
+                          dc.w               $201 
 
-                          dc.w          bpl1mod
-                          dc.w          0 
-                          dc.w          bpl2mod
-                          dc.w          0 
+                          dc.w               bpl1mod
+                          dc.w               0 
+                          dc.w               bpl2mod
+                          dc.w               0 
 
-                          include       "data/faces2cols.s"
+                          include            "data/faces2cols.s"
 
-                          dc.w          bpl1pth
-f1h:                      dc.w          0
-                          dc.w          bpl1ptl
-f1l:                      dc.w          0
+                          dc.w               bpl1pth
+f1h:                      dc.w               0
+                          dc.w               bpl1ptl
+f1l:                      dc.w               0
 
-                          dc.w          bpl2pth
-f2h:                      dc.w          0
-                          dc.w          bpl2ptl
-f2l:                      dc.w          0
+                          dc.w               bpl2pth
+f2h:                      dc.w               0
+                          dc.w               bpl2ptl
+f2l:                      dc.w               0
 
-                          dc.w          bpl3pth
-f3h:                      dc.w          0
-                          dc.w          bpl3ptl
-f3l:                      dc.w          0
+                          dc.w               bpl3pth
+f3h:                      dc.w               0
+                          dc.w               bpl3ptl
+f3l:                      dc.w               0
 
-                          dc.w          bpl4pth
-f4h:                      dc.w          0
-                          dc.w          bpl4ptl
-f4l:                      dc.w          0
+                          dc.w               bpl4pth
+f4h:                      dc.w               0
+                          dc.w               bpl4ptl
+f4l:                      dc.w               0
 
-                          dc.w          bpl5pth
-f5h:                      dc.w          0
-                          dc.w          bpl5ptl
-f5l:                      dc.w          0
+                          dc.w               bpl5pth
+f5h:                      dc.w               0
+                          dc.w               bpl5ptl
+f5l:                      dc.w               0
  
-                          dc.w          $0c01,$ff00
+                          dc.w               $0c01,$ff00
 
-                          dc.w          bplcon0
-                          dc.w          $5201                                                                ; $201
+                          dc.w               bplcon0
+                          dc.w               $5201                                                                ; $201
 
-                          dc.w          $ffff,$fffe
-                          cnop          0,64
-
-*********************************************************************************************
-
-FacePlace:                ds.l          6*32*5
-
-*********************************************************************************************
-
-TEXTSCRN:                 dc.l          0
+                          dc.w               $ffff,$fffe                                                          ; End of copper list
+                          cnop               0,64
 
 *********************************************************************************************
 
 TEXTCOP:
-                          dc.w          intreq,$8030
+                          dc.w               intreq,$8030                                                         ; SET 4 = COPER, 5 = VERTB
 
-                          dc.w          spr0ptl
-txs0l:
-                          dc.w          0
-                          dc.w          spr0pth
-txs0h:
-                          dc.w          0
-                          dc.w          spr1ptl
-txs1l:
-                          dc.w          0
-                          dc.w          spr1pth
-txs1h:
-                          dc.w          0
-                          dc.w          spr2ptl
-txs2l:
-                          dc.w          0
-                          dc.w          spr2pth
-txs2h:
-                          dc.w          0
-                          dc.w          spr3ptl
-txs3l:
-                          dc.w          0
-                          dc.w          spr3pth
-txs3h:
-                          dc.w          0
-                          dc.w          spr4ptl
-txs4l:
-                          dc.w          0
-                          dc.w          spr4pth
-txs4h:
-                          dc.w          0
-                          dc.w          spr5ptl
-txs5l:
-                          dc.w          0
-                          dc.w          spr5pth
-txs5h:
-                          dc.w          0
-                          dc.w          spr6ptl
-txs6l:
-                          dc.w          0
-                          dc.w          spr6pth
-txs6h:
-                          dc.w          0
-                          dc.w          spr7ptl
-txs7l:
-                          dc.w          0
-                          dc.w          spr7pth
-txs7h:
-                          dc.w          0
+                          dc.w               spr0ptl
+txs0l:                    dc.w               0
+                          dc.w               spr0pth
+txs0h:                    dc.w               0
+                          dc.w               spr1ptl
+txs1l:                    dc.w               0
+                          dc.w               spr1pth
+txs1h:                    dc.w               0
+                          dc.w               spr2ptl
+txs2l:                    dc.w               0
+                          dc.w               spr2pth
+txs2h:                    dc.w               0
+                          dc.w               spr3ptl
+txs3l:                    dc.w               0
+                          dc.w               spr3pth
+txs3h:                    dc.w               0
+                          dc.w               spr4ptl
+txs4l:                    dc.w               0
+                          dc.w               spr4pth
+txs4h:                    dc.w               0
+                          dc.w               spr5ptl
+txs5l:                    dc.w               0
+                          dc.w               spr5pth
+txs5h:                    dc.w               0
+                          dc.w               spr6ptl
+txs6l:                    dc.w               0
+                          dc.w               spr6pth
+txs6h:                    dc.w               0
+                          dc.w               spr7ptl
+txs7l:                    dc.w               0
+                          dc.w               spr7pth
+txs7h:                    dc.w               0
 
+                          dc.w               bplcon4,$0088
+                          dc.w               fmode,$000f
+                          dc.w               diwstrt,$2c81                                                        ; Top left corner of screen.
+                          dc.w               diwstop,$2cc1                                                        ; Bottom right corner of screen.
+                          dc.w               ddfstrt,$38                                                          ; Data fetch start.
+                          dc.w               ddfstop,$c8                                                          ; Data fetch stop.
 
-                          dc.w          $10c,$0088
+                          dc.w               bplcon0
+TSCP:                     dc.w               $9201
 
-                          dc.w          $1fc,$f
-                          dc.w          diwstart,$2c81                                                       ; Top left corner of screen.
-                          dc.w          diwstop,$2cc1                                                        ; Bottom right corner of screen.
-                          dc.w          ddfstart,$38                                                         ; Data fetch start.
-                          dc.w          ddfstop,$c8                                                          ; Data fetch stop.
+                          dc.w               bplcon3
+                          dc.w               $0c40
 
-                          dc.w          bplcon0
-TSCP:
-                          dc.w          $9201
+                          dc.w               $2a01,$ff00
 
-                          dc.w          $106,$c40
-
-                          dc.w          $2a01,$ff00
-
-                          dc.w          color00,0
-                          dc.w          color01
+                          dc.w               color00
+TXTBGCOL:                 dc.w               0
+                          dc.w               color01
 TOPLET:
-TXTCOLL:
-                          dc.w          0
-                          dc.w          color02
-BOTLET:
-                          dc.w          0
-                          dc.w          color03
-ALLTEXT:
-                          dc.w          $fff
-                          dc.w          $106,$e40
-                          dc.w          color03
-ALLTEXTLOW:
-                          dc.w          $0
+TXTCOLL:                  dc.w               0
+                          dc.w               color02
+BOTLET:                   dc.w               0
+                          dc.w               color03
+ALLTEXT:                  dc.w               $fff
 
+                          dc.w               bplcon3,$0e40
 
-                          dc.w          bpl1pth
-TSPTh:
-                          dc.w          0
-                          dc.w          bpl1ptl
-TSPTl:
-                          dc.w          0
+                          dc.w               color03
+ALLTEXTLOW:               dc.w               $0
 
-                          dc.w          bpl2pth
-TSPTh2:
-                          dc.w          0
-                          dc.w          bpl2ptl
-TSPTl2:
-                          dc.w          0
-
+                          dc.w               bpl1pth
+TSPTh:                    dc.w               0
+                          dc.w               bpl1ptl
+TSPTl:                    dc.w               0
+                          dc.w               bpl2pth
+TSPTh2:                   dc.w               0
+                          dc.w               bpl2ptl
+TSPTl2:                   dc.w               0
  
-                          dc.w          $108,0
-                          dc.w          $10a,0
+                          dc.w               bpl1mod,0
+                          dc.w               bpl2mod,0
 
-                          dc.w          $ffff,$fffe
+                          dc.w               $ffff,$fffe                                                          ; End of copper list
+
+*********************************************************************************************
+
+nullcop:
+                          dc.w               bplcon3,$0c40
+                          dc.w               color00,0 
+                          dc.w               bplcon0,$0
+                          dc.w               $ffff,$fffe
+
+*********************************************************************************************
+                          
+                          SECTION            LevelCode,CODE_F
 
 *********************************************************************************************
 
 RELEASELEVELDATA:
 
-                          move.l        LEVELDATA,d1
-                          beq           SkipLevelData
+                          move.l             LEVELDATA,d1
+                          beq                SkipLevelData
 
-                          move.l        d1,a1
-                          move.l        #120000,d0
-                          move.l        4.w,a6
-                          jsr           _LVOFreeMem(a6)
-                          move.l        #0,LEVELDATA
+                          move.l             d1,a1
+                          move.l             #120000,d0
+                          move.l             4.w,a6
+                          jsr                _LVOFreeMem(a6)
+                          move.l             #0,LEVELDATA
 
 SkipLevelData:                          
                           rts
@@ -10059,24 +10139,24 @@ SkipLevelData:
 
 RELEASELEVELMEM:
  
-                          move.l        LEVELGRAPHICS,d1
-                          beq           SkipLevelGraph
+                          move.l             LEVELGRAPHICS,d1
+                          beq                SkipLevelGraph
 
-                          move.l        d1,a1
-                          move.l        #50000,d0
-                          move.l        4.w,a6
-                          jsr           _LVOFreeMem(a6)
-                          move.l        #0,LEVELGRAPHICS
+                          move.l             d1,a1
+                          move.l             #50000,d0
+                          move.l             4.w,a6
+                          jsr                _LVOFreeMem(a6)
+                          move.l             #0,LEVELGRAPHICS
 
 SkipLevelGraph: 
-                          move.l        LEVELCLIPS,d1
-                          beq           SkipLevelClips
+                          move.l             LEVELCLIPS,d1
+                          beq                SkipLevelClips
 
-                          move.l        d1,a1
-                          move.l        #40000,d0
-                          move.l        4.w,a6
-                          jsr           _LVOFreeMem(a6)
-                          move.l        #0,LEVELCLIPS
+                          move.l             d1,a1
+                          move.l             #40000,d0
+                          move.l             4.w,a6
+                          jsr                _LVOFreeMem(a6)
+                          move.l             #0,LEVELCLIPS
 
 SkipLevelClips:
                           rts
@@ -10085,95 +10165,55 @@ SkipLevelClips:
 
 RELEASETEXTSCRN:
 
-                          move.l        TEXTSCRN,d1
-                          beq           SkipTextScr
+                          move.l             TEXTSCRN,d1
+                          beq                SkipTextScr
 
-                          move.l        d1,a1
-                          move.l        #10240*4,d0
-                          move.l        4.w,a6
-                          jsr           _LVOFreeMem(a6)
-                          move.l        #0,TEXTSCRN
+                          move.l             d1,a1
+                          move.l             #10240*4,d0
+                          move.l             4.w,a6
+                          jsr                _LVOFreeMem(a6)
+                          move.l             #0,TEXTSCRN
 
 SkipTextScr:
                           rts
 
 *********************************************************************************************
 
-Panel:                    dc.l          0
-
-*********************************************************************************************
-
-TimerScr:                 ds.b          80*96                                                                ; 40*64
-                          cnop          0,32
-
-*********************************************************************************************
-
 scrntab:                  
-                          ds.b          16
-val                       SET           32
-                          REPT          96
-                          dc.b          val,val,val
-val                       SET           val+1
+                          ds.b               16
+val                       SET                32
+                          REPT               96
+                          dc.b               val,val,val
+val                       SET                val+1
                           ENDR
-                          ds.b          16
+                          ds.b               16
 
 *********************************************************************************************
 
 smallscrntab:
-val                       SET           32
-                          REPT          96
-                          dc.b          val,val
-val                       SET           val+1
+val                       SET                32
+                          REPT               96
+                          dc.b               val,val
+val                       SET                val+1
                           ENDR
 
-                          cnop          0,64
+                          cnop               0,64
 
-*********************************************************************************************
+*********************************************************************************************                       
 
-scrn:
-
-                          dcb.l         8,$33333333
-                          dc.l          0
-                          dc.l          0
- 
-                          dcb.l         8,$0f0f0f0f
-                          dc.l          0
-                          dc.l          0
-
-                          dcb.l         8,$00ff00ff
-                          dc.l          0
-                          dc.l          0
- 
-                          dcb.l         8,$0000ffff
-                          dc.l          0
-                          dc.l          0
- 
-                          dc.l          0,-1,0,-1,0,-1,0,-1
-                          dc.l          0
-                          dc.l          0
- 
-                          dc.l          -1,-1,0,0,-1,-1,0,0
-                          dc.l          0
-                          dc.l          0
- 
-                          dc.l          0,0,-1,-1,-1,-1,-1,-1
-                          dc.l          0
-                          dc.l          0
-
-*********************************************************************************************
-
-NumTimes:                 dc.l          0
-TimeCount:                dc.l          0
-oldtime:                  dc.l          0
-counting:                 dc.b          0
-oktodisplay:              dc.b          0
+NumTimes:                 dc.l               0
+TimeCount:                dc.l               0
+oldtime:                  dc.l               0
+counting:                 dc.b               0
+oktodisplay:              dc.b               0
+                          even
 
 *********************************************************************************************
 
 INITTIMER:
 
-                          move.l        #0,TimeCount
-                          move.l        #0,NumTimes
+                          move.l             #0,TimeCount
+                          move.l             #0,NumTimes
 
                           ;clr.b         counting                                                             ; agi: added
                           ;clr.b         oktodisplay
@@ -10184,78 +10224,71 @@ INITTIMER:
 
 STARTCOUNT:
 
-                          move.l        d0,-(a7)
-                          move.l        $dff004,d0
-                          and.l         #$1ffff,d0
-                          move.l        d0,oldtime
-                          st            counting
-                          move.l        (a7)+,d0
+                          move.l             d0,-(a7)
+                          move.l             $dff004,d0
+                          and.l              #$1ffff,d0
+                          move.l             d0,oldtime
+                          st                 counting
+                          move.l             (a7)+,d0
                           rts
 
 *********************************************************************************************
 
 STOPCOUNT:
 
-                          move.l        d0,-(a7)
-                          move.l        $dff004,d0
-                          and.l         #$1ffff,d0
+                          move.l             d0,-(a7)
+                          move.l             $dff004,d0
+                          and.l              #$1ffff,d0
  
-                          sub.l         oldtime,d0
-                          cmp.l         #-256,d0
-                          bge.s         okcount
-                          add.l         #313*256,d0
+                          sub.l              oldtime,d0
+                          cmp.l              #-256,d0
+                          bge.s              okcount
+                          add.l              #313*256,d0
 okcount:
-                          add.l         d0,TimeCount
-                          addq.l        #1,NumTimes
-                          clr.b         counting
-                          move.l        (a7)+,d0
+                          add.l              d0,TimeCount
+                          addq.l             #1,NumTimes
+                          clr.b              counting
+                          move.l             (a7)+,d0
                           rts
 
 *********************************************************************************************
 
 STOPCOUNTNOADD:
 
-                          move.l        d0,-(a7)
-                          move.l        $dff004,d0
-                          and.l         #$1ffff,d0
+                          move.l             d0,-(a7)
+                          move.l             $dff004,d0
+                          and.l              #$1ffff,d0
  
-                          sub.l         oldtime,d0
-                          cmp.l         #-256,d0
-                          bge.s         okcount2
-                          add.l         #313*256,d0
+                          sub.l              oldtime,d0
+                          cmp.l              #-256,d0
+                          bge.s              okcount2
+                          add.l              #313*256,d0
 okcount2:
-                          add.l         d0,TimeCount
-                          clr.b         counting
-                          move.l        (a7)+,d0
+                          add.l              d0,TimeCount
+                          clr.b              counting
+                          move.l             (a7)+,d0
                           rts
 
 *********************************************************************************************
 
-maxbot:                   dc.w          0
-tstneg:                   dc.l          0
+maxbot:                   dc.w               0
+tstneg:                   dc.l               0
 
 *********************************************************************************************
 
 STOPTIMER:
 
-                          st            oktodisplay
+                          st                 oktodisplay
                           rts
 
 *********************************************************************************************
 
-digits:                   incbin        "data/numbers"
+digits:                   incbin             "data/numbers"
+                          even
 
 *********************************************************************************************
 
-                          SECTION       Sounds,CODE_C
-
-*********************************************************************************************
-
-nullcop:
-                          dc.w          bplcon3,$c40
-                          dc.w          color00,0 
-                          dc.w          bplcon0,$0
-                          dc.w          $ffff,$fffe
+                          SECTION            SoundData,DATA_C
 
 *********************************************************************************************
 
@@ -10331,584 +10364,603 @@ Flame:                    ; incbin "ab3:sounds/flame"
 EndFlame:
 
 *********************************************************************************************
+
+                          SECTION            CheatData,DATA_F
+
+*********************************************************************************************
 ; Cheat with player energy 
 
-CHEATFRAME:               dc.b          26,20,33,27,17,12                                                    ; J,A,C,K,I,E
+CHEATFRAME:               dc.b               26,20,33,27,17,12                                                    ; J,A,C,K,I,E
 ENDCHEAT:
                           even
 
-CHEATPTR:                 dc.l          CHEATFRAME-200000
-CHEATNUM:                 dc.l          0
+CHEATPTR:                 dc.l               CHEATFRAME-200000
+CHEATNUM:                 dc.l               0
 
 *********************************************************************************************
 
-                          SECTION       Music,code_c
+                          SECTION            MusicCode,CODE_F
 
 *********************************************************************************************
 
-UseAllChannels:           dc.w          0
+UseAllChannels:           dc.w               0
 
 *********************************************************************************************
 
 mt_init:                  
-                          move.l        mt_data,a0
-                          move.l        a0,a1
-                          add.l         #$3b8,a1
-                          moveq         #$7f,d0
-                          moveq         #0,d1
+                          move.l             mt_data,a0
+                          move.l             a0,a1
+                          add.l              #$3b8,a1
+                          moveq              #$7f,d0
+                          moveq              #0,d1
 
 mt_loop:                  
-                          move.l        d1,d2
-                          subq.w        #1,d0
+                          move.l             d1,d2
+                          subq.w             #1,d0
 
 mt_lop2:                  
-                          move.b        (a1)+,d1
-                          cmp.b         d2,d1
-                          bgt.s         mt_loop
-                          dbf           d0,mt_lop2
-                          addq.b        #1,d2
+                          move.b             (a1)+,d1
+                          cmp.b              d2,d1
+                          bgt.s              mt_loop
+                          dbf                d0,mt_lop2
+                          addq.b             #1,d2
 
-                          lea           mt_samplestarts(pc),a1
-                          asl.l         #8,d2
-                          asl.l         #2,d2
-                          add.l         #$43c,d2
-                          add.l         a0,d2
-                          move.l        d2,a2
-                          moveq         #$1e,d0
+                          lea                mt_samplestarts(pc),a1
+                          asl.l              #8,d2
+                          asl.l              #2,d2
+                          add.l              #$43c,d2
+                          add.l              a0,d2
+                          move.l             d2,a2
+                          moveq              #$1e,d0
 
 mt_lop3:                  
-                          clr.l         (a2)
-                          move.l        a2,(a1)+
-                          moveq         #0,d1
-                          move.w        42(a0),d1
-                          asl.l         #1,d1
-                          add.l         d1,a2
-                          add.l         #$1e,a0
-                          dbf           d0,mt_lop3
+                          clr.l              (a2)
+                          move.l             a2,(a1)+
+                          moveq              #0,d1
+                          move.w             42(a0),d1
+                          asl.l              #1,d1
+                          add.l              d1,a2
+                          add.l              #$1e,a0
+                          dbf                d0,mt_lop3
 
-                          or.b          #$2,$bfe001
-                          move.b        #$6,mt_speed
-                          clr.w         $dff0a8
-                          clr.w         $dff0b8
-                          clr.w         $dff0c8
-                          clr.w         $dff0d8
-                          clr.b         mt_songpos
-                          clr.b         mt_counter
-                          clr.w         mt_pattpos
+                          or.b               #$2,$bfe001
+                          move.b             #$6,mt_speed
+                          clr.w              $dff0a8
+                          clr.w              $dff0b8
+                          clr.w              $dff0c8
+                          clr.w              $dff0d8
+                          clr.b              mt_songpos
+                          clr.b              mt_counter
+                          clr.w              mt_pattpos
                           rts
 
 *********************************************************************************************
 
-mt_end:                   clr.w         $dff0a8
-                          clr.w         $dff0b8
-                          clr.w         $dff0c8
-                          clr.w         $dff0d8
-                          move.w        #$f,$dff096
+mt_end:                   clr.w              $dff0a8
+                          clr.w              $dff0b8
+                          clr.w              $dff0c8
+                          clr.w              $dff0d8
+                          move.w             #$f,$dff096
                           rts
 
 *********************************************************************************************
 
 mt_music:
-                          movem.l       d0-d4/a0-a3/a5-a6,-(a7)
-                          move.l        mt_data,a0
-                          addq.b        #$1,mt_counter
-                          move.b        mt_counter,D0
-                          cmp.b         mt_speed,D0
-                          blt.s         mt_nonew
-                          clr.b         mt_counter
-                          bra           mt_getnew
+                          movem.l            d0-d4/a0-a3/a5-a6,-(a7)
+                          move.l             mt_data,a0
+                          addq.b             #$1,mt_counter
+                          move.b             mt_counter,D0
+                          cmp.b              mt_speed,D0
+                          blt.s              mt_nonew
+                          clr.b              mt_counter
+                          bra                mt_getnew
 
 mt_nonew:
-                          lea           mt_voice1(pc),a6
-                          lea           $dff0a0,a5
-                          bsr           mt_checkcom
-                          lea           mt_voice2(pc),a6
-                          lea           $dff0b0,a5
-                          bsr           mt_checkcom
-                          tst.b         UseAllChannels
-                          beq           mt_endr
-                          lea           mt_voice3(pc),a6
-                          lea           $dff0c0,a5
-                          bsr           mt_checkcom
-                          lea           mt_voice4(pc),a6
-                          lea           $dff0d0,a5
-                          bsr           mt_checkcom
-                          bra           mt_endr
+                          lea                mt_voice1(pc),a6
+                          lea                $dff0a0,a5
+                          bsr                mt_checkcom
+                          lea                mt_voice2(pc),a6
+                          lea                $dff0b0,a5
+                          bsr                mt_checkcom
+                          tst.b              UseAllChannels
+                          beq                mt_endr
+                          lea                mt_voice3(pc),a6
+                          lea                $dff0c0,a5
+                          bsr                mt_checkcom
+                          lea                mt_voice4(pc),a6
+                          lea                $dff0d0,a5
+                          bsr                mt_checkcom
+                          bra                mt_endr
 
 mt_arpeggio:
-                          moveq         #0,d0
-                          move.b        mt_counter,d0
-                          divs          #$3,d0
-                          swap          d0
-                          cmp.w         #$0,d0
-                          beq.s         mt_arp2
-                          cmp.w         #$2,d0
-                          beq.s         mt_arp1
+                          moveq              #0,d0
+                          move.b             mt_counter,d0
+                          divs               #$3,d0
+                          swap               d0
+                          cmp.w              #$0,d0
+                          beq.s              mt_arp2
+                          cmp.w              #$2,d0
+                          beq.s              mt_arp1
 
-                          moveq         #0,d0
-                          move.b        $3(a6),d0
-                          lsr.b         #4,d0
-                          bra.s         mt_arp3
-mt_arp1:                  moveq         #0,d0
-                          move.b        $3(a6),d0
-                          and.b         #$f,d0
-                          bra.s         mt_arp3
-mt_arp2:                  move.w        $10(a6),d2
-                          bra.s         mt_arp4
-mt_arp3:                  asl.w         #1,d0
-                          moveq         #0,d1
-                          move.w        $10(a6),d1
-                          lea           mt_periods(pc),a0
-                          moveq         #$24,d7
+                          moveq              #0,d0
+                          move.b             $3(a6),d0
+                          lsr.b              #4,d0
+                          bra.s              mt_arp3
+mt_arp1:                  moveq              #0,d0
+                          move.b             $3(a6),d0
+                          and.b              #$f,d0
+                          bra.s              mt_arp3
+mt_arp2:                  move.w             $10(a6),d2
+                          bra.s              mt_arp4
+mt_arp3:                  asl.w              #1,d0
+                          moveq              #0,d1
+                          move.w             $10(a6),d1
+                          lea                mt_periods(pc),a0
+                          moveq              #$24,d7
 mt_arploop:
-                          move.w        (a0,d0.w),d2
-                          cmp.w         (a0),d1
-                          bge.s         mt_arp4
-                          addq.l        #2,a0
-                          dbf           d7,mt_arploop
+                          move.w             (a0,d0.w),d2
+                          cmp.w              (a0),d1
+                          bge.s              mt_arp4
+                          addq.l             #2,a0
+                          dbf                d7,mt_arploop
                           rts
-mt_arp4:                  move.w        d2,$6(a5)
+mt_arp4:                  move.w             d2,$6(a5)
                           rts
 
 mt_getnew:
-                          move.l        mt_data,a0
-                          move.l        a0,a3
-                          move.l        a0,a2
-                          add.l         #$c,a3
-                          add.l         #$3b8,a2
-                          add.l         #$43c,a0
+                          move.l             mt_data,a0
+                          move.l             a0,a3
+                          move.l             a0,a2
+                          add.l              #$c,a3
+                          add.l              #$3b8,a2
+                          add.l              #$43c,a0
 
-                          moveq         #0,d0
-                          move.l        d0,d1
-                          move.b        mt_songpos,d0
-                          move.b        (a2,d0.w),d1
-                          asl.l         #8,d1
-                          asl.l         #2,d1
-                          add.w         mt_pattpos,d1
-                          clr.w         mt_dmacon
+                          moveq              #0,d0
+                          move.l             d0,d1
+                          move.b             mt_songpos,d0
+                          move.b             (a2,d0.w),d1
+                          asl.l              #8,d1
+                          asl.l              #2,d1
+                          add.w              mt_pattpos,d1
+                          clr.w              mt_dmacon
 
-                          lea           $dff0a0,a5
-                          lea           mt_voice1(pc),a6
-                          bsr           mt_playvoice
-                          lea           $dff0b0,a5
-                          lea           mt_voice2(pc),a6
-                          bsr           mt_playvoice
-                          tst.b         UseAllChannels
-                          beq           mt_setdma
-                          lea           $dff0c0,a5
-                          lea           mt_voice3(pc),a6
-                          bsr           mt_playvoice
-                          lea           $dff0d0,a5
-                          lea           mt_voice4(pc),a6
-                          bsr           mt_playvoice
-                          bra           mt_setdma
+                          lea                $dff0a0,a5
+                          lea                mt_voice1(pc),a6
+                          bsr                mt_playvoice
+                          lea                $dff0b0,a5
+                          lea                mt_voice2(pc),a6
+                          bsr                mt_playvoice
+                          tst.b              UseAllChannels
+                          beq                mt_setdma
+                          lea                $dff0c0,a5
+                          lea                mt_voice3(pc),a6
+                          bsr                mt_playvoice
+                          lea                $dff0d0,a5
+                          lea                mt_voice4(pc),a6
+                          bsr                mt_playvoice
+                          bra                mt_setdma
 
 *********************************************************************************************
 
 mt_playvoice:
-                          move.l        (a0,d1.l),(a6)
-                          addq.l        #4,d1
-                          moveq         #0,d2
-                          move.b        $2(a6),d2
-                          and.b         #$f0,d2
-                          lsr.b         #4,d2
-                          move.b        (a6),d0
-                          and.b         #$f0,d0
-                          or.b          d0,d2
-                          tst.b         d2
-                          beq.s         mt_setregs
-                          moveq         #0,d3
-                          lea           mt_samplestarts(pc),a1
-                          move.l        d2,d4
-                          subq.l        #$1,d2
-                          asl.l         #2,d2
-                          mulu          #$1e,d4
-                          move.l        (a1,d2.l),$4(a6)
-                          move.w        (a3,d4.l),$8(a6)
-                          move.w        $2(a3,d4.l),$12(a6)
-                          move.w        $4(a3,d4.l),d3
-                          tst.w         d3
-                          beq.s         mt_noloop
-                          move.l        $4(a6),d2
-                          asl.w         #1,d3
-                          add.l         d3,d2
-                          move.l        d2,$a(a6)
-                          move.w        $4(a3,d4.l),d0
-                          add.w         $6(a3,d4.l),d0
-                          move.w        d0,8(a6)
-                          move.w        $6(a3,d4.l),$e(a6)
-                          move.w        $12(a6),d0
-                          asr.w         #2,d0
-                          move.w        d0,$8(a5)
-                          bra.s         mt_setregs
+                          move.l             (a0,d1.l),(a6)
+                          addq.l             #4,d1
+                          moveq              #0,d2
+                          move.b             $2(a6),d2
+                          and.b              #$f0,d2
+                          lsr.b              #4,d2
+                          move.b             (a6),d0
+                          and.b              #$f0,d0
+                          or.b               d0,d2
+                          tst.b              d2
+                          beq.s              mt_setregs
+                          moveq              #0,d3
+                          lea                mt_samplestarts(pc),a1
+                          move.l             d2,d4
+                          subq.l             #$1,d2
+                          asl.l              #2,d2
+                          mulu               #$1e,d4
+                          move.l             (a1,d2.l),$4(a6)
+                          move.w             (a3,d4.l),$8(a6)
+                          move.w             $2(a3,d4.l),$12(a6)
+                          move.w             $4(a3,d4.l),d3
+                          tst.w              d3
+                          beq.s              mt_noloop
+                          move.l             $4(a6),d2
+                          asl.w              #1,d3
+                          add.l              d3,d2
+                          move.l             d2,$a(a6)
+                          move.w             $4(a3,d4.l),d0
+                          add.w              $6(a3,d4.l),d0
+                          move.w             d0,8(a6)
+                          move.w             $6(a3,d4.l),$e(a6)
+                          move.w             $12(a6),d0
+                          asr.w              #2,d0
+                          move.w             d0,$8(a5)
+                          bra.s              mt_setregs
 
 mt_noloop:
-                          move.l        $4(a6),d2
-                          add.l         d3,d2
-                          move.l        d2,$a(a6)
-                          move.w        $6(a3,d4.l),$e(a6)
-                          move.w        $12(a6),d0
-                          asr.w         #2,d0
-                          move.w        d0,$8(a5)
+                          move.l             $4(a6),d2
+                          add.l              d3,d2
+                          move.l             d2,$a(a6)
+                          move.w             $6(a3,d4.l),$e(a6)
+                          move.w             $12(a6),d0
+                          asr.w              #2,d0
+                          move.w             d0,$8(a5)
 
 mt_setregs:
-                          move.w        (a6),d0
-                          and.w         #$fff,d0
-                          beq           mt_checkcom2
-                          move.b        $2(a6),d0
-                          and.b         #$F,d0
-                          cmp.b         #$3,d0
-                          bne.s         mt_setperiod
-                          bsr           mt_setmyport
-                          bra           mt_checkcom2
+                          move.w             (a6),d0
+                          and.w              #$fff,d0
+                          beq                mt_checkcom2
+                          move.b             $2(a6),d0
+                          and.b              #$F,d0
+                          cmp.b              #$3,d0
+                          bne.s              mt_setperiod
+                          bsr                mt_setmyport
+                          bra                mt_checkcom2
 
 mt_setperiod:
-                          move.w        (a6),$10(a6)
-                          and.w         #$fff,$10(a6)
-                          move.w        $14(a6),d0
-                          move.w        d0,$dff096
-                          clr.b         $1b(a6)
+                          move.w             (a6),$10(a6)
+                          and.w              #$fff,$10(a6)
+                          move.w             $14(a6),d0
+                          move.w             d0,$dff096
+                          clr.b              $1b(a6)
 
-                          move.l        $4(a6),(a5)
-                          move.w        $8(a6),$4(a5)
-                          move.w        $10(a6),d0
-                          and.w         #$fff,d0
-                          move.w        d0,$6(a5)
-                          move.w        $14(a6),d0
-                          or.w          d0,mt_dmacon
-                          bra           mt_checkcom2
+                          move.l             $4(a6),(a5)
+                          move.w             $8(a6),$4(a5)
+                          move.w             $10(a6),d0
+                          and.w              #$fff,d0
+                          move.w             d0,$6(a5)
+                          move.w             $14(a6),d0
+                          or.w               d0,mt_dmacon
+                          bra                mt_checkcom2
 
 mt_setdma:
-                          move.w        #250,d0
+                          move.w             #250,d0
 
 mt_wait:
-                          add.w         #1,testchip
-                          dbra          d0,mt_wait
-                          move.w        mt_dmacon,d0
-                          or.w          #$8000,d0
-                          and.w         #%1111111111110011,d0
-                          move.w        d0,$dff096
-                          move.w        #250,d0
+                          add.w              #1,testchip
+                          dbra               d0,mt_wait
+                          move.w             mt_dmacon,d0
+                          or.w               #$8000,d0
+                          and.w              #%1111111111110011,d0
+                          move.w             d0,$dff096
+                          move.w             #250,d0
 
 mt_wait2:
-                          add.w         #1,testchip
-                          dbra          d0,mt_wait2
-                          lea           $dff000,a5
-                          tst.b         UseAllChannels
-                          beq.s         noall
-                          lea           mt_voice4(pc),a6
-                          move.l        $a(a6),$d0(a5)
-                          move.w        $e(a6),$d4(a5)
-                          lea           mt_voice3(pc),a6
-                          move.l        $a(a6),$c0(a5)
-                          move.w        $e(a6),$c4(a5)
+                          add.w              #1,testchip
+                          dbra               d0,mt_wait2
+                          lea                $dff000,a5
+                          tst.b              UseAllChannels
+                          beq.s              noall
+                          lea                mt_voice4(pc),a6
+                          move.l             $a(a6),$d0(a5)
+                          move.w             $e(a6),$d4(a5)
+                          lea                mt_voice3(pc),a6
+                          move.l             $a(a6),$c0(a5)
+                          move.w             $e(a6),$c4(a5)
 
 noall:
-                          lea           mt_voice2(pc),a6
-                          move.l        $a(a6),$b0(a5)
-                          move.w        $e(a6),$b4(a5)
-                          lea           mt_voice1(pc),a6
-                          move.l        $a(a6),$a0(a5)
-                          move.w        $e(a6),$a4(a5)
+                          lea                mt_voice2(pc),a6
+                          move.l             $a(a6),$b0(a5)
+                          move.w             $e(a6),$b4(a5)
+                          lea                mt_voice1(pc),a6
+                          move.l             $a(a6),$a0(a5)
+                          move.w             $e(a6),$a4(a5)
 
-                          add.w         #$10,mt_pattpos
-                          cmp.w         #$400,mt_pattpos
-                          bne.s         mt_endr
+                          add.w              #$10,mt_pattpos
+                          cmp.w              #$400,mt_pattpos
+                          bne.s              mt_endr
 
 mt_nex:                   
-                          clr.w         mt_pattpos
-                          clr.b         mt_break
-                          addq.b        #1,mt_songpos
-                          and.b         #$7f,mt_songpos
-                          move.b        mt_songpos,d1
+                          clr.w              mt_pattpos
+                          clr.b              mt_break
+                          addq.b             #1,mt_songpos
+                          and.b              #$7f,mt_songpos
+                          move.b             mt_songpos,d1
                           ;	cmp.b	mt_data+$3b6,d1
                           ;	bne.s	mt_endr
                           ;	move.b	mt_data+$3b7,mt_songpos
 
 mt_endr:                  
-                          tst.b         mt_break
-                          bne.s         mt_nex
-                          movem.l       (a7)+,d0-d4/a0-a3/a5-a6
+                          tst.b              mt_break
+                          bne.s              mt_nex
+                          movem.l            (a7)+,d0-d4/a0-a3/a5-a6
                           rts
 
 mt_setmyport:
-                          move.w        (a6),d2
-                          and.w         #$fff,d2
-                          move.w        d2,$18(a6)
-                          move.w        $10(a6),d0
-                          clr.b         $16(a6)
-                          cmp.w         d0,d2
-                          beq.s         mt_clrport
-                          bge.s         mt_rt
-                          move.b        #$1,$16(a6)
+                          move.w             (a6),d2
+                          and.w              #$fff,d2
+                          move.w             d2,$18(a6)
+                          move.w             $10(a6),d0
+                          clr.b              $16(a6)
+                          cmp.w              d0,d2
+                          beq.s              mt_clrport
+                          bge.s              mt_rt
+                          move.b             #$1,$16(a6)
                           rts
 
 mt_clrport:
-                          clr.w         $18(a6)
+                          clr.w              $18(a6)
 
 mt_rt:                    
                           rts
 
 *********************************************************************************************
 
-CODESTORE:                dc.l          0
+CODESTORE:                dc.l               0
 
 *********************************************************************************************
 
 mt_myport:
-                          move.b        $3(a6),d0
-                          beq.s         mt_myslide
-                          move.b        d0,$17(a6)
-                          clr.b         $3(a6)
+                          move.b             $3(a6),d0
+                          beq.s              mt_myslide
+                          move.b             d0,$17(a6)
+                          clr.b              $3(a6)
 
 mt_myslide:
-                          tst.w         $18(a6)
-                          beq.s         mt_rt
-                          moveq         #0,d0
-                          move.b        $17(a6),d0
-                          tst.b         $16(a6)
-                          bne.s         mt_mysub
-                          add.w         d0,$10(a6)
-                          move.w        $18(a6),d0
-                          cmp.w         $10(a6),d0
-                          bgt.s         mt_myok
-                          move.w        $18(a6),$10(a6)
-                          clr.w         $18(a6)
+                          tst.w              $18(a6)
+                          beq.s              mt_rt
+                          moveq              #0,d0
+                          move.b             $17(a6),d0
+                          tst.b              $16(a6)
+                          bne.s              mt_mysub
+                          add.w              d0,$10(a6)
+                          move.w             $18(a6),d0
+                          cmp.w              $10(a6),d0
+                          bgt.s              mt_myok
+                          move.w             $18(a6),$10(a6)
+                          clr.w              $18(a6)
 
 mt_myok:                  
-                          move.w        $10(a6),$6(a5)
+                          move.w             $10(a6),$6(a5)
                           rts
 
 mt_mysub:
-                          sub.w         d0,$10(a6)
-                          move.w        $18(a6),d0
-                          cmp.w         $10(a6),d0
-                          blt.s         mt_myok
-                          move.w        $18(a6),$10(a6)
-                          clr.w         $18(a6)
-                          move.w        $10(a6),$6(a5)
+                          sub.w              d0,$10(a6)
+                          move.w             $18(a6),d0
+                          cmp.w              $10(a6),d0
+                          blt.s              mt_myok
+                          move.w             $18(a6),$10(a6)
+                          clr.w              $18(a6)
+                          move.w             $10(a6),$6(a5)
                           rts
 
-mt_vib:                   move.b        $3(a6),d0
-                          beq.s         mt_vi
-                          move.b        d0,$1a(a6)
+mt_vib:                   move.b             $3(a6),d0
+                          beq.s              mt_vi
+                          move.b             d0,$1a(a6)
 
-mt_vi:                    move.b        $1b(a6),d0
-                          lea           mt_sin(pc),a4
-                          lsr.w         #$2,d0
-                          and.w         #$1f,d0
-                          moveq         #0,d2
-                          move.b        (a4,d0.w),d2
-                          move.b        $1a(a6),d0
-                          and.w         #$f,d0
-                          mulu          d0,d2
-                          lsr.w         #$6,d2
-                          move.w        $10(a6),d0
-                          tst.b         $1b(a6)
-                          bmi.s         mt_vibmin
-                          add.w         d2,d0
-                          bra.s         mt_vib2
+mt_vi:                    move.b             $1b(a6),d0
+                          lea                mt_sin(pc),a4
+                          lsr.w              #$2,d0
+                          and.w              #$1f,d0
+                          moveq              #0,d2
+                          move.b             (a4,d0.w),d2
+                          move.b             $1a(a6),d0
+                          and.w              #$f,d0
+                          mulu               d0,d2
+                          lsr.w              #$6,d2
+                          move.w             $10(a6),d0
+                          tst.b              $1b(a6)
+                          bmi.s              mt_vibmin
+                          add.w              d2,d0
+                          bra.s              mt_vib2
 
 mt_vibmin:
-                          sub.w         d2,d0
+                          sub.w              d2,d0
 
 mt_vib2:                  
-                          move.w        d0,$6(a5)
-                          move.b        $1a(a6),d0
-                          lsr.w         #$2,d0
-                          and.w         #$3c,d0
-                          add.b         d0,$1b(a6)
+                          move.w             d0,$6(a5)
+                          move.b             $1a(a6),d0
+                          lsr.w              #$2,d0
+                          and.w              #$3c,d0
+                          add.b              d0,$1b(a6)
                           rts
 
 mt_nop:                   
-                          move.w        $10(a6),$6(a5)
+                          move.w             $10(a6),$6(a5)
                           rts
 
 mt_checkcom:
-                          move.w        $2(a6),d0
-                          and.w         #$fff,d0
-                          beq.s         mt_nop
-                          move.b        $2(a6),d0
-                          and.b         #$f,d0
-                          tst.b         d0
-                          beq           mt_arpeggio
-                          cmp.b         #$1,d0
-                          beq.s         mt_portup
-                          cmp.b         #$2,d0
-                          beq           mt_portdown
-                          cmp.b         #$3,d0
-                          beq           mt_myport
-                          cmp.b         #$4,d0
-                          beq           mt_vib
-                          move.w        $10(a6),$6(a5)
-                          cmp.b         #$a,d0
-                          beq.s         mt_volslide
+                          move.w             $2(a6),d0
+                          and.w              #$fff,d0
+                          beq.s              mt_nop
+                          move.b             $2(a6),d0
+                          and.b              #$f,d0
+                          tst.b              d0
+                          beq                mt_arpeggio
+                          cmp.b              #$1,d0
+                          beq.s              mt_portup
+                          cmp.b              #$2,d0
+                          beq                mt_portdown
+                          cmp.b              #$3,d0
+                          beq                mt_myport
+                          cmp.b              #$4,d0
+                          beq                mt_vib
+                          move.w             $10(a6),$6(a5)
+                          cmp.b              #$a,d0
+                          beq.s              mt_volslide
                           rts
 
 mt_volslide:
-                          moveq         #0,d0
-                          move.b        $3(a6),d0
-                          lsr.b         #4,d0
-                          tst.b         d0
-                          beq.s         mt_voldown
-                          add.w         d0,$12(a6)
-                          cmp.w         #$40,$12(a6)
-                          bmi.s         mt_vol2
-                          move.w        #$40,$12(a6)
-mt_vol2:                  move.w        $12(a6),d0
-                          asr.w         #2,d0
-                          move.w        d0,$8(a5)
+                          moveq              #0,d0
+                          move.b             $3(a6),d0
+                          lsr.b              #4,d0
+                          tst.b              d0
+                          beq.s              mt_voldown
+                          add.w              d0,$12(a6)
+                          cmp.w              #$40,$12(a6)
+                          bmi.s              mt_vol2
+                          move.w             #$40,$12(a6)
+mt_vol2:                  move.w             $12(a6),d0
+                          asr.w              #2,d0
+                          move.w             d0,$8(a5)
                           rts
 
 mt_voldown:
-                          moveq         #0,d0
-                          move.b        $3(a6),d0
-                          and.b         #$f,d0
-                          sub.w         d0,$12(a6)
-                          bpl.s         mt_vol3
-                          clr.w         $12(a6)
-mt_vol3:                  move.w        $12(a6),d0
-                          asr.w         #2,d0
-                          move.w        d0,$8(a5)
+                          moveq              #0,d0
+                          move.b             $3(a6),d0
+                          and.b              #$f,d0
+                          sub.w              d0,$12(a6)
+                          bpl.s              mt_vol3
+                          clr.w              $12(a6)
+mt_vol3:                  move.w             $12(a6),d0
+                          asr.w              #2,d0
+                          move.w             d0,$8(a5)
                           rts
 
 mt_portup:
-                          moveq         #0,d0
-                          move.b        $3(a6),d0
-                          sub.w         d0,$10(a6)
-                          move.w        $10(a6),d0
-                          and.w         #$fff,d0
-                          cmp.w         #$71,d0
-                          bpl.s         mt_por2
-                          and.w         #$f000,$10(a6)
-                          or.w          #$71,$10(a6)
-mt_por2:                  move.w        $10(a6),d0
-                          and.w         #$fff,d0
-                          move.w        d0,$6(a5)
+                          moveq              #0,d0
+                          move.b             $3(a6),d0
+                          sub.w              d0,$10(a6)
+                          move.w             $10(a6),d0
+                          and.w              #$fff,d0
+                          cmp.w              #$71,d0
+                          bpl.s              mt_por2
+                          and.w              #$f000,$10(a6)
+                          or.w               #$71,$10(a6)
+mt_por2:                  move.w             $10(a6),d0
+                          and.w              #$fff,d0
+                          move.w             d0,$6(a5)
                           rts
 
 mt_portdown:
-                          clr.w         d0
-                          move.b        $3(a6),d0
-                          add.w         d0,$10(a6)
-                          move.w        $10(a6),d0
-                          and.w         #$fff,d0
-                          cmp.w         #$358,d0
-                          bmi.s         mt_por3
-                          and.w         #$f000,$10(a6)
-                          or.w          #$358,$10(a6)
-mt_por3:                  move.w        $10(a6),d0
-                          and.w         #$fff,d0
-                          move.w        d0,$6(a5)
+                          clr.w              d0
+                          move.b             $3(a6),d0
+                          add.w              d0,$10(a6)
+                          move.w             $10(a6),d0
+                          and.w              #$fff,d0
+                          cmp.w              #$358,d0
+                          bmi.s              mt_por3
+                          and.w              #$f000,$10(a6)
+                          or.w               #$358,$10(a6)
+mt_por3:                  move.w             $10(a6),d0
+                          and.w              #$fff,d0
+                          move.w             d0,$6(a5)
                           rts
 
 mt_checkcom2:
-                          move.b        $2(a6),d0
-                          and.b         #$f,d0
-                          cmp.b         #$e,d0
-                          beq.s         mt_setfilt
-                          cmp.b         #$d,d0
-                          beq.s         mt_pattbreak
-                          cmp.b         #$b,d0
-                          beq.s         mt_posjmp
-                          cmp.b         #$c,d0
-                          beq.s         mt_setvol
-                          cmp.b         #$f,d0
-                          beq.s         mt_setspeed
+                          move.b             $2(a6),d0
+                          and.b              #$f,d0
+                          cmp.b              #$e,d0
+                          beq.s              mt_setfilt
+                          cmp.b              #$d,d0
+                          beq.s              mt_pattbreak
+                          cmp.b              #$b,d0
+                          beq.s              mt_posjmp
+                          cmp.b              #$c,d0
+                          beq.s              mt_setvol
+                          cmp.b              #$f,d0
+                          beq.s              mt_setspeed
                           rts
 
 mt_setfilt:
-                          move.b        $3(a6),d0
-                          and.b         #$1,d0
-                          asl.b         #$1,d0
-                          and.b         #$fd,$bfe001
-                          or.b          d0,$bfe001
+                          move.b             $3(a6),d0
+                          and.b              #$1,d0
+                          asl.b              #$1,d0
+                          and.b              #$fd,$bfe001
+                          or.b               d0,$bfe001
                           rts
 mt_pattbreak:
-                          not.b         mt_break
+                          not.b              mt_break
                           rts
 mt_posjmp:
-                          st            reachedend
-                          move.b        $3(a6),d0
-                          subq.b        #$1,d0
-                          move.b        d0,mt_songpos
-                          not.b         mt_break
+                          st                 reachedend
+                          move.b             $3(a6),d0
+                          subq.b             #$1,d0
+                          move.b             d0,mt_songpos
+                          not.b              mt_break
                           rts
 mt_setvol:
-                          cmp.b         #$40,$3(a6)
-                          ble.s         mt_vol4
-                          move.b        #$40,$3(a6)
-mt_vol4:                  move.b        $3(a6),d0
-                          asr.w         #2,d0
-                          move.w        d0,$8(a5)
+                          cmp.b              #$40,$3(a6)
+                          ble.s              mt_vol4
+                          move.b             #$40,$3(a6)
+mt_vol4:                  move.b             $3(a6),d0
+                          asr.w              #2,d0
+                          move.w             d0,$8(a5)
                           rts
 mt_setspeed:
-                          cmp.b         #$1f,$3(a6)
-                          ble.s         mt_sets
-                          move.b        #$1f,$3(a6)
-mt_sets:                  move.b        $3(a6),d0
-                          beq.s         mt_rts2
-                          move.b        d0,mt_speed
-                          clr.b         mt_counter
+                          cmp.b              #$1f,$3(a6)
+                          ble.s              mt_sets
+                          move.b             #$1f,$3(a6)
+mt_sets:                  move.b             $3(a6),d0
+                          beq.s              mt_rts2
+                          move.b             d0,mt_speed
+                          clr.b              mt_counter
 mt_rts2:                  rts
 
 *********************************************************************************************
 
 mt_sin:
-                          DC.b          $00,$18,$31,$4a,$61,$78,$8d,$a1,$b4,$c5,$d4,$e0,$eb,$f4,$fa,$fd
-                          DC.b          $ff,$fd,$fa,$f4,$eb,$e0,$d4,$c5,$b4,$a1,$8d,$78,$61,$4a,$31,$18
+                          DC.b               $00,$18,$31,$4a,$61,$78,$8d,$a1,$b4,$c5,$d4,$e0,$eb,$f4,$fa,$fd
+                          DC.b               $ff,$fd,$fa,$f4,$eb,$e0,$d4,$c5,$b4,$a1,$8d,$78,$61,$4a,$31,$18
+                          even
 
 *********************************************************************************************
 
 mt_periods:
-                          DC.w          $0358,$0328,$02fa,$02d0,$02a6,$0280,$025c,$023a,$021a,$01fc,$01e0
-                          DC.w          $01c5,$01ac,$0194,$017d,$0168,$0153,$0140,$012e,$011d,$010d,$00fe
-                          DC.w          $00f0,$00e2,$00d6,$00ca,$00be,$00b4,$00aa,$00a0,$0097,$008f,$0087
-                          DC.w          $007f,$0078,$0071,$0000,$0000
+                          DC.w               $0358,$0328,$02fa,$02d0,$02a6,$0280,$025c,$023a,$021a,$01fc,$01e0
+                          DC.w               $01c5,$01ac,$0194,$017d,$0168,$0153,$0140,$012e,$011d,$010d,$00fe
+                          DC.w               $00f0,$00e2,$00d6,$00ca,$00be,$00b4,$00aa,$00a0,$0097,$008f,$0087
+                          DC.w               $007f,$0078,$0071,$0000,$0000
 
 *********************************************************************************************
 
-reachedend:               dc.b          0
-mt_speed:                 DC.b          6
-mt_songpos:               DC.b          0
-mt_pattpos:               DC.w          0
-mt_counter:               DC.b          0
+reachedend:               dc.b               0
+mt_speed:                 DC.b               6
+mt_songpos:               DC.b               0
+mt_pattpos:               DC.w               0
+mt_counter:               DC.b               0
+                          even
 
 *********************************************************************************************
 
-mt_break:                 DC.b          0
-mt_dmacon:                DC.w          0
-mt_samplestarts:          DS.L          $1f
-mt_voice1:                DS.w          10
-                          DC.w          1
-                          DS.w          3
-mt_voice2:                DS.w          10
-                          DC.w          2
-                          DS.w          3
-mt_voice3:                DS.w          10
-                          DC.w          4
-                          DS.w          3
-mt_voice4:                DS.w          10
-                          DC.w          8
-                          DS.w          3
+mt_break:                 DC.b               0
+mt_dmacon:                DC.w               0
+mt_samplestarts:          DS.L               $1f
+mt_voice1:                DS.w               10
+                          DC.w               1
+                          DS.w               3
+mt_voice2:                DS.w               10
+                          DC.w               2
+                          DS.w               3
+mt_voice3:                DS.w               10
+                          DC.w               4
+                          DS.w               3
+mt_voice4:                DS.w               10
+                          DC.w               8
+                          DS.w               3
+                          even
 
 *********************************************************************************************
 
-testchip:                 dc.w          0
+testchip:                 dc.w               0
 
 *********************************************************************************************
 
-mt_data:                  dc.l          0
-tstchip:                  dc.l          0
+mt_data:                  dc.l               0
+tstchip:                  dc.l               0
 
 *********************************************************************************************
 
-                          include       "Serial_Nightmare.s"
+                          SECTION            SerialCode,CODE_F
+
+*********************************************************************************************
+; Multi player
+
+                          include            "SerialNightmare.s"
+                          even
+                          include            "SerialDataTransfer.s"
+                          even
 
 *********************************************************************************************
 
-ingame:                   incbin        "data/ingame"
-gameover:                 incbin        "data/gameover"
-welldone:                 incbin        "data/welldone"
+                          SECTION            SampleData,DATA_C
+
+*********************************************************************************************
+
+ingame:                   incbin             "data/ingame"
+gameover:                 incbin             "data/gameover"
+welldone:                 incbin             "data/welldone"
 
 *********************************************************************************************

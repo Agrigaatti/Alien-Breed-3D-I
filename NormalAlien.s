@@ -1,6 +1,6 @@
 *********************************************************************************************
 
-      opt         P=68020
+  opt        P=68020
               
 *********************************************************************************************
 
@@ -8,10 +8,11 @@ ItsANasty:
 
   tst.b      NASTY
   bne        .yesnas
+
   move.w     #-1,12(a0)
   rts
-.yesnas:
 
+.yesnas:
   move.w     #$1f1f,14(a0)
 
   move.b     worry(a0),d0
@@ -21,6 +22,7 @@ ItsANasty:
   sub.b      #1,d0
   bge.s      .oknn
   move.b     #0,d0
+
 .oknn: 
   add.b      d0,d1
   move.b     d1,worry(a0)
@@ -38,11 +40,12 @@ ItsANasty:
   clr.b      gotgun
   move.w     12(a0),d2
   bge.s      .stillalive
+
 .notthisone:
   move.w     12(a0),GraphicRoom(a0)
   rts
-.stillalive:
 
+.stillalive:
   tst.b      numlives(a0)
   bgt        .notdying
  
@@ -50,6 +53,7 @@ ItsANasty:
   sub.w      TempFrames,d1
   bge.s      .noneg
   move.w     #0,d1
+
 .noneg:
   move.w     d1,ThirdTimer(a0)
  

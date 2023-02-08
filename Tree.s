@@ -1,6 +1,6 @@
 *********************************************************************************************
 
-            opt        P=68020
+  opt        P=68020
 
 *********************************************************************************************
 
@@ -10,9 +10,8 @@ ItsATree:
   bne        .yesnas
   move.w     #-1,12(a0)
   rts
+
 .yesnas:
-
-
   move.w     #32*256+32,14(a0)
   move.w     #128*256+128,6(a0)
 
@@ -22,6 +21,7 @@ ItsATree:
   and.b      #127,d0
   beq.s      .noless
   sub.b      #1,d0
+
 .noless:
   add.b      d0,d1
   move.b     d1,worry(a0)
@@ -39,11 +39,12 @@ ItsATree:
   clr.b      gotgun
   move.w     12(a0),d2
   bge.s      .stillalive
+
 .notthisone:
   move.w     12(a0),GraphicRoom(a0)
   rts
-.stillalive:
 
+.stillalive:
   tst.b      numlives(a0)
   bgt.s      .notdying
   move.b     #0,numlives(a0)
@@ -62,12 +63,10 @@ ItsATree:
   bra        .notthisone
 
 .onfloordead:
- 
   move.w     12(a0),GraphicRoom(a0)
   rts
 
 .notdying: 
-
   tst.b      17(a0)
   beq.s      .cantseeplayer
   tst.w      ThirdTimer(a0)
@@ -79,7 +78,6 @@ ItsATree:
   bra        .waitandsee
  
 .cantseeplayer:
-
   jsr        GetRand
   lsr.w      #4,d0
   and.w      #63,d0
@@ -87,7 +85,6 @@ ItsATree:
   move.w     d0,ThirdTimer(a0)
 
 .waitandsee:
-
   move.w     #30,FourthTimer(a0)
 
   move.w     12(a0),d2
@@ -118,8 +115,8 @@ ItsATree:
   asr.l      #7,d0
   add.w      d0,4(a0)
   bra        .nochangedir
+
 .notel:
- 
   move.w     maxspd(a0),d2
   muls       TempFrames,d2
   move.w     d2,speed
@@ -140,19 +137,17 @@ ItsATree:
   bra        .hitathing
  
 .canmove:
- 
   clr.b      wallbounce
   jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
   move.b     StoodInTop,ObjInTop(a0)
 
 .hitathing:
-
   tst.b      hitwall
   beq.s      .nochangedir
   move.w     #-1,ObjTimer(a0)
-.nochangedir
 
+.nochangedir
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -164,6 +159,7 @@ ItsATree:
   tst.b      ObjInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
@@ -171,6 +167,7 @@ ItsATree:
   tst.b      ObjInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #100,d0
@@ -210,7 +207,6 @@ ItsATree:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -243,8 +239,6 @@ ItsATree:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream
-
- 
   move.w     TempFrames,d0
   sub.w      d0,ObjTimer(a0)
   bge.s      .keepsamedir
@@ -255,7 +249,6 @@ ItsATree:
   move.w     #50,ObjTimer(a0)
  
 .keepsamedir:
-
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -284,7 +277,6 @@ ItsATree:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
@@ -307,7 +299,6 @@ ItsATree:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
@@ -328,13 +319,10 @@ ItsATree:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   move.w     12(a0),GraphicRoom(a0)
   rts
  
 TreeAttack:
-
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -370,14 +358,12 @@ TreeAttack:
  
  
 TreeAttackPLR1:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
+
 .oktoshoot:
- 
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -389,8 +375,8 @@ TreeAttackPLR1:
   asl.l      #2,d0
   bne.s      .notflfl
   move.l     #16,d0
+
 .notflfl:
- 
   add.l      #$f0000,d0
   move.l     d0,8(a0)
 
@@ -421,7 +407,6 @@ TreeAttackPLR1:
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
@@ -440,6 +425,7 @@ TreeAttackPLR1:
   tst.b      ObjInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
@@ -447,6 +433,7 @@ TreeAttackPLR1:
   tst.b      ObjInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #100,d0
@@ -486,7 +473,6 @@ TreeAttackPLR1:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -519,7 +505,6 @@ TreeAttackPLR1:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream
-
 ; bra .cantshoot
 ; tst.b canshootgun
 ; beq .cantshoot
@@ -538,6 +523,7 @@ TreeAttackPLR1:
 
   move.l     OtherNastyData,a2
   move.w     #19,d1
+
 .findonefree
   move.w     12(a2),d2
   blt.s      .foundonefree
@@ -546,7 +532,6 @@ TreeAttackPLR1:
   bra        .cantshoot
 
 .foundonefree
-
   move.w     #100,FourthTimer(a2)
   move.w     #100,ThirdTimer(a2)
   move.w     #100,ObjTimer(a2)
@@ -565,8 +550,6 @@ TreeAttackPLR1:
   st         worry(a2)
   
 .cantshoot:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -591,7 +574,6 @@ TreeAttackPLR1:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
@@ -613,7 +595,6 @@ TreeAttackPLR1:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
@@ -638,23 +619,19 @@ TreeAttackPLR1:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   move.w     12(a0),GraphicRoom(a0)
   rts
 
 *************************************************
 
 TreeAttackPLR2:
- 
 
- 
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
+
 .oktoshoot:
- 
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -666,8 +643,8 @@ TreeAttackPLR2:
   asl.l      #2,d0
   bne.s      .notflfl
   move.l     #16,d0
+
 .notflfl:
- 
   add.l      #$f0000,d0
   move.l     d0,8(a0)
 
@@ -698,7 +675,6 @@ TreeAttackPLR2:
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
@@ -717,6 +693,7 @@ TreeAttackPLR2:
   tst.b      ObjInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
@@ -724,6 +701,7 @@ TreeAttackPLR2:
   tst.b      ObjInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #100,d0
@@ -763,7 +741,6 @@ TreeAttackPLR2:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -795,8 +772,7 @@ TreeAttackPLR2:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
  
-.noscream
-
+.noscream:
 ; tst.b canshootgun
 ; beq .cantshoot
   cmp.w      #20,FourthTimer(a0)
@@ -810,20 +786,19 @@ TreeAttackPLR2:
 
   move.w     d0,ThirdTimer(a0)
 
-
   move.l     #$f0011,8(a0)
 
   move.l     OtherNastyData,a2
   move.w     #19,d1
-.findonefree
+
+.findonefree:
   move.w     12(a2),d2
   blt.s      .foundonefree
   adda.w     #64,a2
   dbra       d1,.findonefree
   bra        .cantshoot
 
-.foundonefree
-
+.foundonefree:
   move.w     #100,FourthTimer(a2)
   move.w     #100,ThirdTimer(a2)
   move.w     #5,maxspd(a2)
@@ -840,8 +815,6 @@ TreeAttackPLR2:
   st         worry(a2)
   
 .cantshoot:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -866,7 +839,6 @@ TreeAttackPLR2:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
@@ -888,10 +860,8 @@ TreeAttackPLR2:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
-
 
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
@@ -913,11 +883,7 @@ TreeAttackPLR2:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
-
-
   move.w     12(a0),GraphicRoom(a0)
   rts
 
-
+*********************************************************************************************

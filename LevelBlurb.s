@@ -1,13 +1,56 @@
 *********************************************************************************************
 
-              opt        P=68020
+  opt     P=68020
               
 *********************************************************************************************
 ; Inline source
 ; For : ControlLoop.s
 ; Description : Level descriptions + end text
 *********************************************************************************************
+  cnop    0,32
 
+MpMasterText:
+;          01234567890123456789012345678901234567890123456789012345678901234567890123456789
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,1,"Master computer                                                                 "
+  dc.b    0,1,"Waiting..                                                                       "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+
+  cnop    0,32
+    
+MpSlaveText:
+;          01234567890123456789012345678901234567890123456789012345678901234567890123456789
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,1,"Slave computer                                                                  "
+  dc.b    0,1,"Connecting..                                                                    "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+  dc.b    0,0,"                                                                                "
+
+  cnop    0,32
+    
 LEVELTEXT:
 ; Start of level one:
 ;          01234567890123456789012345678901234567890123456789012345678901234567890123456789
@@ -342,7 +385,7 @@ ENDGAMETEXT:
 
 
 ENDOFGAMESCROLL:
-
+    
 ;          01234567890123456789012345678901234567890123456789012345678901234567890123456789
   dc.b    -1,-1
   dc.b    -1,-1
@@ -360,6 +403,7 @@ ENDOFGAMESCROLL:
   dc.b    -1,-1
   dc.b    -1,-1
   dc.b    -1,-1
+  
   dc.b    2,1,"ALIEN BREED 3D                                                                  "
   dc.b    -1,-1
   dc.b    -1,-1
@@ -376,7 +420,7 @@ ENDOFGAMESCROLL:
   dc.b    -1,-1
   dc.b    -1,-1
   dc.b    -1,-1
- 
+   
   dc.b    -1,-1
   dc.b    -1,-1
   dc.b    2,1,"THE CAST:                                                                       "
@@ -393,6 +437,7 @@ ENDOFGAMESCROLL:
   dc.b    2,1,"Melvin the Mutant                                                               "
   dc.b    -1,-1
   dc.b    0,1,"Melvin showed off his acting ability to the full in this, his latest appearance,"
+  
   dc.b    0,1,"in which he played no fewer than three roles simultaneously: a pistol-wielding  "
   dc.b    0,1,"psychotic soldier, a plasma-gun wielding psychotic soldier, and a shotgun       "
   dc.b    0,1,"wielding psychotic soldier. He brushes aside claims that the difference between "

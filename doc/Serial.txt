@@ -1,10 +1,11 @@
 Serial Communictation
+---------------------
 
-Setting the baud rate
+Setting the baud rate:
   the value placed in the SERPER register is
   (3546895/baud)-1
   
-Setting the format
+Setting the format:
   bit 15 of the SERPER register allows you to set data
   transfer at either 8 or 9 bits
   0 - 8 bits

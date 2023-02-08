@@ -1,6 +1,6 @@
 *********************************************************************************************
 
-                 opt                 P=68020
+  opt        P=68020
 
 *********************************************************************************************
 
@@ -8,11 +8,11 @@ ItsABigClaws:
 
   tst.b      NASTY
   bne        .yesnas
+  
   move.w     #-1,12(a0)
   rts
+
 .yesnas:
-
-
   move.w     #64*256+64,14(a0)
   move.w     #$8080,6(a0)
 
@@ -23,6 +23,7 @@ ItsABigClaws:
   and.b      #127,d0
   beq.s      .noless
   sub.b      #1,d0
+
 .noless:
   add.b      d0,d1
   move.b     d1,worry(a0)
@@ -62,7 +63,6 @@ ItsABigClaws:
   bra        .notthisone
 
 .onfloordead:
- 
   rts
 
 .notdying: 
@@ -78,7 +78,6 @@ ItsABigClaws:
   bra        .waitandsee
  
 .cantseeplayer:
-
   jsr        GetRand
   lsr.w      #4,d0
   and.w      #63,d0
@@ -86,7 +85,6 @@ ItsABigClaws:
   move.w     d0,ThirdTimer(a0)
 
 .waitandsee:
-
   move.w     #70,FourthTimer(a0)
 
   move.w     12(a0),d2
@@ -117,8 +115,8 @@ ItsABigClaws:
   asr.l      #7,d0
   add.w      d0,4(a0)
   bra        .nochangedir
+
 .notel:
- 
   move.w     maxspd(a0),d2
   muls       TempFrames,d2
   move.w     d2,speed
@@ -139,18 +137,16 @@ ItsABigClaws:
   bra        .hitathing
  
 .canmove:
- 
   jsr        MoveObject
   movem.l    (a7)+,d0/a0/a1/a3/a4/d7
   move.b     StoodInTop,ObjInTop(a0)
 
 .hitathing:
-
   tst.b      hitwall
   beq.s      .nochangedir
   move.w     #-1,ObjTimer(a0)
-.nochangedir
 
+.nochangedir
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -162,6 +158,7 @@ ItsABigClaws:
   tst.b      ObjInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
@@ -169,6 +166,7 @@ ItsABigClaws:
   tst.b      ObjInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #128,d0
@@ -213,11 +211,9 @@ ItsABigClaws:
   move.w     #$2020,6(a0)
   move.w     #$1010,14(a0)
 
- 
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -249,8 +245,6 @@ ItsABigClaws:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream
-
- 
   move.w     TempFrames,d0
   sub.w      d0,ObjTimer(a0)
   bge.s      .keepsamedir
@@ -261,7 +255,6 @@ ItsABigClaws:
   move.w     #150,ObjTimer(a0)
  
 .keepsamedir:
-
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -290,7 +283,6 @@ ItsABigClaws:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
@@ -313,7 +305,6 @@ ItsABigClaws:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
@@ -334,8 +325,6 @@ ItsABigClaws:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   rts
  
 BigClawsAttack:
@@ -375,14 +364,12 @@ BigClawsAttack:
  
  
 BigClawsAttackPLR1:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
+
 .oktoshoot:
- 
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -394,8 +381,8 @@ BigClawsAttackPLR1:
   asl.l      #2,d0
   bne.s      .notflfl
   move.l     #16,d0
+
 .notflfl:
- 
   add.l      #$e0000,d0
   move.l     d0,8(a0)
 
@@ -426,7 +413,6 @@ BigClawsAttackPLR1:
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   Jsr        MoveObject
   movem.l    (a7)+,d0/a0/a1/a3/a4/d7
   move.b     StoodInTop,ObjInTop(a0)
@@ -444,6 +430,7 @@ BigClawsAttackPLR1:
   tst.b      ObjInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
@@ -451,6 +438,7 @@ BigClawsAttackPLR1:
   tst.b      ObjInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #128,d0
@@ -497,7 +485,6 @@ BigClawsAttackPLR1:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -549,7 +536,6 @@ BigClawsAttackPLR1:
 .noreset:
   move.w     d0,ThirdTimer(a0)
 
-
   move.l     #$e0011,8(a0)
 
   move.w     #9,Samplenum
@@ -564,8 +550,6 @@ BigClawsAttackPLR1:
   jsr        FireAtPlayer1
  
 .cantshoot:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -590,7 +574,6 @@ BigClawsAttackPLR1:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
@@ -612,7 +595,6 @@ BigClawsAttackPLR1:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
@@ -637,8 +619,6 @@ BigClawsAttackPLR1:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   rts
 
 *************************************************
@@ -650,8 +630,8 @@ BigClawsAttackPLR2:
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
+
 .oktoshoot:
- 
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -663,8 +643,8 @@ BigClawsAttackPLR2:
   asl.l      #2,d0
   bne.s      .notflfl
   move.l     #16,d0
+
 .notflfl:
- 
   add.l      #$e0000,d0
   move.l     d0,8(a0)
 
@@ -695,7 +675,6 @@ BigClawsAttackPLR2:
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   Jsr        MoveObject
   movem.l    (a7)+,d0/a0/a1/a3/a4/d7
   move.b     StoodInTop,ObjInTop(a0)
@@ -713,6 +692,7 @@ BigClawsAttackPLR2:
   tst.b      ObjInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
@@ -720,6 +700,7 @@ BigClawsAttackPLR2:
   tst.b      ObjInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #128,d0
@@ -765,7 +746,6 @@ BigClawsAttackPLR2:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -797,7 +777,6 @@ BigClawsAttackPLR2:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream
-
 ; tst.b canshootgun
 ; beq .cantshoot
   cmp.w      #20,FourthTimer(a0)
@@ -817,7 +796,6 @@ BigClawsAttackPLR2:
 .noreset:
   move.w     d0,ThirdTimer(a0)
 
-
   move.l     #$e0011,8(a0)
 
   move.w     #9,Samplenum
@@ -832,8 +810,6 @@ BigClawsAttackPLR2:
   jsr        FireAtPlayer2
  
 .cantshoot:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -858,7 +834,6 @@ BigClawsAttackPLR2:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
@@ -880,7 +855,6 @@ BigClawsAttackPLR2:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
@@ -905,9 +879,6 @@ BigClawsAttackPLR2:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
-
   rts
 
 

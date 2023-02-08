@@ -1,6 +1,6 @@
 *********************************************************************************************
 
-                          opt                 P=68020
+              opt       P=68020
 
 *********************************************************************************************
 
@@ -8,22 +8,22 @@ TITLEPAL:
               incbin    "data/titlescrnpal"
 
 titlecop:
-              dc.w      intreq,$8020
+              dc.w      intreq,$8020            ; SET 5=VBLANK
 
-              dc.w      $10c,$0088
+              dc.w      bplcon4,$0088
 
-              dc.w      $1fc,$f
-              dc.w      diwstart,$2c81     ; Top left corner of screen.
-              dc.w      diwstop,$2cc1      ; Bottom right corner of screen.
-              dc.w      ddfstart,$38       ; Data fetch start.
-              dc.w      ddfstop,$b8        ; Data fetch stop.
+              dc.w      fmode,$000f
+              dc.w      diwstrt,$2c81          ; Top left corner of screen.
+              dc.w      diwstop,$2cc1          ; Bottom right corner of screen.
+              dc.w      ddfstrt,$38            ; Data fetch start.
+              dc.w      ddfstop,$b8            ; Data fetch stop.
 
               dc.w      bplcon0
 titleplanes:  dc.w      $7201
               dc.w      bplcon1
               dc.w      $0
  
-              dc.w      $106,$c40
+              dc.w      bplcon3,$0c40
 
               dc.w      spr0ptl
 tsp0l:
