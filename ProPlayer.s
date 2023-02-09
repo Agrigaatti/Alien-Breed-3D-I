@@ -115,10 +115,10 @@ inst_svol       EQU 6
 inst_strans     EQU 7
 
 ; Audio hardware offsets
-ac_ptr          EQU $00
-ac_len          EQU $04
-ac_per          EQU $06
-ac_vol          EQU $08
+;ac_ptr          EQU $00
+;ac_len          EQU $04
+;ac_per          EQU $06
+;ac_vol          EQU $08
 
 ; Trackdata sizes
 T03SZ           EQU 106

@@ -58,6 +58,14 @@ VERSION          equ "1.00"
 LABEL            equ "EXTE"
                      endc
 
+                     ifnd                   PLR1_GunData
+PLR1_GunData     equ 0
+                     endc
+
+                     ifnd                   PLR1_GunDataEnd
+PLR1_GunDataEnd  equ 32
+                     endc
+
 *********************************************************************************************
 
                      incdir                 "includes"
@@ -187,38 +195,9 @@ PlayGame:
                      jsr                    LOADOBS
 
 *********************************************************************************************
-; End music
-
-                     IFNE                   ENABLETITLEMUSIC
-                     move.b                 #0,lastpressed
-
-wtpress:
-                     btst                   #6,$bfe001                                    ; LMB port 1
-                     beq.s                  continue
-
-                     btst                   #7,$bfe001                                    ; LMB port 2
-                     beq.s                  continue
-                     
-                     tst.b                  lastpressed
-                     beq.s                  wtpress
-
-continue:
-                     jsr                    _StopPlayer
-                     jsr                    _RemPlayer
-
-                     move.l                 INTROTUNEADDR,a0
-                     jsr                    _UnLoadModule
-                     ENDC
-
-*********************************************************************************************
 
                      move.w                 #31,FADEAMOUNT
                      bsr                    FADEDOWNTITLE
-
-*********************************************************************************************
-; No need
-
-                    ;bsr         ASKFORDISK
 
 *********************************************************************************************
 
@@ -227,7 +206,6 @@ continue:
 *********************************************************************************************
 
                      bsr                    SetupDefaultGame
-                     jsr                    INITSER                                       ; agi: added
                      
 *********************************************************************************************
 
@@ -241,11 +219,25 @@ BACKTOMENU:
                      
                      bsr                    READMAINMENU
                      
-                     cmp.b                  #'q',mors                                     ; agi: Exit game
+***************************************************************
+
+                     cmp.b                  #'q',mors                                     ; Exit game
                      bne                    DoNotExitGame
+
+                     IFNE                   ENABLETITLEMUSIC
+                     jsr                    _StopPlayer
+                     jsr                    _RemPlayer
+
+                     move.l                 INTROTUNEADDR,a0
+                     jsr                    _UnLoadModule
+                     ENDC
+
                      rts
 
 DoNotExitGame:                     
+
+***************************************************************
+
                      bra                    DONEMENU
 
 BACKTOMASTER:
@@ -257,6 +249,17 @@ BACKTOSLAVE:
 
 DONEMENU:
                      bsr                    WAITREL
+
+*********************************************************************************************
+; Stop music
+
+                     IFNE                   ENABLETITLEMUSIC
+                     jsr                    _StopPlayer
+                     jsr                    _RemPlayer
+
+                     move.l                 INTROTUNEADDR,a0
+                     jsr                    _UnLoadModule
+                     ENDC
 
 *********************************************************************************************
 ; Clear titlescreen option sprites 
@@ -339,6 +342,23 @@ dontusestats:
                      bsr                    FADEDOWNTITLE 
 
 *********************************************************************************************
+; Start music
+
+                     IFNE                   ENABLETITLEMUSIC
+                     jsr                    _InitPlayer
+
+                     move.l                 #INTROTUNENAME,a0
+                     jsr                    _LoadModule
+                     move.l                 d0,INTROTUNEADDR
+
+                     move.l                 d0,a0
+                     jsr                    _InitModule
+                    
+                     move.l                 INTROTUNEADDR,a0
+                     jsr                    _PlayModule
+                     ENDC
+
+*********************************************************************************************
 
                      move.b                 #'n',mors
                      bra                    BACKTOMENU
@@ -398,6 +418,8 @@ tempsrkey:           dc.b                   0
                      even 
 
 *********************************************************************************************
+
+GUNDATASIZE      EQU (PLR1_GunDataEnd-PLR1_GunData)                                       ; 32
 
 GETSTATS:
 ; CHANGE PASSWORD INTO RAW DATA

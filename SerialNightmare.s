@@ -26,27 +26,6 @@ PAUSE    MACRO
          cnop        0,32
 
 *********************************************************************************************
-
-INITSER:
-         
-         SAVEREGS
-         lea         $dff000,a6
-
-.RBFLoop:
-         btst.b      #6,serdatr(a6)       ; bit 14 = RBF (Serial port receive buffer full)
-         beq.b       .RBFReady            
-         move.w      serdatr(a6),d0
-         move.w      #$0800,intreq(a6)    ; level 5 - bit 11 = RBF (Serial port receive buffer full)
-         PAUSE
-         PAUSE
-         bra.b       .RBFLoop
-
-.RBFReady:
-         GETREGS
-
-         rts
-
-*********************************************************************************************
 ; sends the lower byte of d1 accross serial port corrupts bit 8 of d1
 
 SERSEND:

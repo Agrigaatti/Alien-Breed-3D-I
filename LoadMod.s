@@ -40,7 +40,6 @@ msng_numsamples EQU 787
 
 _LoadModule:
               movem.l    a2-a4/a6/d2-d6,-(sp)
-              PRSDF
               moveq      #0,d6                           ;d6 = return value (zero = error)
               move.l     a0,a4                           ;a4 = module name
               movea.l    4,a6
@@ -48,7 +47,6 @@ _LoadModule:
               moveq      #0,d0
               jsr        -$228(a6)                       ;OpenLibrary()
               tst.l      d0
-              PRSDE
               beq        xlm1
               move.l     d0,a3                           ;a3 = DOSBase
               move.l     d0,a6
@@ -85,7 +83,7 @@ _LoadModule:
               cmp.l      #'MMD0',(a2)
               bne.s      xlm4                            ;this is not a module!!!
 id_ok         movea.l    a2,a0
-              bsr.s      _RelocModule
+              bsr       _RelocModule
               move.l     a2,d6                           ;no error...
               bra.s      xlm3
 xlm4          move.l     a2,a1                           ;error: free the memory

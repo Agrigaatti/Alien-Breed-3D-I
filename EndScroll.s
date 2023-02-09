@@ -6,263 +6,263 @@
 ; After a few seconds, scroll it upwards with the text following....
 *********************************************************************************************
 
-                    opt                 P=68020
+                    opt                P=68020
 
 *********************************************************************************************
 
-                    incdir              "includes"
-                    include             "AB3DI.i"
-                    include             "macros.i"
+                    incdir             "includes"
+                    include            "AB3DI.i"
+                    include            "macros.i"
 
 *********************************************************************************************
 
 EndGameScroll:
 
-                    lea                 KeyMap,a5
-                    clr.b               $45(a5)                       ; Esc
+                    lea                KeyMap,a5
+                    clr.b              $45(a5)                       ; Esc
             
-                    move.w              #14,LINESLEFTTOSCROLL
-                    move.w              #0,DONEXTLINE
-                    move.w              #3,scrolldownaline
-                    move.w              #0,SCROLLPOS
-                    move.l              #0,SCROLLPT
-                    move.l              #0,OLDSCROLL
-                    move.w              #0,NEXTLINE
-                    move.w              #0,LASTLINE
+                    move.w             #14,LINESLEFTTOSCROLL
+                    move.w             #0,DONEXTLINE
+                    move.w             #3,scrolldownaline
+                    move.w             #0,SCROLLPOS
+                    move.l             #0,SCROLLPT
+                    move.l             #0,OLDSCROLL
+                    move.w             #0,NEXTLINE
+                    move.w             #0,LASTLINE
 
 *********************************************************
 
-                    move.l              TEXTSCRN,d0
-                    move.w              d0,TSPTl
-                    swap                d0
-                    move.w              d0,TSPTh
-                    swap                d0
-                    move.w              d0,TSPTl2
-                    swap                d0
-                    move.w              d0,TSPTh2
+                    move.l             TEXTSCRN,d0
+                    move.w             d0,TSPTl
+                    swap               d0
+                    move.w             d0,TSPTh
+                    swap               d0
+                    move.w             d0,TSPTl2
+                    swap               d0
+                    move.w             d0,TSPTh2
 
 *********************************************************
 
-                    move.w              #$0,TXTCOLL
-                    move.w              #$0,BOTLET
-                    move.w              #$0,ALLTEXT
-                    move.w              #$0,ALLTEXTLOW
-                    move.w              #$0,TXTBGCOL
+                    move.w             #$0,TXTCOLL
+                    move.w             #$0,BOTLET
+                    move.w             #$0,ALLTEXT
+                    move.w             #$0,ALLTEXTLOW
+                    move.w             #$0,TXTBGCOL
 
-                    lea                 $dff000,a6                    ; a6 points at the first custom chip register.
+                    lea                $dff000,a6                    ; a6 points at the first custom chip register.
 
-                    move.l              #TEXTCOP,cop1lch(a6)          ; Point the copper at our copperlist.
-                    move.w              #$a201,TSCP                   ; Bitplane control register 0
-                    move.w              #$20,beamcon0(a6)             ; 5 = PAL
+                    move.l             #TEXTCOP,cop1lch(a6)          ; Point the copper at our copperlist.
+                    move.w             #$a201,TSCP                   ; Bitplane control register 0
+                    move.w             #$20,beamcon0(a6)             ; 5 = PAL
 
 *********************************************************
 ; Cleanup
 
-                    bsr                 ClearScreen                 
+                    bsr                ClearScreen                 
    
 *********************************************************
 ; Still text
 
-                    move.l              #ENDGAMETEXT,a0
-                    move.w              #0,d0
-                    moveq               #15,d7
+                    move.l             #ENDGAMETEXT,a0
+                    move.w             #0,d0
+                    moveq              #15,d7
 
 PUTONS:
-                    move.l              TEXTSCRN,a1
-                    bsr                 DRAWLINEOFTEXT 
-                    add.w               #82,a0
-                    addq                #1,d0
-                    dbra                d7,PUTONS
+                    move.l             TEXTSCRN,a1
+                    bsr                DRAWLINEOFTEXT 
+                    add.w              #82,a0
+                    addq               #1,d0
+                    dbra               d7,PUTONS
  
 *********************************************************
 ; Text fade
 
-                    lea                 $dff000,a6 
-                    move.w              #$000,d0
-                    move.w              #15,d1
+                    lea                $dff000,a6 
+                    move.w             #$000,d0
+                    move.w             #15,d1
 
 fdup2:
-                    move.w              #15,d3
-                    move.w              #0,d2
+                    move.w             #15,d3
+                    move.w             #0,d2
 
 fdup3:
-                    move.w              d0,ALLTEXT
-                    move.w              d2,ALLTEXTLOW
-                    add.w               #$111,d2
+                    move.w             d0,ALLTEXT
+                    move.w             d2,ALLTEXTLOW
+                    add.w              #$111,d2
 
                     WAITFORVERTBREQ
 
-                    dbra                d3,fdup3
-                    add.w               #$111,d0
+                    dbra               d3,fdup3
+                    add.w              #$111,d0
 
 skipBgCol:
-                    dbra                d1,fdup2
+                    dbra               d1,fdup2
                     
 *********************************************************
 ; Text delay
 
-                    lea                 $dff000,a6 
-                    move.w              #300,d3
+                    lea                $dff000,a6 
+                    move.w             #300,d3
 
 fdupwt:
-                    move.l              #KeyMap,a5                                                           
-                    tst.b               $45(a5)                       ; (esc) Exit key
-                    bne                 ExitEndScroll
+                    move.l             #KeyMap,a5                                                           
+                    tst.b              $45(a5)                       ; (esc) Exit key
+                    bne                ExitEndScroll
                     
                     WAITFORVERTBREQ
-                    dbra                d3,fdupwt
+                    dbra               d3,fdupwt
  
 *********************************************************
 ; Scroll loop
 
-                    move.w              #0,SCROLLPOS
-                    move.l              #ENDOFGAMESCROLL,SCROLLPT
-                    move.l              #ENDOFGAMESCROLL,OLDSCROLL
-                    move.w              #17,NEXTLINE
-                    move.w              #16,LASTLINE
+                    move.w             #0,SCROLLPOS
+                    move.l             #ENDOFGAMESCROLL,SCROLLPT
+                    move.l             #ENDOFGAMESCROLL,OLDSCROLL
+                    move.w             #17,NEXTLINE
+                    move.w             #16,LASTLINE
 
 SCROLLINGLOOP:
-                    move.l              #KeyMap,a5                                                           
-                    tst.b               $45(a5)                       ; (esc) Exit key
-                    bne                 ExitEndScroll
+                    move.l             #KeyMap,a5                                                           
+                    tst.b              $45(a5)                       ; (esc) Exit key
+                    bne                ExitEndScroll
 
-                    lea                 $dff000,a6 
+                    lea                $dff000,a6 
                     WAITFORVERTBREQ
 
-                    bsr                 DoTheScroll
+                    bsr                DoTheScroll
 
-                    bra                 SCROLLINGLOOP
+                    bra                SCROLLINGLOOP
 
 *********************************************************************************************
 ; Pixel scroll 
 
 DoTheScroll:
 
-                    move.w              TOPLET,d0                     
-                    move.w              BOTLET,d1
-                    sub.w               #$222,d1
-                    add.w               #$222,d0
-                    move.w              d0,TOPLET
-                    move.w              d1,BOTLET
+                    move.w             TOPLET,d0                     
+                    move.w             BOTLET,d1
+                    sub.w              #$222,d1
+                    add.w              #$222,d0
+                    move.w             d0,TOPLET
+                    move.w             d1,BOTLET
 
 **************************************************************
 
-                    sub.w               #1,scrolldownaline
-                    bgt                 skipScrolling
+                    sub.w              #1,scrolldownaline
+                    bgt                skipScrolling
 
 **************************************************************
 
-                    move.w              #$333,TOPLET
-                    move.w              #$ccc,BOTLET
+                    move.w             #$333,TOPLET
+                    move.w             #$ccc,BOTLET
 
 **************************************************************
 ; Pixel scroll counter
 
-                    sub.w               #1,LINESLEFTTOSCROLL
-                    bgt.s               .NONOTHERLINE
+                    sub.w              #1,LINESLEFTTOSCROLL
+                    bgt.s              .NONOTHERLINE
 
-                    move.w              #16,LINESLEFTTOSCROLL
+                    move.w             #16,LINESLEFTTOSCROLL
 
-                    move.b              LazyAssHack,d0
-                    beq.b               .NONOTHERLINE
+                    move.b             LazyAssHack,d0
+                    beq.b              .NONOTHERLINE
 
-                    move.w              #0,d0                  
-                    bsr                 CLEARLINEOFTEXT
-                    move.b              d0,LazyAssHack 
+                    move.w             #0,d0                  
+                    bsr                CLEARLINEOFTEXT
+                    move.b             d0,LazyAssHack 
 
 .NONOTHERLINE:
 
 **************************************************************
 ; Handle upper text line
 
-                    cmp.w               #16,LINESLEFTTOSCROLL
-                    bne.b               .SkipNewTextLineUpper
+                    cmp.w              #16,LINESLEFTTOSCROLL
+                    bne.b              .SkipNewTextLineUpper
 
-                    bsr                 UpdateTextLineCounter
-                    bsr                 NewUpperLine
+                    bsr                UpdateTextLineCounter
+                    bsr                NewUpperLine
 
 .SkipNewTextLineUpper:
 
 ******************************************************************
 ; Bitmap scroll
 
-                    move.w              SCROLLPOS,d0
-                    move.w              d0,d1
-                    add.w               #1,d0
-                    and.w               #255,d0                       ; y=256px -> 16px height line * 16 pcs
-                    move.w              d0,SCROLLPOS
+                    move.w             SCROLLPOS,d0
+                    move.w             d0,d1
+                    add.w              #1,d0
+                    and.w              #255,d0                       ; y=256px -> 16px height line * 16 pcs
+                    move.w             d0,SCROLLPOS
 
 ******************************************************************
 ; Delayd lower line?
 
-                    move.w              SCROLLPOS,d3
-                    cmp.b               #254,d3
-                    bne.b               noDelayForLowerLine
-                    move.b              #1,DelayLowerLine
+                    move.w             SCROLLPOS,d3
+                    cmp.b              #254,d3
+                    bne.b              noDelayForLowerLine
+                    move.b             #1,DelayLowerLine
 
 noDelayForLowerLine:
 
 ******************************************************************
 ; Pixel scroll 
 
-                    muls                #80,d0                        ; x=640px
-                    muls                #80,d1                         
+                    muls               #80,d0                        ; x=640px
+                    muls               #80,d1                         
                     
-                    add.l               TEXTSCRN,d0
-                    add.l               TEXTSCRN,d1
+                    add.l              TEXTSCRN,d0
+                    add.l              TEXTSCRN,d1
                     
-                    move.w              d0,TSPTl
-                    swap                d0
-                    move.w              d0,TSPTh
+                    move.w             d0,TSPTl
+                    swap               d0
+                    move.w             d0,TSPTh
 
-                    move.w              d1,TSPTl2
-                    swap                d1
-                    move.w              d1,TSPTh2
+                    move.w             d1,TSPTl2
+                    swap               d1
+                    move.w             d1,TSPTh2
 
 ******************************************************************
 ; Handle delayed lower text line               
 
-                    move.l              DELAYDSCRPT,d0
-                    beq.b               skipNewDelaydLine
+                    move.l             DELAYDSCRPT,d0
+                    beq.b              skipNewDelaydLine
                     
-                    move.w              SCROLLPOS,d0
-                    cmp.w               #1,d0
-                    bne.b               skipNewDelaydLine
+                    move.w             SCROLLPOS,d0
+                    cmp.w              #1,d0
+                    bne.b              skipNewDelaydLine
 
-                    bsr                 NewDelaydLowerLine
-                    clr.l               DELAYDSCRPT
-                    clr.w               DELAYDNEXTLINE
+                    bsr                NewDelaydLowerLine
+                    clr.l              DELAYDSCRPT
+                    clr.w              DELAYDNEXTLINE
 
 skipNewDelaydLine:
 
 ******************************************************************
 ; Handle lower text line
 
-                    cmp.w               #16,LINESLEFTTOSCROLL
-                    bne.b               SkipNewTextLineLower
+                    cmp.w              #16,LINESLEFTTOSCROLL
+                    bne.b              SkipNewTextLineLower
 
-                    move.b              DelayLowerLine,d0
-                    beq.b               skipDelaySetup
+                    move.b             DelayLowerLine,d0
+                    beq.b              skipDelaySetup
 
-                    move.l              SCROLLPT,DELAYDSCRPT
-                    move.w              NEXTLINE,DELAYDNEXTLINE
-                    clr.b               DelayLowerLine
+                    move.l             SCROLLPT,DELAYDSCRPT
+                    move.w             NEXTLINE,DELAYDNEXTLINE
+                    clr.b              DelayLowerLine
 
 skipDelaySetup:
-                    move.l              DELAYDSCRPT,d0
-                    bne.b               skipLine
+                    move.l             DELAYDSCRPT,d0
+                    bne.b              skipLine
 
-                    bsr                 NewLowerLine
+                    bsr                NewLowerLine
 
 skipLine:
-                    bsr                 UpdateScreenCounter
+                    bsr                UpdateScreenCounter
 
 SkipNewTextLineLower:
 
 ******************************************************************
 ; Reset vblank delay counter
 
-                    move.w              #3,scrolldownaline
+                    move.w             #3,scrolldownaline
  
 skipScrolling:
                     rts
@@ -271,13 +271,13 @@ skipScrolling:
 
 UpdateScreenCounter:
 
-                    move.w              NEXTLINE,d0                   ; Lower
-                    sub.w               #16,d0
-                    move.w              d0,LASTLINE                   ; Upper
-                    add.w               #1,d0
-                    and.w               #15,d0                        ; %1111 -> 17 -> 1
-                    add.w               #16,d0
-                    move.w              d0,NEXTLINE
+                    move.w             NEXTLINE,d0                   ; Lower
+                    sub.w              #16,d0
+                    move.w             d0,LASTLINE                   ; Upper
+                    add.w              #1,d0
+                    and.w              #15,d0                        ; %1111 -> 17 -> 1
+                    add.w              #16,d0
+                    move.w             d0,NEXTLINE
 
                     rts
 
@@ -285,23 +285,23 @@ UpdateScreenCounter:
 
 UpdateTextLineCounter:
 
-                    move.l              SCROLLPT,a0                   ; a0=Scroll text ptr
-                    move.l              a0,OLDSCROLL
+                    move.l             SCROLLPT,a0                   ; a0=Scroll text ptr
+                    move.l             a0,OLDSCROLL
                     
-                    tst.b               (a0)
-                    blt.s               .notex
+                    tst.b              (a0)
+                    blt.s              .notex
 
-                    add.w               #80,a0
+                    add.w              #80,a0
 
 .notex:
-                    adda.w              #2,a0                         ; ControlCodes+TextInLine=2+80
-                    cmp.l               #ENDOFEND,a0                  ; End of text
-                    blt.s               .nostartscroll
+                    adda.w             #2,a0                         ; ControlCodes+TextInLine=2+80
+                    cmp.l              #ENDOFEND,a0                  ; End of text
+                    blt.s              .nostartscroll
 
-                    move.l              #ENDOFGAMESCROLL,a0
+                    move.l             #ENDOFGAMESCROLL,a0
 
 .nostartscroll:
-                    move.l              a0,SCROLLPT                   ; a0=Scroll text ptr
+                    move.l             a0,SCROLLPT                   ; a0=Scroll text ptr
 
                     rts
 
@@ -309,14 +309,14 @@ UpdateTextLineCounter:
 
 NewUpperLine:
 
-                    move.l              OLDSCROLL,a0
-                    move.w              LASTLINE,d0
-                    move.l              TEXTSCRN,a1
+                    move.l             OLDSCROLL,a0
+                    move.w             LASTLINE,d0
+                    move.l             TEXTSCRN,a1
 
-                    bsr                 CLEARLINEOFTEXT
-                    tst.b               (a0)
-                    blt.s               okitsatwo
-                    bsr                 DRAWLINEOFTEXT
+                    bsr                CLEARLINEOFTEXT
+                    tst.b              (a0)
+                    blt.s              okitsatwo
+                    bsr                DRAWLINEOFTEXT
 
 okitsatwo:
                     rts
@@ -325,14 +325,14 @@ okitsatwo:
 
 NewLowerLine:
 
-                    move.l              SCROLLPT,a0
-                    move.w              NEXTLINE,d0
-                    move.l              TEXTSCRN,a1
+                    move.l             SCROLLPT,a0
+                    move.w             NEXTLINE,d0
+                    move.l             TEXTSCRN,a1
 
-                    bsr                 CLEARLINEOFTEXT
-                    tst.b               (a0)
-                    blt.s               okEmptyLine
-                    bsr                 DRAWLINEOFTEXT
+                    bsr                CLEARLINEOFTEXT
+                    tst.b              (a0)
+                    blt.s              okEmptyLine
+                    bsr                DRAWLINEOFTEXT
 
 okEmptyLine:
                     rts
@@ -341,14 +341,14 @@ okEmptyLine:
 
 NewDelaydLowerLine:
 
-                    move.l              DELAYDSCRPT,a0
-                    move.w              DELAYDNEXTLINE,d0             
-                    move.l              TEXTSCRN,a1
+                    move.l             DELAYDSCRPT,a0
+                    move.w             DELAYDNEXTLINE,d0             
+                    move.l             TEXTSCRN,a1
 
-                    bsr                 CLEARLINEOFTEXT
-                    tst.b               (a0)
-                    blt.s               okitsaline
-                    bsr                 DRAWLINEOFTEXT
+                    bsr                CLEARLINEOFTEXT
+                    tst.b              (a0)
+                    blt.s              okitsaline
+                    bsr                DRAWLINEOFTEXT
 
 okitsaline:
                     rts
@@ -357,89 +357,89 @@ okitsaline:
 
 ExitEndScroll: 
 
-                    bsr                 ClearScreen
+                    bsr                ClearScreen
 
-                    move.w              #0,TXTBGCOL
+                    move.w             #0,TXTBGCOL
 
-                    move.l              TEXTSCRN,d0
-                    move.w              d0,TSPTl
-                    swap                d0
-                    move.w              d0,TSPTh
+                    move.l             TEXTSCRN,d0
+                    move.w             d0,TSPTl
+                    swap               d0
+                    move.w             d0,TSPTh
 
-                    move.w              #0,TSPTl2
-                    move.w              #0,TSPTh2
+                    move.w             #0,TSPTl2
+                    move.w             #0,TSPTh2
 
-                    move.w              #$9201,TSCP
+                    move.w             #$9201,TSCP
 
-                    lea                 KeyMap,a5 
-                    clr.b               $45(a5)
+                    lea                KeyMap,a5 
+                    clr.b              $45(a5)
                     rts
 
 *********************************************************************************************
 
 CLEARLINEOFTEXT:
 ; d0 = row
-                    move.l              d0,-(a7)
+                    move.l             d0,-(a7)
  
-                    muls                #80*16,d0
-                    moveq               #0,d1
-                    move.l              TEXTSCRN,a2
-                    add.l               d0,a2
-                    move.w              #(20*2),d0
+                    muls               #80*16,d0
+                    moveq              #0,d1
+                    move.l             TEXTSCRN,a2
+                    add.l              d0,a2
+                    move.w             #(20*2),d0
 
 CLRIT:
-                    move.l              d1,(a2)+
-                    move.l              d1,(a2)+
-                    move.l              d1,(a2)+
-                    move.l              d1,(a2)+
-                    move.l              d1,(a2)+
-                    move.l              d1,(a2)+
-                    move.l              d1,(a2)+
-                    move.l              d1,(a2)+
-                    dbra                d0,CLRIT
+                    move.l             d1,(a2)+
+                    move.l             d1,(a2)+
+                    move.l             d1,(a2)+
+                    move.l             d1,(a2)+
+                    move.l             d1,(a2)+
+                    move.l             d1,(a2)+
+                    move.l             d1,(a2)+
+                    move.l             d1,(a2)+
+                    dbra               d0,CLRIT
  
-                    move.l              (a7)+,d0
+                    move.l             (a7)+,d0
                     rts
 
 *********************************************************************************************
 
 ClearScreen:
 
-                    bsr                 CLRTWEENSCRN                  ; 10240
+                    bsr                CLRTWEENSCRN                  ; 10240
 
-                    add.l               #10240,TEXTSCRN               ; *4
-                    bsr                 CLRTWEENSCRN                   
+                    add.l              #10240,TEXTSCRN               ; *4
+                    bsr                CLRTWEENSCRN                   
 
-                    add.l               #10240,TEXTSCRN
-                    bsr                 CLRTWEENSCRN                   
+                    add.l              #10240,TEXTSCRN
+                    bsr                CLRTWEENSCRN                   
 
-                    add.l               #10240,TEXTSCRN
-                    bsr                 CLRTWEENSCRN                   
+                    add.l              #10240,TEXTSCRN
+                    bsr                CLRTWEENSCRN                   
 
-                    sub.l               #3*10240,TEXTSCRN
+                    sub.l              #3*10240,TEXTSCRN
                     rts
 
 *********************************************************************************************
 
-LINESLEFTTOSCROLL:  dc.w                14
+LINESLEFTTOSCROLL:  dc.w               14
 
 *********************************************************************************************
 
-DONEXTLINE:         dc.w                0
-scrolldownaline:    dc.w                3
-SCROLLPOS:          dc.w                0
-SCROLLPT:           Dc.l                0
-OLDSCROLL:          dc.l                0
-NEXTLINE:           dc.w                0
-LASTLINE:           dc.w                0
+DONEXTLINE:         dc.w               0
+scrolldownaline:    dc.w               3
+SCROLLPOS:          dc.w               0
+SCROLLPT:           Dc.l               0
+OLDSCROLL:          dc.l               0
+NEXTLINE:           dc.w               0
+LASTLINE:           dc.w               0
 
 *********************************************************************************************
 
-DelayLowerLine:     dc.w                0
-DELAYDSCRPT:        dc.l                0
-DELAYDNEXTLINE:     dc.w                0
+DelayLowerLine:     dc.w               0
+DELAYDSCRPT:        dc.l               0
+DELAYDNEXTLINE:     dc.w               0
 
-LazyAssHack:        dc.b                1                    
+LazyAssHack:        dc.b               1                    
                     even
 
 *********************************************************************************************

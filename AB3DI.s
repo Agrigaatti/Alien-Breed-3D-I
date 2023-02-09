@@ -19,7 +19,7 @@
 *
 *********************************************************************************************
 
-VERSION             EQU "1.00"                                                                                    ; 4 chars
+VERSION             EQU "1.01"                                                                                    ; 4 chars
 LABEL               EQU "EXTE"                                                                                    ; 4 chars
 
 *********************************************************************************************
@@ -45,7 +45,7 @@ UNLIMITEDAMMO       EQU 0
 UNLIMITEDHITS       EQU 0
 
 ; Features
-ENABLETITLEMUSIC    EQU 0
+ENABLETITLEMUSIC    EQU 1
 ENABLEBGMUSIC       EQU 0
 ENABLETIMER         EQU 0
 ENABLEFACES         EQU 0
@@ -82,7 +82,6 @@ Main:
 *********************************************************************************************
 
 SetupGame:
-; a0 = dosCmdBuf
 
                           lea                $dff000,a6                                                           
                           
