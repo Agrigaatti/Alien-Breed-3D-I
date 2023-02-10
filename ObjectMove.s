@@ -1388,21 +1388,6 @@ CheckHit:
                    cmp.l      d2,d1
                    slt        hitwall
                    rts
- 
-GetNextCPt:
-                   cmp.w      d0,d1
-                   beq.s      noneedforhassle
-                   muls       #100,d0
-                   ext.l      d1
-                   add.l      d1,d0
-                   move.l     a0,-(a7)
-                   lea        ControlPts,a0
-                   move.b     (a0,d0.w),d0
-                   ext.w      d0
-                   move.l     (a7)+,a0
-
-noneedforhassle:
-                   rts
 
 *********************************************************************************************
 

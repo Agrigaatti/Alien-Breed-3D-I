@@ -147,7 +147,7 @@ ItsATree:
   beq.s      .nochangedir
   move.w     #-1,ObjTimer(a0)
 
-.nochangedir
+.nochangedir:
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -180,8 +180,10 @@ ItsATree:
   sub.b      d2,numlives(a0)
   bgt        .notdeadyet
 
+********************************************************
 ; cmp.b #1,d2
 ; ble.s .noexplode
+********************************************************
 
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
@@ -238,7 +240,7 @@ ItsATree:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
  
-.noscream
+.noscream:
   move.w     TempFrames,d0
   sub.w      d0,ObjTimer(a0)
   bge.s      .keepsamedir
@@ -356,7 +358,6 @@ TreeAttack:
   cmp.l      d3,d4
   ble        TreeAttackPLR2
  
- 
 TreeAttackPLR1:
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
@@ -446,8 +447,10 @@ TreeAttackPLR1:
   sub.b      d2,numlives(a0)
   bgt        .notdeadyet
 
+********************************************************
 ; cmp.b #1,d2
 ; ble.s .noexplode
+********************************************************
 
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
@@ -504,10 +507,13 @@ TreeAttackPLR1:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
  
-.noscream
+.noscream:
+********************************************************
 ; bra .cantshoot
 ; tst.b canshootgun
 ; beq .cantshoot
+********************************************************
+
   cmp.w      #20,FourthTimer(a0)
   bge        .cantshoot
  
@@ -524,14 +530,14 @@ TreeAttackPLR1:
   move.l     OtherNastyData,a2
   move.w     #19,d1
 
-.findonefree
+.findonefree:
   move.w     12(a2),d2
   blt.s      .foundonefree
   adda.w     #64,a2
   dbra       d1,.findonefree
   bra        .cantshoot
 
-.foundonefree
+.foundonefree:
   move.w     #100,FourthTimer(a2)
   move.w     #100,ThirdTimer(a2)
   move.w     #100,ObjTimer(a2)
@@ -622,7 +628,7 @@ TreeAttackPLR1:
   move.w     12(a0),GraphicRoom(a0)
   rts
 
-*************************************************
+*********************************************************************************************
 
 TreeAttackPLR2:
 
@@ -714,8 +720,10 @@ TreeAttackPLR2:
   sub.b      d2,numlives(a0)
   bgt        .notdeadyet
 
+********************************************************
 ; cmp.b #1,d2
 ; ble.s .noexplode
+********************************************************
 
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
@@ -773,8 +781,12 @@ TreeAttackPLR2:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream:
+
+********************************************************
 ; tst.b canshootgun
 ; beq .cantshoot
+********************************************************
+
   cmp.w      #20,FourthTimer(a0)
   bge        .cantshoot
  

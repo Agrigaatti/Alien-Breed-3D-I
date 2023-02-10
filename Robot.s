@@ -21,8 +21,8 @@ ItsARobot:
               bne        .yesnas
               move.w     #-1,12(a0)
               rts
-.yesnas:
 
+.yesnas:
               move.w     Facing(a0),d0
               sub.w      #2048,d0
               and.w      #8190,d0
@@ -43,10 +43,11 @@ ItsARobot:
 
               move.w     12(a0),d2
               bge.s      .stillalive
+
 .notthisone:
               rts
-.stillalive:
 
+.stillalive:
               tst.b      numlives(a0)
               bgt.s      .notdying
 
@@ -82,6 +83,7 @@ ItsARobot:
               cmp.w      #43,d0
               blt.s      .noresanim
               moveq      #0,d0
+
 .noresanim:
               move.w     d0,ROBFRAME
               asr.w      #1,d0
@@ -100,8 +102,7 @@ ItsARobot:
               move.w     #0,ThirdTimer(a0)
               bra        .waitandsee
  
-.cantseeplayer 
- 
+.cantseeplayer: 
               jsr        GetRand
               lsr.w      #4,d0
               and.w      #63,d0
@@ -109,7 +110,6 @@ ItsARobot:
               move.w     d0,ThirdTimer(a0)
 
 .waitandsee:
- 
               move.w     #30,FourthTimer(a0)
  
               move.l     ZoneAdds,a5
@@ -126,8 +126,7 @@ ItsARobot:
 
               bra        ROBAttack_Player
  
-.keepwandering
-
+.keepwandering:
               jsr        GetRand
               and.w      #8190,d0
               move.w     d0,CurrCPt(a0)
@@ -137,8 +136,7 @@ ItsARobot:
               add.w      #100,d0
               move.w     d0,ObjTimer(a0)
 
-.nonewdir
-
+.nonewdir:
               move.w     CurrCPt(a0),d3
               move.l     #SineTable,a2
               add.w      d3,a2
@@ -161,16 +159,16 @@ ItsARobot:
  
               sub.l      d5,d4
               blt.s      .turnrighty
-.turnlefty:
 
+.turnlefty:
               cmp.l      d4,d6
               bgt.s      .doneturn
 
               move.w     #-120,d3
 
               bra.s      .doneturn
-.turnrighty:
 
+.turnrighty:
               neg.l      d4
               cmp.l      d4,d6
               bgt.s      .doneturn
@@ -178,8 +176,6 @@ ItsARobot:
               move.w     #120,d3
 
 .doneturn:
-
-
               muls       2048(a2),d1
               muls       (a2),d2
               add.l      d2,d1
@@ -192,7 +188,6 @@ ItsARobot:
               move.w     #240,d3
 
 .canwalk:
-
               add.w      Facing(a0),d3
  
               and.w      #8191,d3
@@ -233,8 +228,8 @@ ItsARobot:
               tst.b      hitwall
               beq.s      .nochangedir
               move.w     #-1,ObjTimer(a0)
+
 .nochangedir:
- 
               move.l     objroom,a2
               move.w     (a2),d0
               move.w     d0,12(a0)
@@ -243,6 +238,7 @@ ItsARobot:
               tst.b      ObjInTop(a0)
               bne.s      .okbit
               swap       d0
+
 .okbit:
               sub.w      #5,d0
               move.w     d0,2(a0)
@@ -254,6 +250,7 @@ ItsARobot:
               tst.b      ObjInTop(a0)
               beq.s      .notintop
               move.l     ToUpperFloor(a2),d0
+
 .notintop:
               asr.l      #7,d0
               sub.w      #120,d0
@@ -309,8 +306,7 @@ ItsARobot:
               jsr        MakeSomeNoise
               movem.l    (a7)+,d0-d7/a0-a6
  
-.noscream
-
+.noscream:
               move.b     ObjInTop(a0),ViewerTop
               move.b     PLR1_StoodInTop,TargetTop
               move.l     PLR1_Roompt,ToRoom
@@ -337,7 +333,6 @@ ItsARobot:
               move.b     #1,17(a0)
 
 .carryonprowling:
-
               move.b     ObjInTop(a0),ViewerTop
               move.b     PLR2_StoodInTop,TargetTop
               move.l     PLR2_Roompt,ToRoom
@@ -360,20 +355,22 @@ ItsARobot:
               or.b       #2,17(a0)
 
 .carryonprowling2:
-
               move.w     Facing(a0),d0
               add.w      #2048,d0
               and.w      #8190,d0
               move.w     d0,Facing(a0)
 
-
 .thisonedead:
               rts
+
+*********************************************************************************************
 
 p_xoff:       dc.l       0
 p_zoff:       dc.l       0
 p_yoff:       dc.l       0
 p_Roompt:     dc.l       0
+
+*********************************************************************************************
 
 ROBAttack_Player:
 
@@ -413,7 +410,6 @@ COULDBE:
               ble        MUSTPLR2
 
 MUSTPLR1:
-
               move.w     12(a0),d2
               move.l     ZoneAdds,a5
               move.l     (a5,d2.w*4),d0
@@ -469,16 +465,16 @@ MUSTPLR1:
  
               sub.l      d5,d4
               blt.s      .turnrighty2
-.turnlefty2:
 
+.turnlefty2:
               cmp.l      d4,d6
               bgt.s      .doneturn2
 
               move.w     #-240,d3
 
               bra.s      .doneturn2
-.turnrighty2:
 
+.turnrighty2:
               neg.l      d4
               cmp.l      d4,d6
               bgt.s      .doneturn2
@@ -486,7 +482,6 @@ MUSTPLR1:
               move.w     #240,d3
 
 .doneturn2:
-
               move.w     #4,maxspd(a0)
 
               muls       2048(a2),d1
@@ -502,7 +497,6 @@ MUSTPLR1:
               move.w     #480,d3
 
 .canwalk2:
-
               add.w      Facing(a0),d3
  
               and.w      #8191,d3
@@ -518,6 +512,7 @@ MUSTPLR1:
               tst.b      ObjInTop(a0)
               bne.s      .okbit2
               swap       d0
+
 .okbit2:
               sub.w      #5,d0
               move.w     d0,2(a0)
@@ -529,6 +524,7 @@ MUSTPLR1:
               tst.b      ObjInTop(a0)
               beq.s      .notintop2
               move.l     ToUpperFloor(a2),d0
+
 .notintop2:
               asr.l      #7,d0
               sub.w      #120,d0
@@ -584,7 +580,6 @@ MUSTPLR1:
               bra        .cantshoot
  
 .noscream2:
-
               tst.b      canshootgun
               beq        .cantshoot
 
@@ -618,7 +613,6 @@ MUSTPLR1:
               jsr        FireAtPlayer1
  
 .cantshoot:
- 
               move.b     #0,17(a0)
 
               move.l     PLR1_Roompt,ToRoom
@@ -644,7 +638,6 @@ MUSTPLR1:
               move.b     #1,17(a0)
 
 .carryonattack:
-
               move.l     PLR2_Roompt,ToRoom
               move.l     objroom,FromRoom
               move.w     newx,Viewerx
@@ -732,16 +725,16 @@ MUSTPLR2:
  
               sub.l      d5,d4
               blt.s      .turnrighty2
-.turnlefty2:
 
+.turnlefty2:
               cmp.l      d4,d6
               bgt.s      .doneturn2
 
               move.w     #-120,d3
 
               bra.s      .doneturn2
-.turnrighty2:
 
+.turnrighty2:
               neg.l      d4
               cmp.l      d4,d6
               bgt.s      .doneturn2
@@ -749,7 +742,6 @@ MUSTPLR2:
               move.w     #120,d3
 
 .doneturn2:
-
               move.w     #4,maxspd(a0)
 
               muls       2048(a2),d1
@@ -765,7 +757,6 @@ MUSTPLR2:
               move.w     #240,d3
 
 .canwalk2:
-
               add.w      Facing(a0),d3
  
               and.w      #8191,d3
@@ -781,6 +772,7 @@ MUSTPLR2:
               tst.b      ObjInTop(a0)
               bne.s      .okbit2
               swap       d0
+
 .okbit2:
               sub.w      #5,d0
               move.w     d0,2(a0)
@@ -792,6 +784,7 @@ MUSTPLR2:
               tst.b      ObjInTop(a0)
               beq.s      .notintop2
               move.l     ToUpperFloor(a2),d0
+
 .notintop2:
               asr.l      #7,d0
               sub.w      #120,d0
@@ -846,7 +839,6 @@ MUSTPLR2:
               bra        .cantshoot
  
 .noscream2:
-
               tst.b      canshootgun
               beq        .cantshoot
 
@@ -879,7 +871,6 @@ MUSTPLR2:
               jsr        FireAtPlayer2
  
 .cantshoot:
-  
               move.b     #0,17(a0)
 
               move.l     PLR1_Roompt,ToRoom
@@ -905,7 +896,6 @@ MUSTPLR2:
               move.b     #1,17(a0)
 
 .carryonattack:
-
               move.l     PLR2_Roompt,ToRoom
               move.l     objroom,FromRoom
               move.w     newx,Viewerx
@@ -936,5 +926,8 @@ MUSTPLR2:
 
               rts
 
+*********************************************************************************************
 
 canshootgun:  dc.w       0
+
+*********************************************************************************************

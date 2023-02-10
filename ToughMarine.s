@@ -10,8 +10,8 @@ ItsAToughMarine:
   bne        .yesnas
   move.w     #-1,12(a0)
   rts
-.yesnas:
 
+.yesnas:
   move.w     #$1f1f,14(a0)
   move.w     #$4545,6(a0)
 
@@ -22,6 +22,7 @@ ItsAToughMarine:
   sub.b      #1,d0
   bge.s      .oknn
   move.b     #0,d0
+
 .oknn: 
   add.b      d0,d1
   move.b     d1,worry(a0)
@@ -39,11 +40,12 @@ ItsAToughMarine:
   clr.b      gotgun
   move.w     12(a0),d2
   bge.s      .stillalive
+
 .notthisone:
   move.w     12(a0),GraphicRoom(a0)
   rts
-.stillalive:
 
+.stillalive:
   tst.b      numlives(a0)
   bgt        .notdying
 
@@ -51,6 +53,7 @@ ItsAToughMarine:
   sub.w      TempFrames,d1
   bge.s      .noneg
   move.w     #0,d1
+
 .noneg:
   move.w     d1,ThirdTimer(a0)
  
@@ -65,6 +68,7 @@ ItsAToughMarine:
   tst.b      ObjInTop(a0)
   beq.s      .notintopp
   move.l     ToUpperFloor(a1),d0
+
 .notintopp:
   asr.l      #7,d0
   sub.w      #64,d0
@@ -73,14 +77,16 @@ ItsAToughMarine:
   move.w     12(a0),GraphicRoom(a0)
   rts
  
+ *********************************************************************************************
+
 .dyinganim:
   dcb.w      6,18
   dcb.w      10,17
   dcb.w      10,16
 
+*********************************************************************************************
 
 .notdying: 
-
   tst.b      17(a0)
   beq.s      .cantseeplayer
   tst.w      ThirdTimer(a0)
@@ -90,7 +96,6 @@ ItsAToughMarine:
   bra        .waitandsee
  
 .cantseeplayer:
-
   jsr        GetRand
   lsr.w      #4,d0
   and.w      #63,d0
@@ -98,7 +103,6 @@ ItsAToughMarine:
   move.w     d0,ThirdTimer(a0)
 
 .waitandsee:
-
   move.w     #25,FourthTimer(a0)
 
   move.w     12(a0),d2
@@ -129,8 +133,8 @@ ItsAToughMarine:
   asr.l      #7,d0
   add.w      d0,4(a0)
   bra        .nochangedir
+
 .notel:
- 
   move.w     maxspd(a0),d2
   muls       TempFrames,d2
   move.w     d2,speed
@@ -151,19 +155,17 @@ ItsAToughMarine:
   bra        .hitathing
  
 .canmove:
- 
   clr.b      wallbounce
   jsr        MoveObject
   movem.l    (a7)+,d0/a0/a1/a3/a4/d7
   move.b     StoodInTop,ObjInTop(a0)
 
 .hitathing:
-
   tst.b      hitwall
   beq.s      .nochangedir
   move.w     #-1,ObjTimer(a0)
-.nochangedir
 
+.nochangedir:
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -175,6 +177,7 @@ ItsAToughMarine:
   tst.b      ObjInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
@@ -182,11 +185,11 @@ ItsAToughMarine:
   tst.b      ObjInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #64,d0
   move.w     d0,4(a0)
-
 
   moveq      #0,d2
   move.b     damagetaken(a0),d2
@@ -217,6 +220,7 @@ ItsAToughMarine:
   tst.w      d2
   bgt.s      .ko
   moveq      #1,d2
+
 .ko:
   move.w     #31,d3
   jsr        ExplodeIntoBits
@@ -230,7 +234,6 @@ ItsAToughMarine:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -264,10 +267,7 @@ ItsAToughMarine:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
 
-
-.noscream
-
- 
+.noscream:
   move.w     TempFrames,d0
   sub.w      d0,ObjTimer(a0)
   bge.s      .keepsamedir
@@ -278,7 +278,6 @@ ItsAToughMarine:
   move.w     #50,ObjTimer(a0)
  
 .keepsamedir:
-
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -307,7 +306,6 @@ ItsAToughMarine:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
@@ -330,7 +328,6 @@ ItsAToughMarine:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
@@ -351,13 +348,10 @@ ItsAToughMarine:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   move.w     12(a0),GraphicRoom(a0)
   rts
  
 ToughMarineAttack:
-
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -396,16 +390,13 @@ ToughMarineAttack:
   cmp.l      d3,d4
   ble        ToughMarineAttackPLR2
  
- 
 ToughMarineAttackPLR1:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
+
 .oktoshoot:
- 
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -445,7 +436,6 @@ ToughMarineAttackPLR1:
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
@@ -464,6 +454,7 @@ ToughMarineAttackPLR1:
   tst.b      ObjInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
@@ -471,11 +462,11 @@ ToughMarineAttackPLR1:
   tst.b      ObjInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #64,d0
   move.w     d0,4(a0)
-
 
   moveq      #0,d2
   move.b     damagetaken(a0),d2
@@ -506,6 +497,7 @@ ToughMarineAttackPLR1:
   tst.w      d2
   bgt.s      .ko
   moveq      #1,d2
+
 .ko:
   move.w     #31,d3
   jsr        ExplodeIntoBits
@@ -519,7 +511,6 @@ ToughMarineAttackPLR1:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -554,11 +545,13 @@ ToughMarineAttackPLR1:
   movem.l    (a7)+,d0-d7/a0-a6
 
 
-.noscream
+.noscream:
 
-
+********************************************************
 ; tst.b canshootgun
 ; beq .cantshoot
+********************************************************
+
   cmp.w      #20,FourthTimer(a0)
   bge        .cantshoot
  
@@ -583,7 +576,6 @@ ToughMarineAttackPLR1:
   jsr        FireAtPlayer1
 
 .cantshoot:
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -608,7 +600,6 @@ ToughMarineAttackPLR1:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
@@ -630,10 +621,8 @@ ToughMarineAttackPLR1:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
-
 
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
@@ -655,8 +644,6 @@ ToughMarineAttackPLR1:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   move.w     12(a0),GraphicRoom(a0)
   rts
 
@@ -664,14 +651,12 @@ ToughMarineAttackPLR1:
 
 ToughMarineAttackPLR2:
  
-
- 
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
+
 .oktoshoot:
- 
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -711,7 +696,6 @@ ToughMarineAttackPLR2:
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
@@ -730,6 +714,7 @@ ToughMarineAttackPLR2:
   tst.b      ObjInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
@@ -737,6 +722,7 @@ ToughMarineAttackPLR2:
   tst.b      ObjInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #64,d0
@@ -748,8 +734,10 @@ ToughMarineAttackPLR2:
   sub.b      d2,numlives(a0)
   bgt        .notdeadyet
 
+********************************************************
 ; cmp.b #1,d2
 ; ble.s .noexplode
+********************************************************
 
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
@@ -775,7 +763,6 @@ ToughMarineAttackPLR2:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -807,10 +794,13 @@ ToughMarineAttackPLR2:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
  
-.noscream
+.noscream:
 
+********************************************************
 ; tst.b canshootgun
 ; beq .cantshoot
+********************************************************
+
   cmp.w      #20,FourthTimer(a0)
   bge        .cantshoot
  
@@ -835,7 +825,6 @@ ToughMarineAttackPLR2:
   jsr        FireAtPlayer1
 
 .cantshoot:
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -860,7 +849,6 @@ ToughMarineAttackPLR2:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
@@ -882,10 +870,8 @@ ToughMarineAttackPLR2:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
-
 
   move.b     ObjInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
@@ -907,9 +893,7 @@ ToughMarineAttackPLR2:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   move.w     12(a0),GraphicRoom(a0)
   rts
 
-
+*********************************************************************************************

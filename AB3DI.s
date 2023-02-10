@@ -19,7 +19,7 @@
 *
 *********************************************************************************************
 
-VERSION             EQU "1.01"                                                                                    ; 4 chars
+VERSION             EQU "1.02"                                                                                    ; 4 chars
 LABEL               EQU "EXTE"                                                                                    ; 4 chars
 
 *********************************************************************************************
@@ -5101,13 +5101,16 @@ quitGame:
 
 ********************************************************************
 
+                          IFEQ               ENABLEBGMUSIC
                           cmp.b              #'b',Prefsfile+3
                           bne.s              .noBack
+                          ENDC
                           jsr                mt_end
 
 .noBack:
 
 ********************************************************************
+; Won or lost
 
                           tst.w              Energy
                           bgt.s              weveWon
@@ -5159,15 +5162,21 @@ playWellDone:
                           bne.b              noEndGame
 
 ********************************************************************
+; End scroll
 
 testEndScroll:                          
-                          jsr                EndGameScroll
+                          move.w             #15,MAXLEVEL
+                          bsr                cleanupForMainMenu 
+                          bsr                EndGameScroll
+                          rts
 
 ********************************************************************
+; Return to menu
 
 noEndGame:
 weveLost:
-                          jmp                cleanupForMainMenu 
+                          bsr                cleanupForMainMenu 
+                          rts
 
 *********************************************************************************************
 
@@ -5175,8 +5184,10 @@ exitToMainMenu:
 
                           clr.b              doAnything
 
+                          IFEQ               ENABLEBGMUSIC
                           cmp.b              #'b',Prefsfile+3
                           bne.s              .noBack
+                          ENDC
 
                           jsr                mt_end
 
@@ -5192,7 +5203,8 @@ exitToMainMenu:
                           ;.nonextlev:
 ******************************
 
-                          jmp                cleanupForMainMenu
+                          bsr                cleanupForMainMenu
+                          rts
 
 *********************************************************************************************
 
@@ -5243,6 +5255,10 @@ cleanupForMainMenu:
                           clr.b              MASTERPAUSE
                           clr.b              MASTERQUITTING                                                       ; agi: added
                           clr.b              SLAVEQUITTING
+
+*******************************************************************
+
+                          clr.b              doAnything
 
 *******************************************************************
 
@@ -7752,8 +7768,11 @@ noStopCounter:
 
                           SAVEREGS
  
+                          IFEQ               ENABLEBGMUSIC
                           cmp.b              #'b',Prefsfile+3
                           bne.s              .noback
+                          ENDC
+                          
                           jsr                mt_music
 
 .noback:
@@ -9176,34 +9195,34 @@ FOUNDACHAN:
 ; SFX memory begin, end and sample number
 
 SampleList:
-                          dc.l               Scream,EndScream                                                     ; 0
-                          dc.l               Shoot,EndShoot                                                       ; 1
-                          dc.l               Munch,EndMunch                                                       ; 2
-                          dc.l               PooGun,EndPooGun                                                     ; 3
-                          dc.l               Collect,EndCollect                                                   ; 4
+                          dc.l               0,0                                                                  ; 0 : Scream,EndScream
+                          dc.l               0,0                                                                  ; 1 : Shoot,EndShoot
+                          dc.l               0,0                                                                  ; 2 : Munch,EndMunch
+                          dc.l               0,0                                                                  ; 3 : PooGun,EndPooGun
+                          dc.l               0,0                                                                  ; 4 : Collect,EndCollect
 
-                          dc.l               DoorNoise,EndDoorNoise                                               ; 5
-                          dc.l               Bass,BassEnd                                                         ; 6
-                          dc.l               Stomp,EndStomp                                                       ; 7
-                          dc.l               LowScream,EndLowScream                                               ; 8
-                          dc.l               BaddieGun,EndBaddieGun                                               ; 9
+                          dc.l               0,0                                                                  ; 5 : DoorNoise,EndDoorNoise 
+                          dc.l               0,0                                                                  ; 6 : Bass,BassEnd
+                          dc.l               0,0                                                                  ; 7 : Stomp,EndStomp
+                          dc.l               0,0                                                                  ; 8 : LowScream,EndLowScream
+                          dc.l               0,0                                                                  ; 9 : BaddieGun,EndBaddieGun
 
-                          dc.l               SwitchNoise,EndSwitch                                                ; 10
-                          dc.l               Reload,EndReload                                                     ; 11
-                          dc.l               NoAmmo,EndNoAmmo                                                     ; 12
-                          dc.l               Splotch,EndSplotch                                                   ; 13
-                          dc.l               SplatPop,EndSplatPop                                                 ; 14
+                          dc.l               0,0                                                                  ; 10 : SwitchNoise,EndSwitch
+                          dc.l               0,0                                                                  ; 11 : Reload,EndReload
+                          dc.l               0,0                                                                  ; 12 : NoAmmo,EndNoAmmo
+                          dc.l               0,0                                                                  ; 13 : Splotch,EndSplotch 
+                          dc.l               0,0                                                                  ; 14 : SplatPop,EndSplatPop
 
-                          dc.l               Boom,EndBoom                                                         ; 15
-                          dc.l               Hiss,EndHiss                                                         ; 16
-                          dc.l               Howl1,EndHowl1                                                       ; 17
-                          dc.l               Howl2,EndHowl2                                                       ; 18
-                          dc.l               Pant,EndPant                                                         ; 19
+                          dc.l               0,0                                                                  ; 15 : Boom,EndBoom
+                          dc.l               0,0                                                                  ; 16 : Hiss,EndHiss
+                          dc.l               0,0                                                                  ; 17 : Howl1,EndHowl1
+                          dc.l               0,0                                                                  ; 18 : Howl2,EndHowl2
+                          dc.l               0,0                                                                  ; 19 : Pant,EndPant
 
-                          dc.l               Whoosh,EndWhoosh                                                     ; 20
-                          dc.l               ROAR,EndROAR                                                         ; 21  ShotGun
+                          dc.l               0,0                                                                  ; 20 : Whoosh,EndWhoosh
+                          dc.l               0,0                                                                  ; 21  ShotGun : ROAR,EndROAR
 
-                          dc.l               Flame,EndFlame                                                       ; 22  
+                          dc.l               0,0                                                                  ; 22 : Flame,EndFlame 
                           dc.l               0,0                                                                  ; 23  Muffled
                           dc.l               0,0                                                                  ; 24  Clop
                           dc.l               0,0                                                                  ; 25  Clank
@@ -10284,83 +10303,6 @@ STOPTIMER:
 
 digits:                   incbin             "data/numbers"
                           even
-
-*********************************************************************************************
-
-                          SECTION            SoundData,DATA_C
-
-*********************************************************************************************
-
-Scream:                   ; incbin "ab3:sounds/Scream"
-                          ; ds.w 100
-EndScream:
-
-LowScream:                ; incbin "ab3:sounds/LowScream"
-                          ; ds.w 100
-EndLowScream:
-
-BaddieGun:                ; incbin "ab3:sounds/BaddieGun"
-EndBaddieGun:
-
-Bass:                     ; incbin "ab3:sounds/backbass+drum"
-BassEnd:
-
-Shoot:                    ; incbin "ab3:sounds/fire!"
-EndShoot:
-
-Munch:                    ; incbin "ab3:sounds/munch"
-EndMunch:
-
-PooGun:                   ; incbin "ab3:sounds/shoot.dm"
-EndPooGun:
-
-Collect:                  ; incbin "ab3:sounds/collect"
-EndCollect:
-
-DoorNoise:                ; incbin "ab3:sounds/newdoor"
-EndDoorNoise:
-
-Stomp:                    ; incbin "ab3:sounds/footstep3"
-EndStomp:
-
-SwitchNoise:              ; incbin "ab3:sounds/switch"
-EndSwitch:
-
-Reload:                   ; incbin "ab3:sounds/switch1.SFX"
-EndReload:
-
-NoAmmo:                   ; incbin "ab3:sounds/noammo"
-EndNoAmmo:
-
-Splotch:                  ; incbin "ab3:sounds/splotch"
-EndSplotch:
-
-SplatPop:                 ; incbin "ab3:sounds/splatpop"
-EndSplatPop:
-
-Boom:                     ; incbin "ab3:sounds/boom"
-EndBoom:
-
-Hiss:                     ; incbin "ab3:sounds/newhiss"
-EndHiss:
-
-Howl1:                    ; incbin "ab3:sounds/howl1"
-EndHowl1:
-
-Howl2:                    ; incbin "ab3:sounds/howl2"
-EndHowl2:
-
-Pant:                     ; incbin "ab3:sounds/pant"
-EndPant:
-
-Whoosh:                   ; incbin "ab3:sounds/whoosh"
-EndWhoosh:
-
-ROAR:                     ; incbin "ab3:sounds/bigscream"
-EndROAR:
-
-Flame:                    ; incbin "ab3:sounds/flame"
-EndFlame:
 
 *********************************************************************************************
 

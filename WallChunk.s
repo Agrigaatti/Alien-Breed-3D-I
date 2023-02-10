@@ -17,6 +17,7 @@ RELEASEWALLMEM:
 
            move.l     #walltiles,a0
            move.l     #wallchunkdata,a5
+
 relmem:
            move.l     4(a5),d0
            beq.s      relall
@@ -130,8 +131,7 @@ handle:    dc.l       0
 
 UNPACKED:  dc.l       0
 
-walltiles:
-           ds.l       40
+walltiles: ds.l       40
 
 *********************************************************************************************
  
@@ -209,3 +209,4 @@ bluemechNAME:
            dc.b       0
            even
  
+*********************************************************************************************

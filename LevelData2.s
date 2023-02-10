@@ -4,16 +4,12 @@
 
 *********************************************************************************************
 
-                    ifnd      USETESTLEVEL
-USETESTLEVEL equ 0
-                    endc
-
                     ifnd      ENABLECOOP
 ENABLECOOP equ 0
                     endc              
               
 *********************************************************************************************
-* SET UP INITIAL POSITION OF PLAYER 
+; SET UP INITIAL POSITION OF PLAYER 
 
 INITPLAYER:
 
@@ -79,25 +75,19 @@ INITPLAYER:
                     rts
 
 *********************************************************************************************
-
-*************************************************
-* Floor lines:                                  *
-* A floor line is a line seperating two rooms.  *
-* The data for the line is therefore:           *
-* x,y,dx,dy,Room1,Room2                         *
-* For ease of editing the lines are initially   *
-* stored in the form startpt,endpt,Room1,Room2  *
-* and the program calculates x,y,dx and dy from *
-* this information and stores it in a buffer.   *
-*************************************************
+; Floor lines:                                  
+; A floor line is a line seperating two rooms.  
+; The data for the line is therefore:           
+; x,y,dx,dy,Room1,Room2                         
+; For ease of editing the lines are initially   
+; stored in the form startpt,endpt,Room1,Room2  
+; and the program calculates x,y,dx and dy from 
+; this information and stores it in a buffer.   
 
 PointsToRotatePtr:  dc.l      0
 
 *********************************************************************************************
-
-*************************************************************
-* ROOM GRAPHICAL DESCRIPTIONS : WALLS AND FLOORS ************
-************************************************************* 
+; ROOM GRAPHICAL DESCRIPTIONS : WALLS AND FLOORS 
 
 CONNECT_TABLE:      dc.l      0
 ListOfGraphRooms:   dc.l      0
@@ -152,44 +142,14 @@ GreyRoof            SET       258
 
 *********************************************************************************************
 
-BackGraph:          dc.w      -1
-                    dc.w      backdrop
-                    dc.l      -1
-
-*********************************************************************************************
-
-NullClip:           dc.l      0
-
-*********************************************************************************************
-
 LEVELDATA:          dc.l      0
-
-LEVELDATAD:         ; ds.b 100000
-                    IFNE      USETESTLEVEL
-                    incbin    "levels/newlev.bin"
-                    ENDC
 
 *********************************************************************************************
 
 LEVELGRAPHICS:      dc.l      0
 
-LEVELGRAPHICSD:     ; ds.b 50000
-                    IFNE      USETESTLEVEL
-                    incbin    "levels/newlev.graph.bin"
-                    ENDC
-
 *********************************************************************************************
 
 LEVELCLIPS:         dc.l      0
 
-LEVELCLIPSD:        ; ds.b 50000
-                    IFNE      USETESTLEVEL
-                    incbin    "levels/newlev.clips"
-                    ENDC
-
 *********************************************************************************************
-
-ControlPts:
-                    IFNE      USETESTLEVEL
-                    incbin   "levels/newlev.map"
-                    ENDC

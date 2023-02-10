@@ -118,6 +118,7 @@ pstit:
                   move.l                 d5,16(a0)
  
 ; Gouraud shading
+
                   moveq                  #0,d5
                   move.w                 26(a0),d5
                   sub.w                  24(a0),d5
@@ -182,18 +183,18 @@ screendividethru:
                   swap                   d4
                   move.w                 d2,d6
 
-***************************
+**********************************************************
 ; old version
                   asr.w                  #7,d6
 
-***************************
+**********************************************************
                 ; asr.w #3,d6
                 ; sub.w #4,d6
                 ; cmp.w #6,d6
                 ; blt.s tstbrbr
                 ; move.w #6,d6
                 ;tstbrbr:
-***************************
+**********************************************************
 
                   add.w                  angbright(pc),d6
                   bge.s                  .brnotneg
@@ -207,6 +208,7 @@ screendividethru:
                   move.l                 a2,a4
                   add.w                  .ffscrpickhowbright(pc,d6*2),a2
 
+**********************************************************
                 ; and.b #$fe,d6
                 ; add.w .ffscrpickhowbright(pc,d6*2),a4
 
@@ -214,6 +216,7 @@ screendividethru:
                 ; beq .nobrightswap
                 ; exg a2,a4
                 ;.nobrightswap:
+**********************************************************
 
                   move.w                 d7,-(a7)
                   bsr                    ScreenWallstripdrawthru
@@ -350,18 +353,18 @@ pastscrinto:
                   swap                   d4
                   move.w                 d2,d6
 
-***************************
+**********************************************************
 ; old version
                   asr.w                  #7,d6
 
-***************************
+**********************************************************
                 ; asr.w #3,d6
                 ; sub.w #4,d6
                 ; cmp.w #6,d6
                 ; blt.s tstbrbr
                 ; move.w #6,d6
                 ;tstbrbr:
-***************************
+**********************************************************
 
                   move.l                 (a0)+,d5
                   swap                   d5
@@ -378,6 +381,7 @@ pastscrinto:
                   move.l                 a2,a4
                   add.w                  ffscrpickhowbright(pc,d6*2),a2
 
+**********************************************************
                 ; and.b #$fe,d6
                 ; add.w ffscrpickhowbright(pc,d6*2),a4
 
@@ -385,6 +389,7 @@ pastscrinto:
                 ; beq .nobrightswap
                 ; exg a2,a4
                 ;.nobrightswap:
+**********************************************************
 
                   move.w                 d7,-(a7)
                   bsr                    ScreenWallstripdraw
@@ -417,35 +422,34 @@ val               SET                    val+1
 StripData:        dc.w                   0
 
 *********************************************************************************************
+; using a0=left pixel
+; a2= right pixel
+; d0= left height
+; d2= right height
+; d4 = left strip
+; d5 = right strip
 
-* using a0=left pixel
-* a2= right pixel
-* d0= left height
-* d2= right height
-* d4 = left strip
-* d5 = right strip
+; Routine to draw a wall;
+; pass it X and Z coords of the endpoints
+; and the start and end length, and a number
+; representing the number of the wall.
 
-* Routine to draw a wall;
-* pass it X and Z coords of the endpoints
-* and the start and end length, and a number
-* representing the number of the wall.
-
-* a0=x1 d1=z1 a2=x2 d3=z2
-* d4=sl d5=el
-* a1 = strip buffer
+; a0=x1 d1=z1 a2=x2 d3=z2
+; d4=sl d5=el
+; a1 = strip buffer
 
 *********************************************************************************************
 
 store:            ds.l                   500
 
 *********************************************************************************************
-* Curve drawing routine. We have to know:
-* The top and bottom of the wall
-* The point defining the centre of the arc
-* the point defining the starting point of the arc
-* the start and end angles of the arc
-* The start and end positions along the bitmap of the arc
-* Which bitmap to use for the arc
+; Curve drawing routine. We have to know:
+; The top and bottom of the wall
+; The point defining the centre of the arc
+; the point defining the starting point of the arc
+; the start and end angles of the arc
+; The start and end positions along the bitmap of the arc
+; Which bitmap to use for the arc
 
 xmiddle:          dc.w                   0
 zmiddle:          SET                    2
@@ -574,12 +578,14 @@ DivideCurve:
  
                   move.l                 a0,-(a7)
 
+**********************************************************
                 ; move.w #31,d6
                 ; move.l #0,d3
                 ; move.l #stripbuffer,a4
                 ;.emptylop:
                 ; move.l d3,(a4)+
                 ; dbra d6,.emptylop
+**********************************************************
 
                   bsr                    curvecalc
 
@@ -611,6 +617,7 @@ curvecalc:
 .foundinfront:
                   move.w                 (a1)+,d4
                   move.w                 (a1)+,d6
+
  ; d1=left x, d4=left end, d0=left dist
  ; d6=left angbright 
  
@@ -632,8 +639,10 @@ curvecalc:
                   move.w                 4(a1),d2
                   bgt.s                  .infront
  
+**********************************************************
                 ; addq #8,a1
                 ; dbra d7,.findfirstinfront
+**********************************************************                
  
                   SUPERVISOR             SetInstCacheOn
                   rts
@@ -937,7 +946,11 @@ CalcAndDraw:
                   cmp.w                  leftclip(pc),d3
                   blt.s                  .alloffleft
                   cmp.w                  rightclip(pc),d1
+
+**********************************************************
                 ; cmp.w #95,d1
+**********************************************************
+
                   bge.s                  .alloffright
 
                   move.w                 d1,(a0)
@@ -1019,10 +1032,12 @@ noclipbot:
                   bge.s                  nocliptop
                   move.w                 topclip(pc),d5
 
+**********************************************************
                 ; btst #0,d5
                 ; beq.s .nsbd
                 ; exg a2,a4
                 ;.nsbd:
+ **********************************************************
  
                   sub.w                  d5,d6                              ; height to draw.
                   ble.s                  nostripq
@@ -1030,10 +1045,13 @@ noclipbot:
                   bra                    gotoend
  
 nocliptop:
+
+**********************************************************
                 ; btst #0,d5
                 ; beq.s .nsbd
                 ; exg a2,a4
                 ;.nsbd:
+ **********************************************************
  
                   sub.w                  d5,d6                              ; height to draw.
                   ble.s                  nostripq
@@ -1080,7 +1098,7 @@ drawwallPACK0:
 
 *********************************************************************************************
 
-                ; CNOP 0,4
+                  CNOP                   0,4
 
 *********************************************************************************************
 
@@ -1163,10 +1181,12 @@ cliptopusesimple
                   move.w                 #widthOffset,d0
                   moveq                  #0,d1
 
+**********************************************************
                 ; cmp.l a4,a2
                 ; blt.s usea2
                 ; move.l a4,a2
                 ;usea2:
+**********************************************************
 
                   and.w                  d7,d4
  
@@ -1259,6 +1279,7 @@ simplewallPACK2:
                   dbra                   d6,simplewallPACK2
                   rts
  
+********************************************************** 
                 ;gotoendnomult:
                 ; movem.l d0/d1/d2/d3/d4/d7,-(a7)
                 ; add.l timeslarge(pc,d5.w*4),a3 
@@ -1276,6 +1297,7 @@ simplewallPACK2:
                 ; ble cliptopusesimple
                 ;.notsimple:
                 ; bra cliptop
+**********************************************************
 
 gotoend:
                   add.l                  timeslarge(pc,d5.w*4),a3 
@@ -1341,10 +1363,12 @@ ScreenWallstripdrawthru:
                   bge.s                  .nocliptop
                   move.w                 topclip(pc),d5
 
+**********************************************************
                 ; btst #0,d5
                 ; beq.s .nsbd
                 ; exg a2,a4
                 ;.nsbd:
+ **********************************************************
  
                   sub.w                  d5,d6                              ; height to draw.
                   ble.s                  nostripqthru
@@ -1353,10 +1377,12 @@ ScreenWallstripdrawthru:
  
 .nocliptop:
 
+**********************************************************
                 ; btst #0,d5
                 ; beq.s .nsbdthru
                 ; exg a2,a4
                 ;.nsbdthru:
+ **********************************************************
  
                   sub.w                  d5,d6                              ; height to draw.
                   ble.s                  nostripqthru
@@ -1481,6 +1507,7 @@ drawwallthruPACK2:
                   and.b                  #31,d1
                   beq.s                  .holey
                   move.w                 (a2,d1.w*2),(a3)
+
 .holey:
                   adda.w                 d0,a3
                   add.l                  d3,d4
@@ -1575,6 +1602,7 @@ simplewallthruiPACK1:
                   lsr.w                  #5,d1
                   and.w                  #31,d1
                   move.w                 (a2,d1.w*2),d3
+
                   simplewallthruPACK1    :
                   move.w                 d3,(a3)
                   adda.w                 d0,a3
@@ -1609,7 +1637,7 @@ simplewallholePACK1:
                   bcs.s                  maybeholePACK1
                   addx.w                 d5,d4
 
-holeysimplePACK1
+holeysimplePACK1:
                   and.w                  d7,d4
                   dbra                   d6,simplewallholePACK1
                   rts
@@ -1632,7 +1660,7 @@ simplewallthruPACK2:
                   add.l                  d5,d4
                   bcc.s                  noreadthruPACK2
 
-maybeholePACK2
+maybeholePACK2:
                   addx.w                 d2,d4
                   and.w                  d7,d4
                   move.b                 (a5,d4.w*2),d1
@@ -1654,13 +1682,13 @@ noreadthruPACK2:
 
 *********************************************************************************************
 
-simplewallholePACK2
+simplewallholePACK2:
                   adda.w                 d0,a3
                   add.l                  d5,d4
                   bcs.s                  maybeholePACK2
                   addx.w                 d2,d4
 
-holeysimplePACK2
+holeysimplePACK2:
                   and.w                  d7,d4
                   dbra                   d6,simplewallholePACK2
                   rts
@@ -1747,11 +1775,18 @@ itsawalldraw:
                   add.l                  #64*32,a3
                   move.l                 a3,ChunkAddr
  
+ **********************************************************
                 ; move.w (a0)+,d1
                 ; add.w ZoneBright,d1
+**********************************************************
+
                   move.w                 ZoneBright,angbright
+
+**********************************************************
                 ; move.w (a0)+,d1
                 ; move.w (a0)+,d4
+**********************************************************
+
                   move.l                 yoff,d6
  
                   move.b                 (a0)+,VALAND+1
