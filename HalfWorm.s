@@ -10,22 +10,22 @@ ItsAHalfWorm:
   bne        .yesnas
   move.w     #-1,12(a0)
   rts
+
 .yesnas:
-
-
   move.w     #45*256+50,14(a0)
   move.w     #90*256+100,6(a0)
 
-  move.b     worry(a0),d0
+  move.b     objWorry(a0),d0
   move.b     d0,d1
   and.w      #128,d1
   and.b      #127,d0
   sub.b      #1,d0
   bge.s      .oknn
   move.b     #0,d0
+
 .oknn: 
   add.b      d0,d1
-  move.b     d1,worry(a0)
+  move.b     d1,objWorry(a0)
 
   move.w     (a0),CollId
   move.w     #80,extlen
@@ -40,11 +40,11 @@ ItsAHalfWorm:
   clr.b      gotgun
   move.w     12(a0),d2
   bge.s      .stillalive
+
 .notthisone:
   rts
 
 .stillalive:
-
   tst.b      numlives(a0)
   bgt        .notdying
  
@@ -52,6 +52,7 @@ ItsAHalfWorm:
   sub.w      TempFrames,d1
   bge.s      .noneg
   move.w     #0,d1
+
 .noneg:
   move.w     d1,ThirdTimer(a0)
  
@@ -63,9 +64,10 @@ ItsAHalfWorm:
   add.l      LEVELDATA,a1
  
   move.l     ToZoneFloor(a1),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintopp
   move.l     ToUpperFloor(a1),d0
+
 .notintopp:
   asr.l      #7,d0
   sub.w      #100,d0
@@ -81,7 +83,6 @@ ItsAHalfWorm:
   dcb.w      10,18
 
 .notdying: 
-
   tst.b      17(a0)
   beq.s      .cantseeplayer
   tst.w      ThirdTimer(a0)
@@ -93,7 +94,6 @@ ItsAHalfWorm:
   bra        .waitandsee
  
 .cantseeplayer:
-
   jsr        GetRand
   lsr.w      #4,d0
   and.w      #63,d0
@@ -101,7 +101,6 @@ ItsAHalfWorm:
   move.w     d0,ThirdTimer(a0)
 
 .waitandsee:
-
   move.w     #30,FourthTimer(a0)
 
   move.w     12(a0),d2
@@ -132,13 +131,13 @@ ItsAHalfWorm:
   asr.l      #7,d0
   add.w      d0,4(a0)
   bra        .nochangedir
-.notel:
  
+.notel:
   move.w     maxspd(a0),d2
   muls       TempFrames,d2
   move.w     d2,speed
   move.w     Facing(a0),d0
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   jsr        GoInDirection
   move.w     #%1000000000,wallflags
@@ -154,19 +153,17 @@ ItsAHalfWorm:
   bra        .hitathing
  
 .canmove:
- 
   clr.b      wallbounce
   jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
 
 .hitathing:
-
   tst.b      hitwall
   beq.s      .nochangedir
   move.w     #-1,ObjTimer(a0)
-.nochangedir
 
+.nochangedir:
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -175,16 +172,18 @@ ItsAHalfWorm:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #100,d0
@@ -197,8 +196,8 @@ ItsAHalfWorm:
   asr.b      #2,d2
   bne.s      .notovercoat
   moveq      #1,d2
-.notovercoat:
 
+.notovercoat:
   sub.b      d2,numlives(a0)
   bgt        .notdeadyet
 
@@ -224,6 +223,7 @@ ItsAHalfWorm:
   tst.w      d2
   bgt.s      .ko
   moveq      #1,d2
+
 .ko:
   move.w     #31,d3
   jsr        ExplodeIntoBits
@@ -236,7 +236,6 @@ ItsAHalfWorm:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -273,9 +272,7 @@ ItsAHalfWorm:
 
 
  
-.noscream
-
- 
+.noscream:
   move.w     TempFrames,d0
   sub.w      d0,ObjTimer(a0)
   bge.s      .keepsamedir
@@ -286,7 +283,6 @@ ItsAHalfWorm:
   move.w     #50,ObjTimer(a0)
  
 .keepsamedir:
-
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -315,8 +311,7 @@ ItsAHalfWorm:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -338,8 +333,7 @@ ItsAHalfWorm:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -359,14 +353,12 @@ ItsAHalfWorm:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
   move.w     #80,d0
   jsr        FindCloseRoom
 
   rts
  
 HalfWormAttack:
-
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -402,14 +394,12 @@ HalfWormAttack:
  
  
 HalfWormAttackPLR1:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
-.oktoshoot:
  
+.oktoshoot:
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -421,8 +411,8 @@ HalfWormAttackPLR1:
   asl.l      #2,d0
   bne.s      .notflfl
   move.l     #16,d0
-.notflfl:
  
+.notflfl:
   add.l      #$d0000,d0
   move.l     d0,8(a0)
 
@@ -446,18 +436,17 @@ HalfWormAttackPLR1:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -469,21 +458,22 @@ HalfWormAttackPLR1:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #100,d0
   move.w     d0,4(a0)
-
 
   moveq      #0,d2
   move.b     damagetaken(a0),d2
@@ -492,8 +482,8 @@ HalfWormAttackPLR1:
   asr.b      #2,d2
   bne.s      .notovercoat
   moveq      #1,d2
-.notovercoat:
 
+.notovercoat:
   sub.b      d2,numlives(a0)
   bgt        .notdeadyet
 
@@ -519,6 +509,7 @@ HalfWormAttackPLR1:
   tst.w      d2
   bgt.s      .ko
   moveq      #1,d2
+
 .ko:
   move.w     #31,d3
   jsr        ExplodeIntoBits
@@ -531,7 +522,6 @@ HalfWormAttackPLR1:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -570,7 +560,6 @@ HalfWormAttackPLR1:
 
 
 .noscream
-
 ; tst.b canshootgun
 ; beq .cantshoot
   cmp.w      #20,FourthTimer(a0)
@@ -592,7 +581,6 @@ HalfWormAttackPLR1:
 .noreset:
   move.w     d0,ThirdTimer(a0)
 
-
   move.l     #$d0011,8(a0)
 
   move.w     #9,Samplenum
@@ -600,7 +588,7 @@ HalfWormAttackPLR1:
   move.b     #10,SHOTPOWER
   move.w     #16,SHOTSPEED
   move.w     #3,SHOTSHIFT
-  move.b     ObjInTop(a0),SHOTINTOP
+  move.b     objInTop(a0),SHOTINTOP
   move.w     #700,SHOTOFFMULT
   move.l     #-10*128,SHOTYOFF
   move.w     #-100,2(a0)
@@ -608,8 +596,6 @@ HalfWormAttackPLR1:
   jsr        FireAtPlayer1
  
 .cantshoot:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -634,8 +620,7 @@ HalfWormAttackPLR1:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -656,12 +641,10 @@ HalfWormAttackPLR1:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -681,7 +664,6 @@ HalfWormAttackPLR1:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
   move.w     #80,d0
   jsr        FindCloseRoom
 
@@ -691,14 +673,12 @@ HalfWormAttackPLR1:
 
 HalfWormAttackPLR2:
 
-
- 
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
-.oktoshoot:
  
+.oktoshoot:
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -710,8 +690,8 @@ HalfWormAttackPLR2:
   asl.l      #2,d0
   bne.s      .notflfl
   move.l     #16,d0
-.notflfl:
  
+.notflfl:
   add.l      #$d0000,d0
   move.l     d0,8(a0)
 
@@ -735,18 +715,17 @@ HalfWormAttackPLR2:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -758,16 +737,18 @@ HalfWormAttackPLR2:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #100,d0
@@ -779,8 +760,8 @@ HalfWormAttackPLR2:
   asr.b      #2,d2
   bne.s      .notovercoat
   moveq      #1,d2
-.notovercoat:
  
+.notovercoat:
   sub.b      d2,numlives(a0)
   bgt        .notdeadyet
 
@@ -810,7 +791,6 @@ HalfWormAttackPLR2:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -844,7 +824,6 @@ HalfWormAttackPLR2:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream
-
 ; tst.b canshootgun
 ; beq .cantshoot
   cmp.w      #20,FourthTimer(a0)
@@ -865,7 +844,6 @@ HalfWormAttackPLR2:
 .noreset:
   move.w     d0,ThirdTimer(a0)
 
-
   move.l     #$d0011,8(a0)
 
   move.w     #9,Samplenum
@@ -873,7 +851,7 @@ HalfWormAttackPLR2:
   move.b     #10,SHOTPOWER
   move.w     #16,SHOTSPEED
   move.w     #3,SHOTSHIFT
-  move.b     ObjInTop(a0),SHOTINTOP
+  move.b     objInTop(a0),SHOTINTOP
   move.w     #700,SHOTOFFMULT
   move.l     #-10*128,SHOTYOFF
   move.w     #-100,2(a0)
@@ -881,8 +859,6 @@ HalfWormAttackPLR2:
   jsr        FireAtPlayer2
  
 .cantshoot:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -907,8 +883,7 @@ HalfWormAttackPLR2:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -929,12 +904,10 @@ HalfWormAttackPLR2:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -954,12 +927,7 @@ HalfWormAttackPLR2:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
- 
   move.w     #80,d0
   jsr        FindCloseRoom
 
   rts
-
-

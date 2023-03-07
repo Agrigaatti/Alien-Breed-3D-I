@@ -13,18 +13,18 @@
 
 InitLowLevel:
 
-            lea        _lowlevel(pc),a1
+               lea        LowLevelName(pc),a1
             moveq      #0,d0
             move.l     4.w,a6
             jsr        _LVOOpenLibrary(a6)
-            move.l     d0,_LowBase
+               move.l     d0,LowLevelBase
             rts
 
 *********************************************************************************************
 
 CloseLowLevel:
 
-            move.l     _LowBase(pc),a1
+               move.l     LowLevelBase(pc),a1
             tst.l      a1
             beq.s      .Exit
             move.l     4.w,a6
@@ -40,17 +40,17 @@ CloseLowLevel:
 _ReadJoy1:
             move.l     a6,-(a7)
             move.l     #1,d0
-            move.l     _LowBase(pc),a6
+               move.l     LowLevelBase(pc),a6
             jsr        _LVOReadJoyPort(a6)
             move.l     (a7)+,a6
             move.l     d0,d1
+
 ; and.l #$00FF000F,d0
 
             and.l      #JP_TYPE_MASK,d1
-;
+
 ; bits in d1
-;
-;
+
             cmp.l      #JP_TYPE_NOTAVAIL,d1 	
             beq.b      .Empty
 
@@ -64,8 +64,7 @@ _ReadJoy1:
             beq        .Joystick
 
 ; cmp.l	#JP_TYPE_UNKNOWN,d1  
-;
-;
+
 ; type is an unknown type 
 
 .Empty:
@@ -129,10 +128,11 @@ _ReadJoy1:
             bne.s      .notduckbut
             st         .ducklast
             sne        (a5,d5.w)
+
 .notduckbutpre:
             clr.b      .ducklast
-.notduckbut:
 
+.notduckbut:
             move.b     force_sidestep_key,d5
             move.l     d1,d0
             and.l      #JPF_BUTTON_FORWARD,d0
@@ -157,15 +157,15 @@ _ReadJoy1:
             bra        .findcurrent
 
 .foundcurrent:
- 
             moveq      #0,d2
+
 .picknext:
             add.b      #1,d0
             cmp.b      #4,d0
             ble.s      .notfirst
             move.b     #0,d0
-.notfirst:
  
+.notfirst:
             moveq      #0,d2
             moveq      #0,d3 
             move.b     (a5,d0.w),d2
@@ -226,18 +226,18 @@ _ReadJoy1:
 _ReadJoy2:
             move.l     a6,-(a7)
             move.l     #1,d0
-            move.l     _LowBase(pc),a6
+               move.l     LowLevelBase(pc),a6
             jsr        _LVOReadJoyPort(a6)
 
             move.l     (a7)+,a6
             move.l     d0,d1
+
 ; and.l #$00FF000F,d0
 
             and.l      #JP_TYPE_MASK,d1
-;
+
 ; bits in d1
-;
-;
+
             cmp.l      #JP_TYPE_NOTAVAIL,d1 	
             beq.b      .Empty
 
@@ -251,14 +251,12 @@ _ReadJoy2:
             beq        .Joystick
 
 ; cmp.l	#JP_TYPE_UNKNOWN,d1  
-;
-;
+
 ; type is an unknown type 
-;
+
 .Empty:
-;
             rts
-;
+
 .GameCtrl:
 
 ;	these are the bit defs..
@@ -318,10 +316,11 @@ _ReadJoy2:
             bne.s      .notduckbut
             st         .ducklast
             bra        .notduckbut
+
 .notduckbutpre:
             clr.b      .ducklast
-.notduckbut:
 
+.notduckbut:
             move.b     force_sidestep_key,d5
             move.l     d1,d0
             and.l      #JPF_BUTTON_FORWARD,d0
@@ -345,7 +344,6 @@ _ReadJoy2:
             bra        .findcurrent
 
 .foundcurrent: 
-
             moveq      #0,d2
 
 .picknext:
@@ -353,8 +351,8 @@ _ReadJoy2:
             cmp.b      #4,d0
             ble.s      .notfirst
             move.b     #0,d0
-.notfirst:
  
+.notfirst:
             moveq      #0,d2
             moveq      #0,d3
             move.b     (a5,d0.w),d2
@@ -368,8 +366,8 @@ _ReadJoy2:
  
 .nonextweappre:
             clr.b      .heldlast
-.nonextweap:
 
+.nonextweap:
             rts
 
 *********************************************************************************************
@@ -427,8 +425,8 @@ _ReadJoy2:
 
 *********************************************************************************************
 
-_LowBase:   dc.l       0
-_lowlevel:  dc.b       'lowlevel.library',0
+LowLevelBase:  dc.l       0
+LowLevelName:  dc.b       'lowlevel.library',0
             cnop       0,32
 
 *********************************************************************************************

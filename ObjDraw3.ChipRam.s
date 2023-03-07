@@ -96,7 +96,7 @@ notinthiszone:
 
 itsinthiszone:
                       move.b        DOUPPER,d4
-                      move.b        ObjInTop(a1),d3
+                      move.b        objInTop(a1),d3
                       eor.b         d4,d3
                       bne.s         notinthiszone
 
@@ -150,7 +150,7 @@ DrawtheObject:
                       movem.l       d0-d7/a0-a6,-(a7)
   
                       move.l        ObjectData,a0
-                      move.l        #ObjRotated,a1
+                      lea           ObjRotated,a1
                       asl.w         #6,d0
                       adda.w        d0,a0
  
@@ -631,7 +631,6 @@ pastobjscale:
                       move.l        (a5),a5 
                       move.w        2(a0),d7
                       move.l        (a5,d7.w*4),d7
-                      move.l        d7,tstddd
                       move.w        d7,DOWN_STRIP
                       move.l        PTR_PTR,a5
                       swap          d7
@@ -847,20 +846,20 @@ objintocop:           incbin        "data/XTOCOPX"
 
 *********************************************************************************************
 
-tstddd:               dc.l          0 
+objBright:            dc.w          0
+objAng:               dc.w          0
 
 *********************************************************************************************
+; Handle vector object - exit
 
 polybehind:           rts
 
 *********************************************************************************************
-
-objbright:            dc.w          0
-ObjAng:               dc.w          0
-
-*********************************************************************************************
+; Handle vector object 
 
 PolygonObj:
+; a0 = object data 
+; a1 = Object rotated
 
 ***************************************************************
                      ; move.w 4(a0),d0	; ypos
@@ -879,17 +878,17 @@ PolygonObj:
                      ; and.w #8191,boxang
 ***************************************************************
 
-                      move.w        Facing(a0),ObjAng
+                      move.w        objVectFacing(a0),objAng
 
-                      move.w        (a0)+,d0
+                      move.w        (a0)+,d0                                                                      ; objVectUnknown0
                       move.w        2(a1,d0.w*8),d1                                                               ; zpos of mid
                       ble           polybehind
 
-                      move.w        (a0),d2
+                      move.w        (a0),d2                                                                       ; objVectBright                      
                       move.w        d1,d3
                       asr.w         #7,d3
                       add.w         d3,d2
-                      move.w        d2,objbright
+                      move.w        d2,objBright
 
                       move.w        topclip,d2
                       move.w        botclip,d3
@@ -900,7 +899,7 @@ PolygonObj:
 ***************************************************************
 ; Dont use d1 here.
 
-                      move.w        6(a0),d5                                                                      ; Vector object number (d5)
+                      move.w        6(a0),d5                                                                      ; objVectNumber                                                             ; Vector object number (d5)
                       move.l        #POLYOBJECTS,a3
                       move.l        (a3,d5.w*4),a3
                       move.l        a3,START_OF_OBJ
@@ -912,11 +911,10 @@ PolygonObj:
                       lea           (a3,d6.w*2),a3
                       move.l        a3,LinesPtr
 
-                      moveq         #0,d5
-                      move.w        8(a0),d5                                                                      ; frame nbr
-
 ***************************************************************
                      ; Just for charles (animate automatically)
+;                      moveq         #0,d5               
+;                      move.w        8(a0),d5            ; objVectFrameNumber                                                          ; frame nbr
                      ; add.w #1,d5
                      ; cmp.w d6,d5
                      ; blt.s okless
@@ -925,6 +923,7 @@ PolygonObj:
                      ; move.w d5,8(a0)
 *************************************************************** 
  
+                      moveq         #0,d5               
                       move.l        POINTER_TO_POINTERS,a4
                       move.w        (a4,d5.w*2),d5
                       add.l         START_OF_OBJ,d5
@@ -936,7 +935,7 @@ PolygonObj:
 
                       move.l        #boxrot,a4
  
-                      move.w        ObjAng,d2
+                      move.w        objAng,d2
                       sub.w         #2048,d2
                       sub.w         angpos,d2
                       and.w         #8191,d2
@@ -1004,7 +1003,7 @@ rotobj:
                       move.l        #boxrot,a2
                       move.l        #boxonscr,a3
                       move.l        #boxbrights,a6
-                      move.w        2(a0),d2
+                      move.w        2(a0),d2                                                                      ; objVectUnknown4
                       subq          #1,d7
  
                       ext.l         d2
@@ -1021,6 +1020,7 @@ convtoscr:
                       move.w        (a2),d5
                       add.w         d1,d5
                       ble           polybehind
+
                       move.w        d5,(a2)+
  
                       divs          d5,d3
@@ -1176,6 +1176,7 @@ doapoly:
                       muls          d5,d0
                       sub.l         d0,d2
                       ble           polybehind
+
                       move.l        d2,polybright
 
                       clr.b         drawit
@@ -1203,8 +1204,10 @@ dontusegour:
                       move.w        rightclipb,d4
                       cmp.w         d3,d7
                       ble           polybehind
+
                       cmp.w         d4,d1
                       bge           polybehind
+
                       cmp.w         d3,d1
                       bge           .notop
                       move.w        d3,d1
@@ -1221,6 +1224,7 @@ dontusegour:
                       lea           (a4,d1.w*8),a4
                       sub.w         d1,d7
                       ble           polybehind
+
                       move.l        #objintocop,a2
                       lea           (a2,d1.w*2),a2
                       moveq         #0,d0
@@ -1242,7 +1246,7 @@ dontusegour:
                       move.l        #objscalecols,a1
                       neg.w         d1
                       add.w         #14,d1
-                      move.w        objbright(pc),d0
+                      move.w        objBright(pc),d0
                       add.w         d0,d1
                       bge.s         toobright
                       move.w        #0,d1

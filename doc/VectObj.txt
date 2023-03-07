@@ -1,5 +1,3 @@
-# Vector object file: #
-
 Offsets:
             0:.w = Number of points
             2:.w = Number of frames

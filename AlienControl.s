@@ -5,7 +5,6 @@
 *********************************************************************************************
 
               incdir      "includes"
-                                      
               include     "macros.i"
              
 *********************************************************************************************
@@ -101,6 +100,7 @@ ViewpointToDraw:
 
               tst.l       d0
               bgt.s       FacingTowardsPlayer
+
 FAP:
               tst.l       d4
               bgt.s       FAPR
@@ -114,8 +114,7 @@ FAPR:
               bgt.s       RIGHTFRAME
               bra.s       AWAYFRAME
 
-FacingTowardsPlayer
- 
+FacingTowardsPlayer:
               tst.l       d4
               bgt.s       FTPR
               neg.l       d4
@@ -126,15 +125,19 @@ FacingTowardsPlayer
 FTPR:
               cmp.l       d0,d4
               bgt.s       RIGHTFRAME
+
 TOWARDSFRAME:
               move.l      #0,d0
               rts
+
 RIGHTFRAME:
               move.l      #1,d0
               rts
+
 LEFTFRAME:
               move.l      #3,d0
               rts
+
 AWAYFRAME:
               move.l      #2,d0
               rts
@@ -177,6 +180,7 @@ RunAround:
               blt.s       headleft
               neg.w       d0
               neg.w       d1
+
 headleft:
               sub.w       d1,newx
               add.w       d0,newz
@@ -234,7 +238,7 @@ SHOOTPLAYER1:
               asl.l       #7,d1
               move.l      d1,oldy
  
-              move.b      ObjInTop(a0),StoodInTop
+              move.b      objInTop(a0),StoodInTop
  
               st          exitfirst
               move.w      #0,extlen
@@ -275,9 +279,10 @@ SHOOTPLAYER1:
               move.w      #19,d1
 
 .findonefree2:
-              move.w      12(a0),d2
+              move.w      objZone(a0),d2
               blt.s       .foundonefree2
-              adda.w      #64,a0
+              
+              adda.w      #ObjectSize,a0
               dbra        d1,.findonefree2
 
               move.w      tsx,oldx
@@ -298,8 +303,8 @@ SHOOTPLAYER1:
               move.b      #0,shotanim(a0)
  
               move.l      backroom,a1
-              move.w      (a1),12(a0)
-              st          worry(a0)
+              move.w      (a1),objZone(a0)
+              st          objWorry(a0)
               move.l      wallhitheight,d0
               move.l      d0,accypos(a0)
               asr.l       #7,d0
@@ -324,9 +329,10 @@ FireAtPlayer1:
               move.w      #19,d1
 
 .findonefree:
-              move.w      12(a5),d0
+              move.w      objZone(a5),d0
               blt.s       .foundonefree
-              adda.w      #64,a5
+
+              adda.w      #ObjectSize,a5
               dbra        d1,.findonefree
 
               bra         .cantshoot
@@ -405,14 +411,14 @@ FireAtPlayer1:
               move.w      d0,shotzvel(a5)
  
               move.l      #%100000100000,EnemyFlags(a5)
-              move.w      12(a0),12(a5)
+              move.w      objZone(a0),objZone(a5)
               move.w      4(a0),d0
               move.w      d0,4(a5)
               ext.l       d0
               asl.l       #7,d0
               add.l       SHOTYOFF,d0
               move.l      d0,accypos(a5)
-              move.b      SHOTINTOP,ObjInTop(a5)
+              move.b      SHOTINTOP,objInTop(a5)
               move.l      PLR1_Obj,a2
               move.w      4(a2),d1
               sub.w       #20,d1
@@ -431,7 +437,7 @@ FireAtPlayer1:
 .okokokok:
               divs        d0,d1
               move.w      d1,shotyvel(a5)
-              st          worry(a5)
+              st          objWorry(a5)
 
               move.l      GunData,a6
               moveq       #0,d0
@@ -487,7 +493,7 @@ SHOOTPLAYER2:
               ext.l       d1
               asl.l       #7,d1
               move.l      d1,oldy
-              move.b      ObjInTop(a0),StoodInTop
+              move.b      objInTop(a0),StoodInTop
  
               st          exitfirst
               move.w      #0,extlen
@@ -528,9 +534,10 @@ SHOOTPLAYER2:
               move.w      #19,d1
 
 .findonefree2:
-              move.w      12(a0),d2
+              move.w      objZone(a0),d2
               blt.s       .foundonefree2
-              adda.w      #64,a0
+              
+              adda.w      #ObjectSize,a0
               dbra        d1,.findonefree2
 
               move.w      tsx,oldx
@@ -551,8 +558,8 @@ SHOOTPLAYER2:
               move.b      #0,shotanim(a0)
  
               move.l      backroom,a1
-              move.w      (a1),12(a0)
-              st          worry(a0)
+              move.w      (a1),objZone(a0)
+              st          objWorry(a0)
               move.l      wallhitheight,d0
               move.l      d0,accypos(a0)
               asr.l       #7,d0
@@ -572,9 +579,10 @@ FireAtPlayer2:
               move.w      #19,d1
 
 .findonefree:
-              move.w      12(a5),d0
+              move.w      objZone(a5),d0
               blt.s       .foundonefree
-              adda.w      #64,a5
+
+              adda.w      #ObjectSize,a5
               dbra        d1,.findonefree
 
               bra         .cantshoot
@@ -594,6 +602,7 @@ FireAtPlayer2:
               move.w      #0,shotlife(a5)
               move.b      d0,shotsize(a5)
               move.b      SHOTPOWER,shotpower(a5)
+              
               movem.l     a5/a1/a0,-(a7)
               move.b      1(a0),IDNUM
               jsr         MakeSomeNoise
@@ -638,14 +647,14 @@ FireAtPlayer2:
               move.w      d0,shotzvel(a5)
  
               move.l      #%100000100000,EnemyFlags(a5)
-              move.w      12(a0),12(a5)
+              move.w      objZone(a0),objZone(a5)
               move.w      4(a0),d0
               move.w      d0,4(a5)
               ext.l       d0
               asl.l       #7,d0
               add.l       SHOTYOFF,d0
               move.l      d0,accypos(a5)
-              move.b      SHOTINTOP,ObjInTop(a5)
+              move.b      SHOTINTOP,objInTop(a5)
               move.l      PLR2_Obj,a2
               move.w      4(a2),d1
               sub.w       #20,d1
@@ -663,7 +672,7 @@ FireAtPlayer2:
 .okokokok:
               divs        d0,d1
               move.w      d1,shotyvel(a5)
-              st          worry(a5)
+              st          objWorry(a5)
               move.w      #0,shotgrav(a5)
 
 .cantshoot:

@@ -76,12 +76,12 @@ loademin:
            move.l     handle,d1
            move.l     a5,d2
            jsr        _LVOExamineFH(a6)
-           move.l     $7c(a5),d0
+           move.l     fib_Size(a5),d0
            move.l     d0,blocklen
            tst.l      d0
            beq        ErrorFileSizeZero
 
-           move.l     #MEMF_FAST,d1
+           move.l     #MEMF_FAST|MEMF_CLEAR,d1
            move.l     4.w,a6
            move.l     UNPACKED,d0
            jsr        _LVOAllocMem(a6)

@@ -15,7 +15,7 @@ ItsATree:
   move.w     #32*256+32,14(a0)
   move.w     #128*256+128,6(a0)
 
-  move.b     worry(a0),d0
+  move.b     objWorry(a0),d0
   move.b     d0,d1
   and.w      #128,d1
   and.b      #127,d0
@@ -24,7 +24,7 @@ ItsATree:
 
 .noless:
   add.b      d0,d1
-  move.b     d1,worry(a0)
+  move.b     d1,objWorry(a0)
 
   move.w     (a0),CollId
   move.w     #80,extlen
@@ -121,7 +121,7 @@ ItsATree:
   muls       TempFrames,d2
   move.w     d2,speed
   move.w     Facing(a0),d0
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   jsr        GoInDirection
   move.w     #%1000000000,wallflags
@@ -140,7 +140,7 @@ ItsATree:
   clr.b      wallbounce
   jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
 
 .hitathing:
   tst.b      hitwall
@@ -156,7 +156,7 @@ ItsATree:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
 
@@ -164,7 +164,7 @@ ItsATree:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
 
@@ -279,7 +279,7 @@ ItsATree:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -301,7 +301,7 @@ ItsATree:
   move.b     #1,17(a0)
 
 .carryonprowling:
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -401,7 +401,7 @@ TreeAttackPLR1:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
@@ -411,7 +411,7 @@ TreeAttackPLR1:
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -423,7 +423,7 @@ TreeAttackPLR1:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
 
@@ -431,7 +431,7 @@ TreeAttackPLR1:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
 
@@ -553,7 +553,7 @@ TreeAttackPLR1:
   move.l     (a1,d1.w*8),(a1,d0.w*8)
   move.l     4(a1,d1.w*8),4(a1,d0.w*8)
   move.w     12(a0),12(a2)
-  st         worry(a2)
+  st         objWorry(a2)
   
 .cantshoot:
   move.w     TempFrames,d0
@@ -580,7 +580,7 @@ TreeAttackPLR1:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -605,7 +605,7 @@ TreeAttackPLR1:
   beq.s      .carryonprowling2
 
 
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -674,7 +674,7 @@ TreeAttackPLR2:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
@@ -684,7 +684,7 @@ TreeAttackPLR2:
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -696,7 +696,7 @@ TreeAttackPLR2:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
 
@@ -704,7 +704,7 @@ TreeAttackPLR2:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
 
@@ -824,7 +824,7 @@ TreeAttackPLR2:
   move.l     (a1,d1.w*8),(a1,d0.w*8)
   move.l     4(a1,d1.w*8),4(a1,d0.w*8)
   move.w     12(a0),12(a2)
-  st         worry(a2)
+  st         objWorry(a2)
   
 .cantshoot:
   move.w     TempFrames,d0
@@ -851,7 +851,7 @@ TreeAttackPLR2:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -875,7 +875,7 @@ TreeAttackPLR2:
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom

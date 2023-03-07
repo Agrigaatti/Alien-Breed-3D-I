@@ -119,6 +119,7 @@ putinlargescr:
   move.l    #scrntab,a3
   move.w    #319,d7                  ; counter
   move.w    #0,d1                    ; xpos
+
 .plotscrnloop:
   move.b    (a3)+,d0
   move.w    d1,d2
@@ -135,35 +136,41 @@ putinlargescr:
   btst      #0,d0
   beq.s     .nobp1
   bset.b    d3,-40(a0,d2.w)
+
 .nobp1:
   btst      #1,d0
   beq.s     .nobp2
   bset.b    d3,(a0,d2.w)
+
 .nobp2:
   btst      #2,d0
   beq.s     .nobp3
   bset.b    d3,40(a0,d2.w)
+
 .nobp3:
   btst      #3,d0
   beq.s     .nobp4
   bset.b    d3,-40(a1,d2.w)
+
 .nobp4:
   btst      #4,d0
   beq.s     .nobp5
   bset.b    d3,(a1,d2.w)
+
 .nobp5:
   btst      #5,d0
   beq.s     .nobp6
   bset.b    d3,40(a1,d2.w)
+
 .nobp6:
   btst      #6,d0
   beq.s     .nobp7
   bset.b    d3,-40(a2,d2.w)
-.nobp7:
  
+.nobp7:
   addq      #1,d1
-
   dbra      d7,.plotscrnloop
 
   rts
-  
+
+*********************************************************************************************

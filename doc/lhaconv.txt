@@ -1,0 +1,3 @@
+Stefan Boberg 
+=SB= Packer LHACONV
+Encrypts and packs LHA archives

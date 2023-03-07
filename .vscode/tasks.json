@@ -17,7 +17,7 @@
                 "command": "${config:amiga-assembly.binDir}/vlink",
                 "createStartupSequence": true,
                 "createExeFileParentDir": true,
-                "exefilename": "../uae/dh0/myprogram",
+                "exefilename": "../uae/dh0/ab3d",
                 "args": [
                     "-bamigahunk",
                     "-Bstatic"
@@ -29,6 +29,20 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "type": "amigaassembly",
+            "vasm": {
+                "enabled": true,
+                "command": "${config:amiga-assembly.binDir}/vasmm68k_mot",
+                "args": [
+                    "-m68020",
+                    "-Fhunk",
+                    "-linedebug"
+                ]
+            },
+            "problemMatcher": [],
+            "label": "amigaassembly: compile current file"
         }
     ]
 }

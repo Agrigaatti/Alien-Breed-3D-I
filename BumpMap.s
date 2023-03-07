@@ -6,6 +6,7 @@
 
   incdir        "includes"
   include       "macros.i"
+  include       "AB3DI.i"
 
 *********************************************************************************************
 
@@ -44,7 +45,7 @@ BumpMap:
   bra           TwelveBelow
   rts
   
-*****************************
+****************************************************************
  
 OneBelow:
   moveq         #0,d0
@@ -95,7 +96,7 @@ OneBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -103,7 +104,7 @@ OneBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
  
-*****************************
+****************************************************************
  
 TwoBelow:
 
@@ -156,7 +157,7 @@ TwoBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -164,7 +165,7 @@ TwoBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 ThreeBelow:
   moveq         #0,d0
@@ -219,7 +220,7 @@ ThreeBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -227,7 +228,7 @@ ThreeBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 FourBelow:
   moveq         #0,d0
@@ -284,7 +285,7 @@ FourBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -292,7 +293,7 @@ FourBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 FiveBelow:
   moveq         #0,d0
@@ -351,7 +352,7 @@ FiveBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -359,7 +360,7 @@ FiveBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 SixBelow:
   moveq         #0,d0
@@ -420,7 +421,7 @@ SixBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -428,7 +429,7 @@ SixBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 SevenBelow:
   moveq         #0,d0
@@ -491,7 +492,7 @@ SevenBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -499,7 +500,7 @@ SevenBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 EightBelow:
   moveq         #0,d0
@@ -564,7 +565,7 @@ EightBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -572,7 +573,7 @@ EightBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 NineBelow:
   moveq         #0,d0
@@ -639,7 +640,7 @@ NineBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -647,7 +648,7 @@ NineBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 TenBelow:
   moveq         #0,d0
@@ -712,12 +713,11 @@ TenBelow:
   rts
 
 .notdoneyet:
-
   cmp.w         #32,d7
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -725,7 +725,7 @@ TenBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 ElevenBelow:
   moveq         #0,d0
@@ -796,7 +796,7 @@ ElevenBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -804,7 +804,7 @@ ElevenBelow:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 TwelveBelow:
   moveq         #0,d0
@@ -877,13 +877,15 @@ TwelveBelow:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
+****************************************************************
 
 bumpthefloor:
   move.l        #14*128,d0
@@ -906,7 +908,7 @@ bumpthefloor:
   moveq         #0,d0
   rts
 
-*****************************
+****************************************************************
  
 OneAbove:
   moveq         #0,d0
@@ -955,7 +957,7 @@ OneAbove:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -963,7 +965,7 @@ OneAbove:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
  
-*****************************
+****************************************************************
  
 TwoAbove:
   moveq         #0,d0
@@ -1014,7 +1016,7 @@ TwoAbove:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1022,7 +1024,7 @@ TwoAbove:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 ThreeAbove:
   moveq         #0,d0
@@ -1075,7 +1077,7 @@ ThreeAbove:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1083,7 +1085,7 @@ ThreeAbove:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 FourAbove:
   moveq         #0,d0
@@ -1138,7 +1140,7 @@ FourAbove:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1146,7 +1148,7 @@ FourAbove:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 FiveAbove:
   moveq         #0,d0
@@ -1203,7 +1205,7 @@ FiveAbove:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1211,7 +1213,7 @@ FiveAbove:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 SixAbove:
   moveq         #0,d0
@@ -1270,7 +1272,7 @@ SixAbove:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1278,7 +1280,7 @@ SixAbove:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 SevenAbove:
   moveq         #0,d0
@@ -1339,7 +1341,7 @@ SevenAbove:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1347,7 +1349,7 @@ SevenAbove:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 EightAbove:
   moveq         #0,d0
@@ -1410,7 +1412,7 @@ EightAbove:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1441,7 +1443,7 @@ SmoothMap:
 ; bra EightBelowS
   rts
   
-*****************************
+****************************************************************
  
 OneBelowS:
   moveq         #0,d0
@@ -1490,7 +1492,7 @@ OneBelowS:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1499,7 +1501,7 @@ OneBelowS:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
  
-*****************************
+****************************************************************
  
 TwoBelowS:
   moveq         #0,d0
@@ -1563,7 +1565,7 @@ TwoBelowS:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1571,7 +1573,7 @@ TwoBelowS:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 ThreeBelowS:
   moveq         #0,d0
@@ -1652,7 +1654,7 @@ ThreeBelowS:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1660,7 +1662,7 @@ ThreeBelowS:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 FourBelowS:
   moveq         #0,d0
@@ -1743,7 +1745,7 @@ FourBelowS:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1751,7 +1753,7 @@ FourBelowS:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 FiveBelowS:
   moveq         #0,d0
@@ -1838,7 +1840,7 @@ FiveBelowS:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
@@ -1848,7 +1850,7 @@ tstend:
   SUPERVISOR    SetInstCacheFreezeOn
   rts
 
-*****************************
+****************************************************************
  
 SixBelowS:
   moveq         #0,d0
@@ -1937,13 +1939,15 @@ SixBelowS:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
+****************************************************************
 
 SevenBelowS:
   moveq         #0,d0
@@ -2034,13 +2038,15 @@ SevenBelowS:
   ble.s         .notoowide
   move.w        #32,d7
 
-.notoowide
+.notoowide:
   sub.w         d7,d4  
   addq          #4,a3
  
   dbra          d7,.BumpAcross
   SUPERVISOR    SetInstCacheFreezeOn
   rts
+
+****************************************************************
 
 smooththefloor:
   move.l        #14*128,d0

@@ -10,21 +10,21 @@ ItsAFlyingNasty:
   bne        .yesnas
   move.w     #-1,12(a0)
   rts
-.yesnas:
 
+.yesnas:
   clr.b      exitfirst
 
-  move.b     worry(a0),d0
+  move.b     objWorry(a0),d0
   move.b     d0,d1
   and.w      #128,d1
   and.b      #127,d0
   sub.b      #1,d0
   bge.s      .oknn
   move.b     #0,d0
-.oknn: 
  
+.oknn: 
   add.b      d0,d1
-  move.b     d1,worry(a0)
+  move.b     d1,objWorry(a0)
 
   move.w     (a0),CollId
   move.w     #160,extlen
@@ -41,10 +41,11 @@ ItsAFlyingNasty:
   clr.b      gotgun
   move.w     12(a0),d2
   bge.s      .stillalive
+
 .notthisone:
   rts
-.stillalive:
 
+.stillalive:
   tst.b      numlives(a0)
   bgt        .notdying
   move.b     #0,numlives(a0)
@@ -52,9 +53,10 @@ ItsAFlyingNasty:
   move.l     (a1,d2.w*4),a1
   add.l      LEVELDATA,a1
   move.l     ToZoneFloor(a1),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintopp
   move.l     ToUpperFloor(a1),d0
+
 .notintopp:
   asr.l      #7,d0
   sub.w      nasheight,d0
@@ -74,8 +76,8 @@ ItsAFlyingNasty:
   move.w     #80,d0
   jsr        FindCloseRoom
   rts
-.notyet:
  
+.notyet:
   move.w     FourthTimer(a0),d0
   asr.w      #4,d0
   add.w      #1,d0
@@ -96,8 +98,8 @@ ItsAFlyingNasty:
   jsr        FindCloseRoom
 
   rts
-.nosplatch
 
+.nosplatch:
   move.w     TempFrames,d0
   sub.w      d0,ThirdTimer(a0)
   bge.s      .onfloordead
@@ -119,7 +121,6 @@ ItsAFlyingNasty:
   rts
 
 .notdying: 
-
   tst.b      17(a0)
   beq.s      .cantseeplayer
   tst.w      ThirdTimer(a0)
@@ -129,7 +130,6 @@ ItsAFlyingNasty:
   bra        .waitandsee
  
 .cantseeplayer:
-
   jsr        GetRand
   lsr.w      #4,d0
   and.w      #31,d0
@@ -137,7 +137,6 @@ ItsAFlyingNasty:
   move.w     d0,ThirdTimer(a0)
 
 .waitandsee:
-
   move.w     #30,FourthTimer(a0)
 
   move.w     12(a0),d2
@@ -173,14 +172,13 @@ ItsAFlyingNasty:
   asr.l      #7,d0
   add.w      d0,4(a0)
   bra        .nochangedir
-.notel:
-
  
+.notel:
   move.w     maxspd(a0),d2
   muls       TempFrames,d2
   move.w     d2,speed
   move.w     Facing(a0),d0
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   jsr        GoInDirection
   move.w     #%1000000000,wallflags
@@ -196,19 +194,17 @@ ItsAFlyingNasty:
   bra.s      .hitathing
  
 .okcanmove:
- 
   clr.b      wallbounce
   jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
 
 .hitathing:
-
 ; tst.b hitwall
 ; beq.s .nochangedir
 ; move.w #-1,ObjTimer(a0)
-.nochangedir
 
+.nochangedir:
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -217,20 +213,21 @@ ItsAFlyingNasty:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
   move.l     ToZoneRoof(a2),d1
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
   move.l     ToUpperRoof(a2),d1
-.notintop:
 
+.notintop:
   move.w     objyvel(a0),d2
   add.w      d2,4(a0)
 
@@ -247,14 +244,14 @@ ItsAFlyingNasty:
   move.l     d2,d3
   neg.w      objyvel(a0)
   sub.l      #96*256,d3
-.botnohit:
 
+.botnohit:
   cmp.l      d1,d3
   bgt.s      .topnohit
   move.l     d1,d3
   neg.w      objyvel(a0)
-.topnohit:
 
+.topnohit:
   add.l      #48*256,d3
   asr.l      #7,d3
   move.w     d3,4(a0)
@@ -291,7 +288,6 @@ ItsAFlyingNasty:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -326,9 +322,7 @@ ItsAFlyingNasty:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
  
-.noscream
-
- 
+.noscream:
   move.w     TempFrames,d0
   sub.w      d0,ObjTimer(a0)
   bge.s      .keepsamedir
@@ -353,7 +347,6 @@ ItsAFlyingNasty:
   move.w     d1,objyvel(a0)
  
 .keepsamedir:
-
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -378,8 +371,7 @@ ItsAFlyingNasty:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -400,11 +392,10 @@ ItsAFlyingNasty:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -424,7 +415,6 @@ ItsAFlyingNasty:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
   move.w     #80,d0
   jsr        FindCloseRoom
 
@@ -468,8 +458,8 @@ FlyingBallAttackPLR2:
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
-.oktoshoot:
  
+.oktoshoot:
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -482,10 +472,11 @@ FlyingBallAttackPLR2:
   bne.s      .nofacing
   move.l     #16,d0
   bra        .facing
-.nofacing:
  
+.nofacing:
   add.l      alframe,d0
-.facing
+
+.facing:
   add.l      #$40000,d0
   move.l     d0,8(a0)
 
@@ -509,18 +500,17 @@ FlyingBallAttackPLR2:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
- 
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -532,20 +522,21 @@ FlyingBallAttackPLR2:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
   move.l     ToZoneRoof(a2),d1
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
   move.l     ToUpperRoof(a2),d1
-.notintop:
 
+.notintop:
   move.w     objyvel(a0),d2
   add.w      d2,4(a0)
 
@@ -562,14 +553,14 @@ FlyingBallAttackPLR2:
   move.l     d2,d3
   neg.w      objyvel(a0)
   sub.l      #96*256,d3
-.botnohit:
 
+.botnohit:
   cmp.l      d1,d3
   bgt.s      .topnohit
   move.l     d1,d3
   neg.w      objyvel(a0)
-.topnohit:
 
+.topnohit:
   add.l      #48*256,d3
   asr.l      #7,d3
   move.w     d3,4(a0)
@@ -606,7 +597,6 @@ FlyingBallAttackPLR2:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -640,9 +630,9 @@ FlyingBallAttackPLR2:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream
-
 ; tst.b canshootgun
 ; beq .cantshoot
+
   cmp.w      #20,FourthTimer(a0)
   bge        .cantshoot
  
@@ -650,21 +640,18 @@ FlyingBallAttackPLR2:
  
   move.w     #17,10(a0)
  
-
   move.w     #20,Samplenum
   move.b     #0,SHOTTYPE
   move.b     #5,SHOTPOWER
   move.w     #16,SHOTSPEED
   move.w     #3,SHOTSHIFT
-  move.b     ObjInTop(a0),SHOTINTOP
+  move.b     objInTop(a0),SHOTINTOP
   move.w     #0,SHOTOFFMULT
   move.w     #-10,2(a0)
   move.l     #0,SHOTYOFF
   jsr        FireAtPlayer2
 
 .cantshoot:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -689,8 +676,7 @@ FlyingBallAttackPLR2:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -711,12 +697,10 @@ FlyingBallAttackPLR2:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -741,15 +725,14 @@ FlyingBallAttackPLR2:
 
   rts
 
-
 FlyingBallAttackPLR1:
  
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
-.oktoshoot:
  
+.oktoshoot:
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -762,10 +745,11 @@ FlyingBallAttackPLR1:
   bne.s      .nofacing
   move.l     #16,d0
   bra        .facing
-.nofacing:
  
+.nofacing:
   add.l      alframe,d0
-.facing
+
+.facing:
   add.l      #$40000,d0
   move.l     d0,8(a0)
 
@@ -789,18 +773,17 @@ FlyingBallAttackPLR1:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -812,20 +795,21 @@ FlyingBallAttackPLR1:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
   move.l     ToZoneRoof(a2),d1
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
   move.l     ToUpperRoof(a2),d1
-.notintop:
 
+.notintop:
   move.w     objyvel(a0),d2
   add.w      d2,4(a0)
 
@@ -842,14 +826,14 @@ FlyingBallAttackPLR1:
   move.l     d2,d3
   neg.w      objyvel(a0)
   sub.l      #96*256,d3
-.botnohit:
 
+.botnohit:
   cmp.l      d1,d3
   bgt.s      .topnohit
   move.l     d1,d3
   neg.w      objyvel(a0)
-.topnohit:
 
+.topnohit:
   add.l      #48*256,d3
   asr.l      #7,d3
   move.w     d3,4(a0)
@@ -886,7 +870,6 @@ FlyingBallAttackPLR1:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -920,9 +903,9 @@ FlyingBallAttackPLR1:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream
-
 ; tst.b canshootgun
 ; beq .cantshoot
+
   cmp.w      #20,FourthTimer(a0)
   bge        .cantshoot
 
@@ -930,21 +913,18 @@ FlyingBallAttackPLR1:
  
   move.w     #17,10(a0)
  
-
   move.w     #20,Samplenum
   move.b     #0,SHOTTYPE
   move.b     #5,SHOTPOWER
   move.w     #16,SHOTSPEED
   move.w     #3,SHOTSHIFT
-  move.b     ObjInTop(a0),SHOTINTOP
+  move.b     objInTop(a0),SHOTINTOP
   move.w     #0,SHOTOFFMULT
   move.w     #-10,2(a0)
   move.l     #0,SHOTYOFF
   jsr        FireAtPlayer1
 
 .cantshoot:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -969,8 +949,7 @@ FlyingBallAttackPLR1:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -991,12 +970,10 @@ FlyingBallAttackPLR1:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom

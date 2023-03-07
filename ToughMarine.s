@@ -15,7 +15,7 @@ ItsAToughMarine:
   move.w     #$1f1f,14(a0)
   move.w     #$4545,6(a0)
 
-  move.b     worry(a0),d0
+  move.b     objWorry(a0),d0
   move.b     d0,d1
   and.w      #128,d1
   and.b      #127,d0
@@ -25,7 +25,7 @@ ItsAToughMarine:
 
 .oknn: 
   add.b      d0,d1
-  move.b     d1,worry(a0)
+  move.b     d1,objWorry(a0)
 
   move.w     (a0),CollId
   move.w     #80,extlen
@@ -65,7 +65,7 @@ ItsAToughMarine:
   add.l      LEVELDATA,a1
  
   move.l     ToZoneFloor(a1),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintopp
   move.l     ToUpperFloor(a1),d0
 
@@ -139,7 +139,7 @@ ItsAToughMarine:
   muls       TempFrames,d2
   move.w     d2,speed
   move.w     Facing(a0),d0
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    d0/a0/a1/a3/a4/d7,-(a7)
   jsr        GoInDirection
   move.w     #%1000000000,wallflags
@@ -158,7 +158,7 @@ ItsAToughMarine:
   clr.b      wallbounce
   jsr        MoveObject
   movem.l    (a7)+,d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
 
 .hitathing:
   tst.b      hitwall
@@ -174,7 +174,7 @@ ItsAToughMarine:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
 
@@ -182,7 +182,7 @@ ItsAToughMarine:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
 
@@ -306,7 +306,7 @@ ItsAToughMarine:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -328,7 +328,7 @@ ItsAToughMarine:
   move.b     #1,17(a0)
 
 .carryonprowling:
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -429,7 +429,7 @@ ToughMarineAttackPLR1:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
@@ -439,7 +439,7 @@ ToughMarineAttackPLR1:
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -451,7 +451,7 @@ ToughMarineAttackPLR1:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
 
@@ -459,7 +459,7 @@ ToughMarineAttackPLR1:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
 
@@ -570,7 +570,7 @@ ToughMarineAttackPLR1:
   move.w     #32,SHOTSPEED
   move.w     #4,SHOTSHIFT
   move.w     #0,SHOTOFFMULT
-  move.b     ObjInTop(a0),SHOTINTOP
+  move.b     objInTop(a0),SHOTINTOP
   move.w     #-10,2(a0)
   move.l     #0,SHOTYOFF
   jsr        FireAtPlayer1
@@ -600,7 +600,7 @@ ToughMarineAttackPLR1:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -624,7 +624,7 @@ ToughMarineAttackPLR1:
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -689,7 +689,7 @@ ToughMarineAttackPLR2:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
@@ -699,7 +699,7 @@ ToughMarineAttackPLR2:
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -711,7 +711,7 @@ ToughMarineAttackPLR2:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
 
@@ -719,7 +719,7 @@ ToughMarineAttackPLR2:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
 
@@ -819,7 +819,7 @@ ToughMarineAttackPLR2:
   move.w     #32,SHOTSPEED
   move.w     #4,SHOTSHIFT
   move.w     #0,SHOTOFFMULT
-  move.b     ObjInTop(a0),SHOTINTOP
+  move.b     objInTop(a0),SHOTINTOP
   move.w     #-10,2(a0)
   move.l     #0,SHOTYOFF
   jsr        FireAtPlayer1
@@ -849,7 +849,7 @@ ToughMarineAttackPLR2:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -873,7 +873,7 @@ ToughMarineAttackPLR2:
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom

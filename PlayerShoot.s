@@ -30,7 +30,6 @@ Player1Shot:
                    bra        PLR1_nofire
  
 okcanfire:
-
                    lea        PLR1_GunData,a6
                    moveq      #0,d0
                    move.b     p1_gunselected,d0
@@ -55,7 +54,6 @@ okcanfire:
                    beq        PLR1_nofire
 
 .itsahold:
-
                    move.w     PLR1_angpos,d0
                    move.l     #SineTable,a0
                    lea        (a0,d0.w),a0
@@ -77,7 +75,8 @@ okcanfire:
                    move.l     #PLR1_ObsInLine,a1
                    move.l     ObjectData,a0
                    move.l     #PLR1_ObjDists,a2
-findclosestinline
+
+findclosestinline:
                    tst.w      (a0)
                    blt        outofline
                    tst.b      (a1)+
@@ -100,6 +99,7 @@ findclosestinline
                    move.l     d2,d3
                    bge.s      .oknotneg
                    neg.l      d2
+
 .oknotneg:
                    divs       #44,d2
                    cmp.w      d6,d2
@@ -111,6 +111,7 @@ findclosestinline
                    move.l     a0,a5
  
 ; We have a closer enemy lined up.
+
                    move.l     d3,targetydiff 
                    move.w     d5,d0
 
@@ -119,8 +120,6 @@ notlinedup:
                    bra        findclosestinline
 
 outofline:
-
- 
                    move.w     d1,targdist
  
                    move.l     targetydiff,d5
@@ -133,7 +132,8 @@ outofline:
                    tst.w      d1
                    bgt.s      okdistthing
                    moveq      #1,d1
-okdistthing
+
+okdistthing:
                    divs       d1,d5
                    move.w     d5,bulyspd
 
@@ -156,7 +156,6 @@ okdistthing
                    rts
 
 .okcanshoot:
-
                    move.w     8(a6),PLR1_TimeToShoot
 
                    move.b     MaxFrame,PLR1_GunFrame
@@ -187,7 +186,6 @@ okdistthing
                    move.w     22(a6),d7
 
 FIREBULLETS:
-
                    movem.l    a0/a1/d7/d0/a5,-(a7)
                    jsr        GetRand
  
@@ -215,15 +213,14 @@ FIREBULLETS:
                    move.l     (a7)+,d0
  
                    bra.s      .missplr
-.hitplr: 
 
+.hitplr: 
                    movem.l    (a7)+,a0/a1/d7/d0/a5
                    move.l     d0,-(a7)
                    bsr        PLR1HITINSTANT
                    move.l     (a7)+,d0
 
 .missplr:
-
                    subq       #1,d7
                    bgt.s      FIREBULLETS
  
@@ -292,12 +289,12 @@ nothingtoshoot:
                    bra        .again
 
 .nofurther:
- 
                    movem.l    (a7)+,d0-d7/a0-a6
 
                    move.l     PlayerShotData,a0
                    move.w     #19,d1
-.findonefree2
+
+.findonefree2:
                    move.w     12(a0),d2
                    blt.s      .foundonefree2
                    adda.w     #64,a0
@@ -306,7 +303,6 @@ nothingtoshoot:
                    rts
 
 .foundonefree2:
-
                    move.l     ObjectPoints,a1
                    move.w     (a0),d2
                    move.w     newx,(a1,d2.w*8)
@@ -318,7 +314,7 @@ nothingtoshoot:
  
                    move.l     objroom,a1
                    move.w     (a1),12(a0)
-                   st         worry(a0)
+                   st         objWorry(a0)
                    move.l     wallhitheight,d0
                    move.l     newy,TESTY+8
                    move.l     d0,TESTY+12
@@ -329,7 +325,6 @@ nothingtoshoot:
                    rts
  
 PLR1_nofire:
-
                    rts
 
 *********************************************************************************************
@@ -350,8 +345,6 @@ Player2Shot:
                    bra        PLR2_nofire
  
 okcanfire2:
-
-
                    lea        PLR2_GunData,a6
                    moveq      #0,d0
                    move.b     p2_gunselected,d0
@@ -376,7 +369,6 @@ okcanfire2:
                    beq        PLR2_nofire
 
 .itsahold:
-
                    move.w     PLR2_angpos,d0
                    move.l     #SineTable,a0
                    lea        (a0,d0.w),a0
@@ -398,7 +390,8 @@ okcanfire2:
                    move.l     #PLR2_ObsInLine,a1
                    move.l     ObjectData,a0
                    move.l     #PLR2_ObjDists,a2
-findclosestinline2
+
+findclosestinline2:
                    tst.w      (a0)
                    blt        outofline2
                    tst.b      (a1)+
@@ -421,6 +414,7 @@ findclosestinline2
                    move.l     d2,d3
                    bge.s      .oknotneg
                    neg.l      d2
+
 .oknotneg:
                    divs       #44,d2
                    cmp.w      d6,d2
@@ -432,6 +426,7 @@ findclosestinline2
                    move.l     a0,a5
  
 ; We have a closer enemy lined up.
+
                    move.l     d3,targetydiff 
                    move.w     d5,d0
 
@@ -440,8 +435,6 @@ notlinedup2:
                    bra        findclosestinline2
 
 outofline2:
-
- 
                    move.w     d1,targdist
  
                    move.l     targetydiff,d5
@@ -454,7 +447,8 @@ outofline2:
                    tst.w      d1
                    bgt.s      okdistthing2
                    moveq      #1,d1
-okdistthing2
+
+okdistthing2:
                    divs       d1,d5
                    move.w     d5,bulyspd
 
@@ -477,7 +471,6 @@ okdistthing2
                    rts
 
 .okcanshoot:
-
                    move.w     8(a6),PLR2_TimeToShoot
 
                    move.b     MaxFrame,PLR2_GunFrame
@@ -508,7 +501,6 @@ okdistthing2
                    move.w     22(a6),d7
 
 FIREBULLETS2:
-
                    movem.l    a0/a1/d7/d0/a5,-(a7)
                    jsr        GetRand
  
@@ -536,15 +528,14 @@ FIREBULLETS2:
                    move.l     (a7)+,d0
  
                    bra.s      .missplr
-.hitplr: 
 
+.hitplr: 
                    movem.l    (a7)+,a0/a1/d7/d0/a5
                    move.l     d0,-(a7)
                    bsr        PLR2HITINSTANT
                    move.l     (a7)+,d0
 
 .missplr:
-
                    subq       #1,d7
                    bgt.s      FIREBULLETS2
  
@@ -615,6 +606,7 @@ nothingtoshoot2:
 
                    move.l     PlayerShotData,a0
                    move.w     #19,d1
+
 .findonefree2
                    move.w     12(a0),d2
                    blt.s      .foundonefree2
@@ -624,7 +616,6 @@ nothingtoshoot2:
                    rts
 
 .foundonefree2:
-
                    move.l     ObjectPoints,a1
                    move.w     (a0),d2
                    move.w     newx,(a1,d2.w*8)
@@ -636,7 +627,7 @@ nothingtoshoot2:
  
                    move.l     objroom,a1
                    move.w     (a1),12(a0)
-                   st         worry(a0)
+                   st         objWorry(a0)
                    move.l     wallhitheight,d0
                    move.l     d0,accypos(a0)
                    asr.l      #7,d0
@@ -645,13 +636,13 @@ nothingtoshoot2:
                    rts
  
 PLR2_nofire:
-
                    rts
 
+*********************************************************************************************
 
 BulletSpd:         dc.w       0
 
-*******************************************************
+*********************************************************************************************
  
 tempyoff:          dc.l       0
 tempStoodInTop:    dc.w       0
@@ -660,6 +651,9 @@ tempxdir:          dc.w       0
 tempzdir:          dc.w       0
 tempgun:           dc.w       0
 tstfire:           dc.w       0
+
+*********************************************************************************************
+
 PLR1FIREBULLET:
 
                    move.w     #256,d6
@@ -670,15 +664,14 @@ PLR1FIREBULLET:
                    bra        firefive
  
 PLR2FIREBULLET:
-
                    move.b     MaxFrame,PLR2_GunFrame
                    move.l     PLR2_Obj,a2
 
 firefive:
-
                    move.l     PlayerShotData,a0
                    move.w     #19,d1
-.findonefree
+
+.findonefree:
                    move.w     12(a0),d0
                    blt.s      .foundonefree
                    adda.w     #64,a0
@@ -686,7 +679,7 @@ firefive:
 
                    rts
 
-.foundonefree
+.foundonefree:
                    move.w     16(a6),shotgrav(a0)
                    move.w     18(a6),shotflags(a0)
  
@@ -694,13 +687,13 @@ firefive:
                    cmp.w      #20,d0
                    blt.s      .okdownspd
                    move.w     #20,d0
-.okdownspd:
 
+.okdownspd:
                    cmp.w      #-20,d0
                    blt.s      .okupspd
                    move.w     #-20,d0
-.okupspd:
 
+.okupspd:
                    add.w      20(a6),d0
 
                    move.w     d0,bulyspd
@@ -725,7 +718,7 @@ firefive:
                    asl.l      d1,d0
                    move.l     d0,shotzvel(a0)
                    move.w     bulyspd,shotyvel(a0)
-                   move.b     tempStoodInTop,ObjInTop(a0)
+                   move.b     tempStoodInTop,objInTop(a0)
                    move.w     #0,shotlife(a0)
                    move.l     d7,EnemyFlags(a0)
                    move.l     tempRoompt,a2
@@ -733,19 +726,19 @@ firefive:
                    move.l     tempyoff,d0
                    add.l      #20*128,d0
                    move.l     d0,accypos(a0)
-                   st         worry(a0)
+                   st         objWorry(a0)
                    asr.l      #7,d0
                    move.w     d0,4(a0)
  
                    rts
 
 PLR1HITINSTANT:
-
 ; Just blow it up.
 
                    move.l     PlayerShotData,a0
                    move.w     #19,d1
-.findonefree
+
+.findonefree:
                    move.w     12(a0),d2
                    blt.s      .foundonefree
                    adda.w     #64,a0
@@ -769,7 +762,7 @@ PLR1HITINSTANT:
                    asl.l      #7,d1
                    move.l     d1,accypos(a0)
                    move.w     12(a5),12(a0)
-                   st         worry(a0)
+                   st         objWorry(a0)
                    move.w     4(a5),4(a0)
  
                    move.b     6(a6),d0
@@ -789,7 +782,6 @@ PLR1HITINSTANT:
                    rts
 
 PLR1MISSINSTANT: 
-
                    move.w     PLR1_xoff,oldx
                    move.w     PLR1_zoff,oldz
                    move.l     PLR1_yoff,d1
@@ -844,11 +836,11 @@ PLR1MISSINSTANT:
                    bra        .again
 
 .nofurther:
- 
                    movem.l    (a7)+,d0-d7/a0-a6
 
                    move.l     PlayerShotData,a0
                    move.w     #19,d1
+
 .findonefree2
                    move.w     12(a0),d2
                    blt.s      .foundonefree2
@@ -858,7 +850,6 @@ PLR1MISSINSTANT:
                    rts
 
 .foundonefree2:
-
                    move.l     ObjectPoints,a1
                    move.w     (a0),d2
                    move.w     newx,(a1,d2.w*8)
@@ -870,7 +861,7 @@ PLR1MISSINSTANT:
  
                    move.l     objroom,a1
                    move.w     (a1),12(a0)
-                   st         worry(a0)
+                   st         objWorry(a0)
                    move.l     newy,d1
                    move.l     d1,accypos(a0)
                    asr.l      #7,d1
@@ -878,9 +869,7 @@ PLR1MISSINSTANT:
  
                    rts
 
-
 PLR2HITINSTANT:
-
 ; Just blow it up.
 
                    move.l     PlayerShotData,a0
@@ -894,7 +883,6 @@ PLR2HITINSTANT:
                    rts
 
 .foundonefree:
-
                    move.l     ObjectPoints,a1
                    move.w     (a0),d2
                    move.l     (a1,d0.w*8),(a1,d2.w*8)
@@ -909,7 +897,7 @@ PLR2HITINSTANT:
                    asl.l      #7,d1
                    move.l     d1,accypos(a0)
                    move.w     12(a5),12(a0)
-                   st         worry(a0)
+                   st         objWorry(a0)
                    move.w     4(a5),4(a0)
  
                    move.b     6(a6),d0
@@ -929,7 +917,6 @@ PLR2HITINSTANT:
                    rts
 
 PLR2MISSINSTANT: 
-
                    move.w     PLR2_xoff,oldx
                    move.w     PLR2_zoff,oldz
                    move.l     PLR2_yoff,d1
@@ -983,11 +970,11 @@ PLR2MISSINSTANT:
                    bra        .again
 
 .nofurther:
- 
                    movem.l    (a7)+,d0-d7/a0-a6
 
                    move.l     PlayerShotData,a0
                    move.w     #19,d1
+
 .findonefree2
                    move.w     12(a0),d2
                    blt.s      .foundonefree2
@@ -997,7 +984,6 @@ PLR2MISSINSTANT:
                    rts
 
 .foundonefree2:
-
                    move.l     ObjectPoints,a1
                    move.w     (a0),d2
                    move.w     newx,(a1,d2.w*8)
@@ -1009,10 +995,12 @@ PLR2MISSINSTANT:
  
                    move.l     objroom,a1
                    move.w     (a1),12(a0)
-                   st         worry(a0)
+                   st         objWorry(a0)
                    move.l     newy,d1
                    move.l     d1,accypos(a0)
                    asr.l      #7,d1
                    move.w     d1,4(a0)
  
                    rts
+
+*********************************************************************************************

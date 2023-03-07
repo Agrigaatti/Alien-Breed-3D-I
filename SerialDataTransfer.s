@@ -36,7 +36,7 @@ SyncMaster:
           jsr         SENDFIRST
           move.l      d0,p2_height
 
-          ; Angpos & bobble
+          ; Angpos & Bobble
           move.w      p1_angpos,d0
           swap        d0
           move.w      p1_bobble,d0
@@ -45,7 +45,7 @@ SyncMaster:
           swap        d0
           move.w      d0,p2_angpos
 
-          ; Frames & space & click
+          ; Frames & Space & Click
           move.w      TempFrames,d0
           swap        d0
           move.b      p1_spctap,d0
@@ -56,7 +56,7 @@ SyncMaster:
           lsr.w       #8,d0
           move.b      d0,p2_spctap
 
-          ; Rnd & duck & gun
+          ; Rnd & Duck & Gun
           move.w      Rand1,d0
           swap        d0
           move.b      p1_ducked,d0
@@ -67,7 +67,7 @@ SyncMaster:
           lsr.w       #8,d0
           move.b      d0,p2_ducked
             
-          ; Fire & Pause & quit
+          ; Fire & Pause & Quit
           move.b      p1_fire,d0
           lsl.w       #8,d0
           move.b      MASTERQUITTING,d0
@@ -116,7 +116,7 @@ SyncSlave:
           jsr         RECFIRST
           move.l      d0,p1_height
 
-          ; Angpos & bobble  
+          ; Angpos & Bobble  
           move.w      p2_angpos,d0
           swap        d0
           move.w      p2_bobble,d0
@@ -125,12 +125,12 @@ SyncSlave:
           swap        d0
           move.w      d0,p1_angpos
 
-          ; Space & click  
+          ; Space & Click  
           move.b      p2_spctap,d0
           lsl.w       #8,d0
           move.b      p2_clicked,d0
           jsr         RECFIRST
-          ; Space & click & Frames 
+          ; Space & Click & Frames 
           move.b      d0,p1_clicked
           lsr.w       #8,d0
           move.b      d0,p1_spctap
@@ -142,14 +142,14 @@ SyncSlave:
           lsl.w       #8,d0
           move.b      p2_gunselected,d0
           jsr         RECFIRST
-          ; Duck & gun & rnd 
+          ; Duck & Gun & Rnd 
           move.b      d0,p1_gunselected
           lsr.w       #8,d0
           move.b      d0,p1_ducked
           swap        d0
           move.w      d0,Rand1
             
-          ; fire & pause & quit
+          ; Fire & Pause & Quit
           move.b      p2_fire,d0
           lsl.w       #8,d0
           move.b      SLAVEQUITTING,d0
@@ -178,23 +178,29 @@ AdvSyncMaster:
           jsr         INITSEND                      ; Sync slave
           jsr         SENDLONG                      ; +4 buffer
                
+          ; XOff      
           move.l      p1_xoff,d0
           jsr         SENDLONG
             
+          ; ZOff   
           move.l      p1_zoff,d0
           jsr         SENDLONG
             
+          ; YOff  
           move.l      p1_yoff,d0
           jsr         SENDLONG
             
+          ; Height  
           move.l      p1_height,d0
           jsr         SENDLONG
             
+          ; Angpos & Bobble  
           move.w      p1_angpos,d0
           swap        d0
           move.w      p1_bobble,d0
           jsr         SENDLONG
 
+          ; Frames & Space & Click
           move.w      TempFrames,d0
           swap        d0
           move.b      p1_spctap,d0
@@ -202,6 +208,7 @@ AdvSyncMaster:
           move.b      p1_clicked,d0
           jsr         SENDLONG
             
+          ; Rnd & Duck & Gun
           move.w      Rand1,d0
           swap        d0
           move.b      p1_ducked,d0
@@ -209,7 +216,7 @@ AdvSyncMaster:
           move.b      p1_gunselected,d0
           jsr         SENDLONG
 
-            ; Handle pause & quit
+          ; Fire & Quit & Pause
           move.b      p1_fire,d0
           lsl.w       #8,d0
           move.b      MASTERQUITTING,d0
@@ -260,34 +267,41 @@ AdvSyncSlave:
 
           jsr         INITSEND
 
+          ; XOff
           move.l      p2_xoff,d0
           jsr         SENDLONG
             
+          ; ZOff  
           move.l      p2_zoff,d0
           jsr         SENDLONG
             
+          ; YOff   
           move.l      p2_yoff,d0
           jsr         SENDLONG
             
+          ; Height  
           move.l      p2_height,d0
           jsr         SENDLONG
             
+          ; Angpos & Bobble    
           move.w      p2_angpos,d0
           swap        d0
           move.w      p2_bobble,d0
           jsr         SENDLONG 
             
+          ; Space & Click  
           move.b      p2_spctap,d0
           lsl.w       #8,d0
           move.b      p2_clicked,d0
           jsr         SENDLONG
             
+          ; Duck & Gun  
           move.b      p2_ducked,d0
           lsl.w       #8,d0
           move.b      p2_gunselected,d0
           jsr         SENDLONG
             
-            ; Handle pause & quit
+          ; Fire & Quit & Pause
           move.b      p2_fire,d0
           lsl.w       #8,d0
           move.b      SLAVEQUITTING,d0

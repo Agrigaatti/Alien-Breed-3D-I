@@ -5,6 +5,7 @@
 *********************************************************************************************
 
 ItsABigNasty:
+; a0 = 
 
   move.l     #20*256,StepUpVal
   move.l     #50*256,thingheight
@@ -311,7 +312,8 @@ ItsABigNasty:
   asr.w      #4,d0
   bgt.s      .okokokok
   moveq      #1,d0
-.okokokok
+
+.okokokok:
   divs       d0,d1
   move.w     d1,shotyvel(a5)
   jsr        GetRand
@@ -357,4 +359,3 @@ ItsABigNasty:
 
 .carryonattack:
   rts
-

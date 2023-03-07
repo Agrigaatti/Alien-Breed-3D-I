@@ -311,10 +311,10 @@ LOADBOTPIC:
                    move.l                 a5,d2
                    jsr                    _LVOExamineFH(a6)
  
-                   move.l                 $7c(a5),blocklen
-                   move.l                 #30720,PanelLen
+                   move.l                 fib_Size(a5),blocklen
+                   move.l                 #PanelSize,PanelLen
  
-                   move.l                 #MEMF_CHIP,d1
+                   move.l                 #MEMF_CHIP|MEMF_CLEAR,d1
                    move.l                 4.w,a6
                    move.l                 PanelLen,d0
                    jsr                    _LVOAllocMem(a6)
@@ -485,9 +485,9 @@ LOAD_AN_OBJ:
                    move.l                 a5,d2
                    jsr                    _LVOExamineFH(a6)
  
-                   move.l                 $7c(a5),blocklen
+                   move.l                 fib_Size(a5),blocklen
  
-                   move.l                 #MEMF_FAST,d1
+                   move.l                 #MEMF_FAST|MEMF_CLEAR,d1
                    move.l                 4.w,a6
                    move.l                 blocklen,d0
                    jsr                    _LVOAllocMem(a6)
@@ -567,7 +567,7 @@ oktoload:
                    move.l                 a2,blockname
                    movem.l                a0/a1,-(a7)
 
-                   move.l                 #MEMF_CHIP,d1
+                   move.l                 #MEMF_CHIP|MEMF_CLEAR,d1
                    move.l                 4.w,a6
                    move.l                 blocklen,d0
                    jsr                    _LVOAllocMem(a6)
@@ -600,8 +600,8 @@ oktoload:
 
 LOADFLOOR:
 
-                   move.l                 #65536,d0
-                   move.l                 #MEMF_FAST,d1
+                   move.l                 #FloorTileSize,d0
+                   move.l                 #MEMF_FAST|MEMF_CLEAR,d1
                    move.l                 4.w,a6
                    jsr                    _LVOAllocMem(a6)
                    move.l                 d0,floortile
@@ -615,7 +615,7 @@ LOADFLOOR:
                    move.l                 d0,handle
                    move.l                 d0,d1
                    move.l                 floortile,d2
-                   move.l                 #65536,d3
+                   move.l                 #FloorTileSize,d3
                    jsr                    _LVORead(a6)
 
                    move.l                 doslib,a6
@@ -715,7 +715,7 @@ RELEASEFLOORMEM:
                    beq                    SkipFloorTile
 
                    move.l                 d1,a1
-                   move.l                 #65536,d0
+                   move.l                 #FloorTileSize,d0
                    move.l                 4.w,a6
                    jsr                    _LVOFreeMem(a6)
                    move.l                 #0,floortile
@@ -766,6 +766,20 @@ COPSCRN2:          dc.l                   0
 
 *********************************************************************************************
 
-unLHA:             incbin                 "data/Decomp4.raw"
+unLHA:
+; D0 = Source pointer
+; A0 = Destination memory pointer
+; A1 = 16K Workspace
+; A2 = 65K Workspace
+; D1 = Pointer to list of the form:
+;
+;   LONG <offset>
+;   LONG <length>
+;
+; NB: Terminated by _two_ zero longwords.
+;
+; (If D1 = 0 then the entire source file is decompressed).
+
+             incbin                 "data/Decomp4.raw"
 
 *********************************************************************************************

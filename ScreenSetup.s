@@ -26,19 +26,19 @@
 INITCOPPERSCRN:
 ; Get copper screen memory
 
-              move.l     #MEMF_CHIP,d1
+              move.l     #MEMF_CHIP|MEMF_CLEAR,d1
               move.l     #(widthOffset*scrheight)+16,d0
               move.l     4.w,a6
               jsr        _LVOAllocMem(a6)
               move.l     d0,COPSCRN1
               
-              move.l     #MEMF_CHIP,d1
+              move.l     #MEMF_CHIP|MEMF_CLEAR,d1
               move.l     #(widthOffset*scrheight)+16,d0
               move.l     4.w,a6
               jsr        _LVOAllocMem(a6)
               move.l     d0,COPSCRN2
 
-              move.l     #MEMF_FAST,d1
+              move.l     #MEMF_FAST|MEMF_CLEAR,d1
               move.l     #(widthOffset*scrheight)+16,d0
               move.l     4.w,a6
               jsr        _LVOAllocMem(a6)

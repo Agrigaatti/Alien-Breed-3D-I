@@ -50,6 +50,7 @@ PLR1_fall:
 *********************************************************************************************
 
 PLR2_fall:
+
   move.l    PLR2s_tyoff,d0
   move.l    PLR2s_yoff,d1
   move.l    PLR2s_yvel,d2
@@ -58,6 +59,7 @@ PLR2_fall:
   sub.l     #512,d2
   blt.s     .notfast
   move.l    #0,d2
+
 .notfast:
   add.l     d2,d1
   sub.l     d2,d0

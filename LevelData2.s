@@ -3,15 +3,9 @@
                     opt       P=68020
 
 *********************************************************************************************
-
-                    ifnd      ENABLECOOP
-ENABLECOOP equ 0
-                    endc              
-              
-*********************************************************************************************
 ; SET UP INITIAL POSITION OF PLAYER 
 
-INITPLAYER:
+InitPlayer:
 
                     move.l    LEVELDATA,a1
                     move.w    4(a1),d0
@@ -19,59 +13,72 @@ INITPLAYER:
                     move.l    (a0,d0.w*4),d0
                     add.l     LEVELDATA,d0
                     move.l    d0,PLR1_Roompt
+
                     move.l    PLR1_Roompt,a0
                     move.l    ToZoneFloor(a0),d0
                     sub.l     #playerheight,d0
                     move.l    d0,PLR1s_yoff
-                    move.l    d0,PLR1_yoff
                     move.l    d0,PLR1_tyoff
                     move.l    d0,PLR1_yoff
                     move.l    PLR1_Roompt,PLR1_OldRoompt
 
                     move.w    (a1),PLR1s_xoff
                     move.w    2(a1),PLR1s_zoff 
+                    
                     move.w    (a1),PLR1_xoff
                     move.w    2(a1),PLR1_zoff 
 
-                    IFNE      ENABLECOOP
+                    cmp.w     #1,MPMode
+                    bne.b     skipLevelCoop
+
+*************************************************************
+
                     move.l    PLR1_Roompt,PLR2_Roompt
                     move.l    PLR2_Roompt,PLR2_OldRoompt  
 
                     move.l    PLR1s_yoff,d0
-                    sub.l     #playerheight,d0
                     move.l    d0,PLR2s_yoff
-                    move.l    d0,PLR2_yoff
                     move.l    d0,PLR2_tyoff
                     move.l    d0,PLR2_yoff
  
                     move.w    PLR1s_xoff,PLR2s_xoff
-                    move.w    PLR1s_zoff,PLR2s_zoff 
+
+                    move.w    PLR1s_zoff,d0
+                    add.l     #100,d0           
+                    move.w    d0,PLR2s_zoff 
+
                     move.w    PLR1_xoff,PLR2_xoff
                     move.w    PLR1_zoff,PLR2_zoff                 
-                    ENDC
 
-                    IFEQ      ENABLECOOP
+                    bra       continueLevel
+
+*************************************************************
+
+skipLevelCoop:
                     move.l    LEVELDATA,a1
                     move.w    10(a1),d0
                     move.l    ZoneAdds,a0
                     move.l    (a0,d0.w*4),d0
                     add.l     LEVELDATA,d0
                     move.l    d0,PLR2_Roompt
+                    
                     move.l    PLR2_Roompt,a0
                     move.l    ToZoneFloor(a0),d0
                     sub.l     #playerheight,d0
                     move.l    d0,PLR2s_yoff
-                    move.l    d0,PLR2_yoff
                     move.l    d0,PLR2_tyoff
                     move.l    d0,PLR2_yoff
                     move.l    PLR2_Roompt,PLR2_OldRoompt
                     
                     move.w    6(a1),PLR2s_xoff
                     move.w    8(a1),PLR2s_zoff 
+                    
                     move.w    6(a1),PLR2_xoff
                     move.w    8(a1),PLR2_zoff
-                    ENDC
 
+*************************************************************
+
+continueLevel:
                     rts
 
 *********************************************************************************************

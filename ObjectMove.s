@@ -53,9 +53,7 @@ checkwalls:
                    asl.w      #4,d0
                    lea        (a1,d0.w),a2
 
-******************************************************************
 ; Check if we are within exit limits of zone.
-******************************************************************
 
                    move.l     #-65536*256,d0
                    move.l     d0,LowerRoofHeight
@@ -99,6 +97,7 @@ chkstepup:
                    blt.s      botinsidebot
 
 ; We have a wall!
+
                    bra        thisisawall1
 
 botinsidebot:
@@ -135,6 +134,7 @@ chkstepup2:
                    blt.s      botinsidebot2
 
 ; We have a wall!
+
                    bra        thisisawall2
 
 botinsidebot2:
@@ -142,6 +142,7 @@ botinsidebot2:
                    blt.s      thisisawall2
 
                    bra        checkwalls
+
 thisisawall2:
                    move.l     #0,a4
                    move.l     #0,a6
@@ -158,6 +159,7 @@ thisisawall2:
                    beq.s      .noshift
                    asl.w      d3,d2
                    asl.w      d3,d4
+
 .noshift:
                    move.w     d2,a4
                    move.w     d4,a6
@@ -228,8 +230,7 @@ chkhttt:
 
 .ohbugger:
 
-; We now have ratio to multiply x,z and y differences
-; by. Check y=0 since that's quite common.
+; We now have ratio to multiply x,z and y differences by. Check y=0 since that's quite common.
 
                    move.l     d4,d1
                    beq.s      .dontworryhit
@@ -264,19 +265,15 @@ chkhttt:
 
 .calcbounce:
 
-; For simplicity (possibility!) the
-; bounce routine will:
-; Place the object at wall contact
-; point
-; Supply wall data to reflect the
-; movement direction of the object
+; For simplicity (possibility!) the bounce routine will:
+; Place the object at wall contact point
+; Supply wall data to reflect the movement direction of the object
 
                    move.w     d2,wallxsize
                    move.w     d5,wallzsize
                    move.w     d3,walllength
 
 .calcwherehit:
- 
 ; add.w #20,d7
                    move.w     newx,d6
                    sub.w      oldx,d6
@@ -294,7 +291,6 @@ chkhttt:
                    bra.s      .calcedhit
  
 .calcalong:
- 
 ; sub.w #3,d7
                    move.w     d7,d6
                    muls       d5,d6
@@ -346,7 +342,6 @@ chkhttt:
                    sub.l      d6,d7
                    blt        oknothitwall
                    bra        hitthewall
-
 
 othercheck:
 
@@ -479,9 +474,7 @@ anotherwalls:
                    asl.w      #4,d0
                    lea        (a1,d0.w),a2
 
-******************************************************************
 ; Check if we are within exit limits of zone.
-******************************************************************
 
                 ; tst.b 9(a2)
                 ; bne .thisisawall2
@@ -778,9 +771,7 @@ NOOTHERWALLSNEEDED:
                 ; move.l d0,largespd
 *****************************************************
 
-*****************************************************
 ; FIND ROOM WE'RE STANDING IN
-
 
                    move.l     a5,a0
                    adda.w     ToExitList(a5),a0
@@ -861,8 +852,7 @@ okthebottom:
                    sub.l      d1,d0
                    bge        StillSameSide
  
-; Player is now on the left side of this line.
-; Where was he before?
+; Player is now on the left side of this line. Where was he before?
 
                 ; cmp.l a4,a5
                 ; bne StillSameSide
@@ -878,8 +868,7 @@ okthebottom:
                 ; bra checkifcrossed
 
 OnRightsideofline:
-; Player is now on the right side of the line.
-; Where was he last time?
+; Player is now on the right side of the line. Where was he last time?
 
                 ; exg a3,a4
 
@@ -897,8 +886,7 @@ OnRightsideofline:
 
 checkifcrossed:
 
-; Player used to be on other side of this line.
-; Need to check if he crossed it.
+; Player used to be on other side of this line. Need to check if he crossed it.
  
                    move.l     d0,billy
  
@@ -1474,10 +1462,8 @@ InList:
                    bra.s      InList
 
 isinlist:
-; We have found the dest room in the
-; list of rooms visible from the
-; source room.
 
+; We have found the dest room in the  list of rooms visible from the source room.
 ; Do line of sight!
 
                    st         CanSee
@@ -1543,8 +1529,7 @@ norightone:
 
 nomorerclips:
 
-; No clipping points in the way; got to do the
-; vertical working out now.
+; No clipping points in the way; got to do the vertical working out now.
 
                    move.w     Targetx,d0
                    move.w     Targetz,d1
@@ -1588,8 +1573,7 @@ FindWayOut:
                    tst.w      8(a2)
                    blt        outlist
 
-; Here is the exit from the room. Calculate the height at which
-; we meet it.
+; Here is the exit from the room. Calculate the height at which we meet it.
 
                    move.w     Targetx,d3
                    move.w     Targetz,d4
@@ -1679,7 +1663,6 @@ outlist:
                    movem.l    (a7)+,d0-d7/a0-a6
                    rts
  
- 
 FindCollisionPt:
                    movem.l    d0-d7/a0-a6,-(a7)
  
@@ -1692,7 +1675,6 @@ FindCollisionPt:
                    move.b     ViewerTop,d2
                    move.w     Targety,d7
                    sub.w      Viewery,d7
- 
  
 .GoThroughZones:
                    move.l     a5,a0
@@ -1723,8 +1705,7 @@ FindCollisionPt:
                    bge        .FindWayOut
  
 
-; Here is the exit from the room. Calculate the height at which
-; we meet it.
+; Here is the exit from the room. Calculate the height at which we meet it.
 
                    move.w     Targetx,d3
                    move.w     Targetz,d4
@@ -1794,6 +1775,10 @@ foundpt:
                    movem.l    (a7)+,d0-d7/a0-a6
                    rts
  
+*********************************************************************************************
+; Calculated random value
+; MP: Seed from the master
+
 GetRand:
                    move.w     Rand1,d0
                    add.w      #29,d0
@@ -1869,7 +1854,7 @@ checkcol:
                    tst.b      numlives(a0)
                    beq.s      checkcol
 
-                   move.b     ObjInTop(a0),d1
+                   move.b     objInTop(a0),d1
                    eor.b      d6,d1
                    bne        checkcol
 
@@ -1939,49 +1924,53 @@ checkedallcol:
                    rts
 
 *********************************************************************************************
+; Collision boxes
+; Ordered by object number
 
 ColBoxTable:
 
-; red scurrying alien
+; 0 = red scurrying alien
                    dc.w       40,60,120,0
-; Medipack
+; 1 = Medipack
                    dc.w       40,20,40,0
-; Bullet
+; 2 = Bullet
                    dc.w       40,20,40,0
-; Gun
+; 3 = Gun
                    dc.w       40,20,40,0
-; Key
+; 4 = Key
                    dc.w       40,20,40,0
-; PLayer1
+; 5 = PLayer1
                    dc.w       40,40,80,0
-;Robot
+; 6 = Robot
                    dc.w       40,50,100,0
-;?
+; 7 = ?
                    dc.w       40,20,40,0
-; Flying Nasty
+; 8 = Flying Nasty
                    dc.w       80,60,120,0
-; Ammo
+; 9 = Ammo
                    dc.w       40,20,40,0
-; Barrel
+; 10 = Barrel
                    dc.w       40,30,60,0
-;PlAYER2
+; 11 = Player2
                    dc.w       40,40,80,0
-; Mutant Marine
+; 12 = Mutant Marine
                    dc.w       40,40,80,0
-; worm
+; 13 = Worm
                    dc.w       80,60,120,0
-; huge red thing
+; 14 = Huge red thing
                    dc.w       160,100,200,0
-; small red thing
+; 15 = Small red thing
                    dc.w       80,50,100,0
-; tree
+; 16 = Tree
                    dc.w       80,60,120,0
-; eyeball
+; 17 = Eye ball
                    dc.w       40,30,60,0
-; Tough Marine
+; 18 = Tough Marine
                    dc.w       40,40,80,0
-; ShotGun Marine
+; 19 = Shot Gun Marine
                    dc.w       40,40,80,0
+; 20 = Gas pipe
+;                   dc.w       40,30,60,0
 
 *********************************************************************************************
 
@@ -2115,6 +2104,7 @@ putinmore2:
                    bge.s      putinmore2
 
 ; ok a3 points at list of rooms passed through.
+
                    move.w     #-1,(a3)+
 
 

@@ -34,6 +34,7 @@
 
                       tst.l      USECOPBUFFER
                       bpl.s      noFastBuffer  
+                       
                       move.l     COPSCRNBUFF,a3
 
 noFastBuffer:                      

@@ -32,7 +32,7 @@ ItsARobot:
               jsr        FindCloseRoom
               clr.b      exitfirst
 
-              sub.b      #1,worry(a0)
+              sub.b      #1,objWorry(a0)
 
               move.w     #160,extlen
               move.b     #2,awayfromwall
@@ -212,7 +212,7 @@ ItsARobot:
               move.l     d0,newy
               move.l     d0,oldy
  
-              move.b     ObjInTop(a0),StoodInTop
+              move.b     objInTop(a0),StoodInTop
  
               movem.l    d0/a0/a1/a3/a4/d7,-(a7)
               clr.b      canshove
@@ -223,7 +223,7 @@ ItsARobot:
               Jsr        MoveObject
               movem.l    (a7)+,d0/a0/a1/a3/a4/d7
  
-              move.b     StoodInTop,ObjInTop(a0)
+              move.b     StoodInTop,objInTop(a0)
  
               tst.b      hitwall
               beq.s      .nochangedir
@@ -235,7 +235,7 @@ ItsARobot:
               move.w     d0,12(a0)
               move.l     #ZoneBrightTable,a5
               move.l     (a5,d0.w*4),d0
-              tst.b      ObjInTop(a0)
+              tst.b      objInTop(a0)
               bne.s      .okbit
               swap       d0
 
@@ -247,7 +247,7 @@ ItsARobot:
               move.w     newz,4(a1)
 
               move.l     ToZoneFloor(a2),d0
-              tst.b      ObjInTop(a0)
+              tst.b      objInTop(a0)
               beq.s      .notintop
               move.l     ToUpperFloor(a2),d0
 
@@ -287,7 +287,6 @@ ItsARobot:
               move.w     #$2020,6(a0)
               move.w     #$1010,14(a0)
  
- 
               rts
  
 .notdeadyet:
@@ -307,13 +306,13 @@ ItsARobot:
               movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream:
-              move.b     ObjInTop(a0),ViewerTop
+              move.b     objInTop(a0),ViewerTop
               move.b     PLR1_StoodInTop,TargetTop
               move.l     PLR1_Roompt,ToRoom
               move.l     objroom,FromRoom
               move.w     newx,Viewerx
               move.w     newz,Viewerz
-              move.b     ObjInTop(a0),ViewerTop
+              move.b     objInTop(a0),ViewerTop
               move.b     PLR1_StoodInTop,TargetTop
               move.w     PLR1_xoff,Targetx
               move.w     PLR1_zoff,Targetz
@@ -333,7 +332,7 @@ ItsARobot:
               move.b     #1,17(a0)
 
 .carryonprowling:
-              move.b     ObjInTop(a0),ViewerTop
+              move.b     objInTop(a0),ViewerTop
               move.b     PLR2_StoodInTop,TargetTop
               move.l     PLR2_Roompt,ToRoom
               move.l     objroom,FromRoom
@@ -341,7 +340,7 @@ ItsARobot:
               move.w     newz,Viewerz
               move.w     p2_xoff,Targetx
               move.w     p2_zoff,Targetz
-              move.b     ObjInTop(a0),ViewerTop
+              move.b     objInTop(a0),ViewerTop
               move.b     PLR2_StoodInTop,TargetTop
               move.l     p2_yoff,d0
               asr.l      #7,d0
@@ -436,7 +435,7 @@ MUSTPLR1:
               move.l     d0,newy
               move.l     d0,oldy
 
-              move.b     ObjInTop(a0),StoodInTop
+              move.b     objInTop(a0),StoodInTop
               movem.l    d0/a0/a1/a3/a4/d7,-(a7)
               clr.b      canshove
               clr.b      GotThere
@@ -445,7 +444,7 @@ MUSTPLR1:
               clr.b      wallbounce
               Jsr        MoveObject
               movem.l    (a7)+,d0/a0/a1/a3/a4/d7
-              move.b     StoodInTop,ObjInTop(a0)
+              move.b     StoodInTop,objInTop(a0)
  
               move.w     CosRet,d1
               move.w     SinRet,d2
@@ -509,7 +508,7 @@ MUSTPLR1:
               move.w     d0,12(a0)
               move.l     #ZoneBrightTable,a5
               move.l     (a5,d0.w*4),d0
-              tst.b      ObjInTop(a0)
+              tst.b      objInTop(a0)
               bne.s      .okbit2
               swap       d0
 
@@ -521,7 +520,7 @@ MUSTPLR1:
               move.w     newz,4(a1)
 
               move.l     ToZoneFloor(a2),d0
-              tst.b      ObjInTop(a0)
+              tst.b      objInTop(a0)
               beq.s      .notintop2
               move.l     ToUpperFloor(a2),d0
 
@@ -559,7 +558,6 @@ MUSTPLR1:
               move.l     #$50003,8(a0)
               move.w     #$2020,6(a0)
               move.w     #$1010,14(a0)
- 
  
               rts 
  
@@ -621,7 +619,7 @@ MUSTPLR1:
               move.w     newz,Viewerz
               move.w     p1_xoff,Targetx
               move.w     p1_zoff,Targetz
-              move.b     ObjInTop(a0),ViewerTop
+              move.b     objInTop(a0),ViewerTop
               move.b     PLR1_StoodInTop,TargetTop
               move.w     Facing(a0),Facedir
               move.l     p1_yoff,d0
@@ -645,7 +643,7 @@ MUSTPLR1:
               move.w     p2_xoff,Targetx
               move.w     p2_zoff,Targetz
               move.w     Facing(a0),Facedir
-              move.b     ObjInTop(a0),ViewerTop
+              move.b     objInTop(a0),ViewerTop
               move.b     PLR2_StoodInTop,TargetTop
               move.l     p2_yoff,d0
               asr.l      #7,d0
@@ -669,7 +667,6 @@ MUSTPLR1:
               rts
 
 MUSTPLR2:
-
               move.w     12(a0),d2
               move.l     ZoneAdds,a5
               move.l     (a5,d2.w*4),d0
@@ -696,7 +693,7 @@ MUSTPLR2:
               move.l     d0,newy
               move.l     d0,oldy
 
-              move.b     ObjInTop(a0),StoodInTop
+              move.b     objInTop(a0),StoodInTop
               movem.l    d0/a0/a1/a3/a4/d7,-(a7)
               clr.b      canshove
               clr.b      GotThere
@@ -705,7 +702,7 @@ MUSTPLR2:
               clr.b      wallbounce
               Jsr        MoveObject
               movem.l    (a7)+,d0/a0/a1/a3/a4/d7
-              move.b     StoodInTop,ObjInTop(a0)
+              move.b     StoodInTop,objInTop(a0)
  
               move.w     CosRet,d1
               move.w     SinRet,d2
@@ -769,7 +766,7 @@ MUSTPLR2:
               move.w     d0,12(a0)
               move.l     #ZoneBrightTable,a5
               move.l     (a5,d0.w*4),d0
-              tst.b      ObjInTop(a0)
+              tst.b      objInTop(a0)
               bne.s      .okbit2
               swap       d0
 
@@ -781,7 +778,7 @@ MUSTPLR2:
               move.w     newz,4(a1)
 
               move.l     ToZoneFloor(a2),d0
-              tst.b      ObjInTop(a0)
+              tst.b      objInTop(a0)
               beq.s      .notintop2
               move.l     ToUpperFloor(a2),d0
 
@@ -879,7 +876,7 @@ MUSTPLR2:
               move.w     newz,Viewerz
               move.w     p1_xoff,Targetx
               move.w     p1_zoff,Targetz
-              move.b     ObjInTop(a0),ViewerTop
+              move.b     objInTop(a0),ViewerTop
               move.b     PLR1_StoodInTop,TargetTop
               move.w     Facing(a0),Facedir
               move.l     p1_yoff,d0
@@ -902,7 +899,7 @@ MUSTPLR2:
               move.w     newz,Viewerz
               move.w     p2_xoff,Targetx
               move.w     p2_zoff,Targetz
-              move.b     ObjInTop(a0),ViewerTop
+              move.b     objInTop(a0),ViewerTop
               move.b     PLR2_StoodInTop,TargetTop
               move.w     Facing(a0),Facedir
               move.l     p2_yoff,d0

@@ -15,7 +15,7 @@ ItsANasty:
 .yesnas:
   move.w     #$1f1f,14(a0)
 
-  move.b     worry(a0),d0
+  move.b     objWorry(a0),d0
   move.b     d0,d1
   and.w      #128,d1
   and.b      #127,d0
@@ -25,7 +25,7 @@ ItsANasty:
 
 .oknn: 
   add.b      d0,d1
-  move.b     d1,worry(a0)
+  move.b     d1,objWorry(a0)
 
   move.w     (a0),CollId
   move.w     #80,extlen
@@ -65,9 +65,10 @@ ItsANasty:
   add.l      LEVELDATA,a1
  
   move.l     ToZoneFloor(a1),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a1),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #64,d0
@@ -75,13 +76,15 @@ ItsANasty:
   move.w     12(a0),GraphicRoom(a0)
   rts
  
+ *********************************************************************************************
+
 .dyinganim:
   dcb.w      11,33
   dcb.w      15,32
 
+*********************************************************************************************
 
 .notdying: 
-
   tst.b      17(a0)
   beq.s      .cantseeplayer
   tst.w      ThirdTimer(a0)
@@ -91,7 +94,6 @@ ItsANasty:
   bra        .waitandsee
  
 .cantseeplayer:
-
   jsr        GetRand
   lsr.w      #4,d0
   and.w      #63,d0
@@ -99,7 +101,6 @@ ItsANasty:
   move.w     d0,ThirdTimer(a0)
 
 .waitandsee:
-
   move.w     #25,FourthTimer(a0)
  
   move.w     12(a0),d2
@@ -130,13 +131,13 @@ ItsANasty:
   asr.l      #7,d0
   add.w      d0,4(a0)
   bra        .nochangedir
-.notel:
  
+.notel:
   move.w     maxspd(a0),d2
   muls       TempFrames,d2
   move.w     d2,speed
   move.w     Facing(a0),d0
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    d0/a0/a1/a3/a4/d7,-(a7)
   jsr        GoInDirection
   move.w     #%1000000000,wallflags
@@ -152,19 +153,17 @@ ItsANasty:
   bra        .hitathing
  
 .canmove:
- 
   clr.b      wallbounce
   jsr        MoveObject
   movem.l    (a7)+,d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
 
 .hitathing:
-
   tst.b      hitwall
   beq.s      .nochangedir
   move.w     #-1,ObjTimer(a0)
-.nochangedir
 
+.nochangedir:
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -173,16 +172,18 @@ ItsANasty:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintopp
   move.l     ToUpperFloor(a2),d0
+
 .notintopp:
   asr.l      #7,d0
   sub.w      #40,d0
@@ -217,6 +218,7 @@ ItsANasty:
   tst.w      d2
   bgt.s      .ko
   moveq      #1,d2
+
 .ko:
   move.w     #31,d3
   jsr        ExplodeIntoBits
@@ -230,7 +232,6 @@ ItsANasty:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -263,9 +264,7 @@ ItsANasty:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
  
-.noscream
-
- 
+.noscream:
   move.w     TempFrames,d0
   sub.w      d0,ObjTimer(a0)
   bge.s      .keepsamedir
@@ -276,7 +275,6 @@ ItsANasty:
   move.w     #50,ObjTimer(a0)
  
 .keepsamedir:
-
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -305,8 +303,7 @@ ItsANasty:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -328,8 +325,7 @@ ItsANasty:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -349,12 +345,10 @@ ItsANasty:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
   move.w     12(a0),GraphicRoom(a0)
   rts
  
 NastyAttack:
-
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -394,7 +388,6 @@ NastyAttack:
  
  
 NastyAttackPLR1:
- 
   move.w     12(a0),FromZone
   bsr        CheckTeleport
   tst.b      OKTEL
@@ -403,8 +396,8 @@ NastyAttackPLR1:
   asr.l      #7,d0
   add.w      d0,4(a0)
   bra        .NoMunch
-.notel:
  
+.notel:
   move.w     PLR1_xoff,newx
   move.w     PLR1_zoff,newz
   move.w     PLR1_sinval,tempsin
@@ -431,7 +424,7 @@ NastyAttackPLR1:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
@@ -450,7 +443,6 @@ NastyAttackPLR1:
   bra        .hitathing
  
 .nothitplayer:
-
   move.l     #%11111111110111000001,CollideFlags
   jsr        Collision
   tst.b      hitwall
@@ -462,16 +454,14 @@ NastyAttackPLR1:
   bra        .hitathing
  
 .canmove:
- 
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
 .hitathing:
- 
   tst.b      GotThere 
   beq.s      .NoMunch
   tst.w      FourthTimer(a0)
@@ -479,13 +469,13 @@ NastyAttackPLR1:
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bra.s      .NoMunch
+
 .OKtomunch:
   move.w     #20,FourthTimer(a0)
   move.l     PLR1_Obj,a2
   add.b      #2,damagetaken(a2)
  
 .NoMunch: 
-
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -494,16 +484,18 @@ NastyAttackPLR1:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   sub.l      #40*128,d0
   asr.l      #7,d0
@@ -538,6 +530,7 @@ NastyAttackPLR1:
   tst.w      d2
   bgt.s      .ko
   moveq      #1,d2
+
 .ko:
   move.w     #31,d3
   jsr        ExplodeIntoBits
@@ -551,7 +544,6 @@ NastyAttackPLR1:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -587,8 +579,7 @@ NastyAttackPLR1:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
  
-.noscream
-
+.noscream:
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -617,8 +608,7 @@ NastyAttackPLR1:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -640,8 +630,7 @@ NastyAttackPLR1:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -661,7 +650,6 @@ NastyAttackPLR1:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
   move.w     12(a0),GraphicRoom(a0)
 
   rts
@@ -678,8 +666,8 @@ NastyAttackPLR2:
   asr.l      #7,d0
   add.w      d0,4(a0)
   bra        .NoMunch2
-.notel2:
  
+.notel2:
   move.w     PLR2_xoff,newx
   move.w     PLR2_zoff,newz
   move.w     (a0),d1
@@ -700,7 +688,7 @@ NastyAttackPLR2:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
@@ -719,7 +707,6 @@ NastyAttackPLR2:
   bra        .hitathing
  
 .nothitplayer:
-
   move.l     #%11111111110111000001,CollideFlags
   jsr        Collision
   tst.b      hitwall
@@ -731,16 +718,14 @@ NastyAttackPLR2:
   bra        .hitathing
  
 .canmove:
- 
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
 .hitathing:
- 
   tst.b      GotThere 
   beq.s      .NoMunch2
   tst.w      FourthTimer(a0)
@@ -748,13 +733,13 @@ NastyAttackPLR2:
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bra.s      .NoMunch2
+
 .OKtomunch2:
   move.w     #20,FourthTimer(a0)
   move.l     PLR2_Obj,a2
   add.b      #2,damagetaken(a2)
  
 .NoMunch2: 
-
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -763,16 +748,18 @@ NastyAttackPLR2:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   sub.l      #40*128,d0
   asr.l      #7,d0
@@ -811,7 +798,6 @@ NastyAttackPLR2:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -844,7 +830,6 @@ NastyAttackPLR2:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream
-
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -873,8 +858,7 @@ NastyAttackPLR2:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -896,8 +880,7 @@ NastyAttackPLR2:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -917,9 +900,6 @@ NastyAttackPLR2:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
   move.w     12(a0),GraphicRoom(a0)
 
   rts
-
-

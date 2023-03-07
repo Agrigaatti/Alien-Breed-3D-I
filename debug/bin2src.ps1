@@ -1,3 +1,5 @@
+# bin2src source destination bytesperline linespergroup
+
 param ([Parameter(Mandatory)]$i, $o, $l, $g)
 
 [byte[]]$data = [System.IO.File]::ReadAllBytes($i) 

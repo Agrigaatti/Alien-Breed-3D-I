@@ -31,19 +31,21 @@ PLR1_mouse_control:
                      asr.l      #1,d6
                      add.l      #1,d6
                      bra.s      .bug1
-.nobug1
-                     asr.l      #1,d6
-.bug1:
 
+.nobug1:
+                     asr.l      #1,d6
+
+.bug1:
                      neg.l      d7
                      ble.s      .nobug2
                      asr.l      #1,d7
                      add.l      #1,d7
                      bra.s      .bug2
-.nobug2
+
+.nobug2:
                      asr.l      #1,d7
-.bug2: 
  
+.bug2: 
                      move.w     ymouse,d3
                      sub.w      oldymouse,d3
                      add.w      d3,oldymouse
@@ -51,17 +53,18 @@ PLR1_mouse_control:
                      cmp.w      #50,d3
                      ble.s      nofastfor
                      move.w     #50,d3
+
 nofastfor:
                      cmp.w      #-50,d3
                      bge.s      nofastback
                      move.w     #-50,d3
-nofastback:
 
+nofastback:
                      tst.b      PLR1_Ducked
                      beq.s      .nohalve
                      asr.w      #1,d3
-.nohalve
 
+.nohalve:
                      move.w     d3,d2
                      asl.w      #4,d2
                      move.w     d2,d1
@@ -79,9 +82,7 @@ nofastback:
  
                      bsr        PLR1clump
  
-.noclump
- 
-
+.noclump:
                      move.w     PLR1s_sinval,d1
                      move.w     PLR1s_cosval,d2
  
@@ -108,9 +109,11 @@ nofastback:
                      tst.b      PLR1_fire
                      beq.s      .firenotpressed
 ; fire was pressed last time.
+
                      btst       #6,$bfe001
                      bne.s      .firenownotpressed
 ; fire is still pressed this time.
+
                      st         PLR1_fire
                      bra        .doneplr1
  
@@ -120,21 +123,18 @@ nofastback:
                      bra        .doneplr1
  
 .firenotpressed
-
 ; fire was not pressed last frame...
-
                      btst       #6,$bfe001
 ; if it has still not been pressed, go back above
                      bne.s      .firenownotpressed
 ; fire was not pressed last time, and was this time, so has
 ; been clicked.
+
                      st         PLR1_clicked
                      st         PLR1_fire
 
 .doneplr1:
- 
                      bsr        PLR1_fall
- 
                      rts
 
 *********************************************************************************************
@@ -153,8 +153,8 @@ PLR1_mousekbd_control:
 ;  dc.w PLR1_angpos => (PLR1_angpos + PLR1_angpos & %0001111111111110)
 
                      IFNE       ENABLEPATH
-PLR1_follow_path:
 
+PLR1_follow_path:
                      move.l     pathpt,a0
 
                      move.w     (a0),d1
@@ -175,6 +175,7 @@ PLR1_follow_path:
                      cmp.l      #endpath,a0
                      blt        notrestartpath
                      move.l     #Path,a0
+
 notrestartpath:
                      move.l     a0,pathpt
 
@@ -365,8 +366,8 @@ nofaster:
                      asr.w      #2,d3
                      bge.s      .nneg
                      addq       #1,d3
-.nneg:
  
+.nneg:
                      move.b     turn_left_key,templeftkey
                      move.b     turn_right_key,temprightkey
                      move.b     sidestep_left_key,tempslkey
@@ -547,8 +548,7 @@ nobackward:
 
 *********************************************************************************************
 
-passspace:
-                     ds.l       400 
+passspace:           ds.l       400 
 
 *********************************************************************************************
 
@@ -595,14 +595,15 @@ PLR1_JoyStick_control:
                      beq.s      .nofaster
                      move.w     #120,d1
                      move.w     #10,d2
-.nofaster:
 
+.nofaster:
                      tst.b      PLR1_Ducked
                      beq.s      .nohalve
                      asr.w      #1,d2
-.nohalve:
 
+.nohalve:
                      moveq      #0,d4 
+
                 ; tst.b $67(a5) ; Right) Alt
                 ; bne.s slidelr
  
@@ -695,7 +696,7 @@ PLR1_JoyStick_control:
  
                      bsr        PLR1clump
  
-.noclump
+.noclump:
                      and.w      #8190,d1
                      move.w     d1,PLR1_bobble
  
@@ -734,13 +735,13 @@ PLR1_JoyStick_control:
                      clr.b      PLR1_fire
                      bra        .doneplr1
  
-.firenotpressed
-
+.firenotpressed:
 ; fire was not pressed last frame...
                      tst.b      $65(a5)                             ; (Right) Alt
 ; if it has still not been pressed, go back above
                      beq.s      .firenownotpressed
 ; fire was not pressed last time, and was this time, so has been clicked.
+
                      st         PLR1_clicked
                      st         PLR1_fire
 
@@ -814,3 +815,5 @@ THERESNOWATER:
                      movem.l    (a7)+,d0-d7/a0-a6
 
                      rts
+
+*********************************************************************************************

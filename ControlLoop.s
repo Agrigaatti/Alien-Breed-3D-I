@@ -38,16 +38,20 @@
 
 *********************************************************************************************
 
+                     incdir               "includes"
+                     include              "exec/memory.i"
+                     include              "AB3DI.i"
+                     include              "macros.i"
+                     include              "defs.i"
+
+*********************************************************************************************
+
                      ifnd                   ENABLETITLEMUSIC
 ENABLETITLEMUSIC equ 0
                      endc
 
                      ifnd                   ENABLEADVSERIAL
 ENABLEADVSERIAL  equ 0
-                     endc
-
-                     ifnd                   ENABLECOOP
-ENABLECOOP       equ 0
                      endc
 
                      ifnd                   VERSION
@@ -65,15 +69,6 @@ PLR1_GunData     equ 0
                      ifnd                   PLR1_GunDataEnd
 PLR1_GunDataEnd  equ 32
                      endc
-
-*********************************************************************************************
-
-                     incdir                 "includes"
-                     include                "exec/memory.i"
-
-                     include                "AB3DI.i"
-                     include                "macros.i"
-                     include                "defs.i"
 
 *********************************************************************************************
 
@@ -302,11 +297,6 @@ DONEMENU:
                      bsr                    FREEBOTMEM      
 
 *********************************************************************************************
-; Test code, quit
-
-                     ; rts
- 
-*********************************************************************************************
 ;
 
                      tst.b                  FINISHEDLEVEL
@@ -499,19 +489,27 @@ NASTY:               dc.w                   0
 MASTERSETUP:
                      SAVEREGS
 
-                     IFNE                   ENABLECOOP
+                     cmp.w                #1,MPMode
+                     bne.b                skipMasterCoop
+
                      bsr                    SetupDefaultGame
                      st.b                   NASTY                                         ; All enemies
-                     ENDC
 
-                     IFEQ                   ENABLECOOP
+                     clr.l                d0
+                     move.w               MPMode,d0
+                     swap                 d0
+                     move.w               PLOPT,d0
+
+                     bra                  continueMaster
+
+skipMasterCoop:
                      bsr                    SetupTwoPlayerGame
                      clr.b                  NASTY                                         ; No enemies
-                     ENDC
 
-                     clr.L                  d0
+                     clr.l                d0
                      move.w                 PLOPT,d0
 
+continueMaster:
                      IFNE                   ENABLEADVSERIAL
                      jsr                    INITSEND                                      ; Sync slave
                      jsr                    SENDLONG
@@ -532,16 +530,6 @@ MASTERSETUP:
 SLAVESETUP:
                      SAVEREGS
 
-                     IFNE                   ENABLECOOP
-                     bsr                    SetupDefaultGame
-                     st.b                   NASTY                                         ; All enemies
-                     ENDC
-
-                     IFEQ                   ENABLECOOP
-                     bsr                    SetupTwoPlayerGame
-                     clr.b                  NASTY                                         ; No enemies
-                     ENDC
-
                      IFNE                   ENABLEADVSERIAL
                      jsr                    INITREC                                       ; Wait master
                      jsr                    RECEIVE
@@ -552,6 +540,10 @@ SLAVESETUP:
                      jsr                    RECFIRST
                      ENDC
 
+                     move.l               d0,d1
+                     swap                 d1
+                     move.w               d1,MPMode
+
                      move.w                 d0,PLOPT
                      add.b                  #'a',d0
                      move.b                 d0,LEVA
@@ -559,6 +551,21 @@ SLAVESETUP:
                      move.b                 d0,LEVC
 
                      move.w                 #$0000,TXTBGCOL
+
+                     cmp.w                #1,MPMode
+                     bne.b                skipSlaveCoop
+
+                     bsr                  SetupDefaultGame
+                     st.b                 NASTY                                         ; All enemies
+
+                     bra.b                continueSlave
+
+skipSlaveCoop:
+                     bsr                  SetupTwoPlayerGame
+                     clr.b                NASTY                                         ; No enemies
+
+continueSlave:
+
                      GETREGS
                      rts
  	
@@ -622,21 +629,22 @@ READMAINMENU:
 
                      move.w                 #0,OptScrn
                      bsr                    DRAWOPTSCRN
-                     move.w                 #1,OPTNUM
 
+                     move.w               #1,OPTNUM
                      bsr                    HIGHLIGHT
+
                      bsr                    WAITREL
 
 ************************************************************
 
-.rdlop:
+rdlop1:
                      bsr                    CHECKMENU
                      tst.w                  d0
-                     blt.s                  .rdlop
-                     bne                    .noopt
+                     blt.s                rdlop1
+                     bne                  noOpt1
                      bra                    MASTERMENU
 
-.noopt:
+noOpt1:
 
  ************************************************************
  ; Exit
@@ -699,7 +707,7 @@ READMAINMENU:
 ************************************************************
 
                      cmp.w                  #1,d0
-                     beq                    playgame
+                     beq                  readyToPlay1
 
 ************************************************************
 
@@ -710,12 +718,13 @@ READMAINMENU:
 
                      move.w                 #0,OptScrn
                      bsr                    DRAWOPTSCRN
-                     move.w                 #1,OPTNUM
 
+                     move.w               #1,OPTNUM
                      bsr                    HIGHLIGHT
 
                      bsr                    WAITREL
-                     bra                    .rdlop
+
+                     bra                  rdlop1
   
 .nocontrol:
 
@@ -728,19 +737,19 @@ READMAINMENU:
 
                      move.w                 #0,OptScrn
                      bsr                    DRAWOPTSCRN
-                     move.w                 #1,OPTNUM
 
+                     move.w               #1,OPTNUM
                      bsr                    HIGHLIGHT
 
                      bsr                    WAITREL
-                     bra                    .rdlop
+                     bra                  rdlop1
  
 .nocred:
 
 ************************************************************
  
                      cmp.w                  #4,d0
-                     bne                    playgame
+                     bne                  readyToPlay1
                      bsr                    WAITREL
 
 ************************************************************
@@ -830,12 +839,11 @@ READMAINMENU:
                      bsr                    DRAWOPTSCRN
 
                      move.w                 #1,OPTNUM
-
                      bsr                    HIGHLIGHT
 
-                     bra                    .rdlop 
+                     bra                  rdlop1
  
-playgame:
+readyToPlay1:
                      move.w                 MAXLEVEL,PLOPT
                      rts
 
@@ -844,38 +852,57 @@ playgame:
 LEVELSELECTED:       dc.w                   0
 
 *********************************************************************************************
+*********************************************************************************************
 
 MASTERMENU:
 
                      move.b                 #'m',mors
 
-                     move.w                 #0,LEVELSELECTED
+                     move.w               MAXLEVEL,d0
+                     move.w               d0,LEVELSELECTED
 
 ************************************************************
+; Reset level line
 
-                     move.w                 #0,d0 
-                     move.l                 #CURRENTLEVELLINEM,a1
+                     lea                  CURRENTLEVELLINEM,a1
                      muls                   #40,d0
-                     move.l                 #LEVEL_OPTS,a0
+                     lea                  LEVEL_OPTS,a0
+                     add.l                d0,a0
+                     bsr                  PUTINLINE
+
+************************************************************
+; Update mode line
+
+                     lea                  CURRENTMPMODELINE,a1
+                     clr.l                d0
+                     move.w               MPMode,d0
+                     muls.l               #40,d0
+                     lea                  MPMODE_OPTS,a0
                      add.l                  d0,a0
                      bsr                    PUTINLINE
+
+                     move.w               MPMode,d0
+                     lea                  MPMODE_HIGHLIGHT_OPTS,a0
+                     lea                  MASTERPLAYERMENU_OPTS,a1
+                     bsr                  UpdateHLSettings
 
 ************************************************************
 ; Stay here until 'play game' is selected.
 
                      move.w                 #4,OptScrn
                      bsr                    DRAWOPTSCRN
-                     move.w                 #1,OPTNUM
 
+                     move.w               #1,OPTNUM
                      bsr                    HIGHLIGHT
+
                      bsr                    WAITREL
 
 ************************************************************
 
-.rdlop:
+rdlop2:
                      bsr                    CHECKMENU
                      tst.w                  d0
-                     blt.s                  .rdlop
+                     blt.s                rdlop2
                      bsr                    WAITREL
 
 ************************************************************
@@ -913,20 +940,21 @@ MASTERMENU:
 
                      movem.l                (a7)+,d1-d7/a0-a6
 
-                     move.l                 #CURRENTLEVELLINEM,a1
+                     lea                  CURRENTLEVELLINEM,a1
                      muls                   #40,d0
-                     move.l                 #LEVEL_OPTS,a0
+                     lea                  LEVEL_OPTS,a0
                      add.l                  d0,a0
                      bsr                    PUTINLINE
+
                      bsr                    JUSTDRAWIT
-                     bra                    .rdlop
+                     bra                  rdlop2
 
 .nonextlev:
 
 ************************************************************
 
                      cmp.w                  #2,d0
-                     beq                    .playgame
+                     beq                  readyToPlay2
  
  ************************************************************
 
@@ -934,15 +962,47 @@ MASTERMENU:
                      beq.b                  .masterToSlaveMenu
 
                      cmp.w                  #0,d0
-                     bne                    .noopt
+                     bne                  noOpt2
+ 
+                     cmp.w                #1,MPMode
+                     bne                  changeMPMode
+                     
+                     move.w               #0,MPMode
  
                      .masterToSlaveMenu:
                      bra                    SLAVEMENU
  
-.noopt:
+************************************************************
+
+changeMPMode:
+                     lea                  CURRENTMPMODELINE,a1
+                     clr.l                d0
+                     move.w               MPMode,d0
+                     add.w                #1,d0
+                     move.w               d0,MPMode
+                     mulu.l               #40,d0
+                     lea                  MPMODE_OPTS,a0
+                     add.l                d0,a0
+                     bsr                  PUTINLINE
+
+                     move.w               MPMode,d0
+                     lea                  MPMODE_HIGHLIGHT_OPTS,a0
+                     lea                  MASTERPLAYERMENU_OPTS,a1
+                     bsr                  UpdateHLSettings
+
+                     move.w               #4,OptScrn
+                     bsr                  DRAWOPTSCRN
+
+                     move.w               #2,OPTNUM
+                     bsr                  HIGHLIGHT
+
+                     bsr                  WAITREL
+                     
+                     bra                  rdlop2
 
 ************************************************************
 
+noOpt2:
                      cmp.w                  #3,d0
                      bne                    .nocontrol
  
@@ -955,16 +1015,17 @@ MASTERMENU:
                      bsr                    HIGHLIGHT
 
                      bsr                    WAITREL
-                     bra                    .rdlop
+                     bra                  rdlop2
  
 .nocontrol:
 
 ************************************************************
 
-.playgame
+readyToPlay2:
                      move.w                 LEVELSELECTED,PLOPT
                      rts
 
+*********************************************************************************************
 *********************************************************************************************
 
 SLAVEMENU:
@@ -982,31 +1043,31 @@ SLAVEMENU:
 
 ************************************************************
 
-.rdlop:
+rdlop3:
                      bsr                    CHECKMENU
                      tst.w                  d0
-                     blt.s                  .rdlop
+                     blt.s                rdlop3
                      bsr                    WAITREL
 
 ************************************************************
 
                      cmp.w                  #$fe,d0                                       ; TAB
-                     beq.b                  .rdlop
+                     beq.b                rdlop3
 
                      cmp.w                  #1,d0
-                     beq                    .playgame
+                     beq                  readyToPlay3
 
 
                      cmp.w                  #$ff,d0                                       ; ESC
                      beq.b                  .slaveToMainMenu
 
                      cmp.w                  #0,d0
-                     bne                    .noopt
+                     bne                  noOpt3
  
                      .slaveToMainMenu:
                      bra                    READMAINMENU
  
-.noopt:
+noOpt3:
                      cmp.w                  #2,d0
                      bne                    .nocontrol
  
@@ -1019,10 +1080,10 @@ SLAVEMENU:
                      bsr                    HIGHLIGHT
 
                      bsr                    WAITREL
-                     bra                    .rdlop
+                     bra                  rdlop3
  
 .nocontrol:
-.playgame:
+readyToPlay3:
                      rts
 
 *********************************************************************************************
@@ -1446,10 +1507,10 @@ CHANGECONTROLS:
                      bsr                    HIGHLIGHT
                      bsr                    WAITREL
  
-.rdlop:
+.rdlop4:
                      bsr                    CHECKMENU
                      tst.w                  d0
-                     blt.s                  .rdlop
+                     blt.s                .rdlop4
 
                      cmp.w                  #12,d0
                      beq                    .backtomain
@@ -1478,7 +1539,7 @@ CHANGECONTROLS:
                      move.l                 (a1,d1.w*4),(a0)
                      bsr                    JUSTDRAWIT
                      bsr                    WAITREL
-                     bra                    .rdlop
+                     bra                  .rdlop4
 
 .backtomain:
                      rts
@@ -1496,20 +1557,20 @@ SHOWCREDITS:
 
                      bsr                    WAITREL
 
-.rdlop1:
+.rdlop5:
                      bsr                    CHECKMENU
                      tst.w                  d0
-                     blt.s                  .rdlop1
+                     blt.s                .rdlop5
 
                      move.w                 #8,OptScrn
                      bsr                    DRAWOPTSCRN
 
                      bsr                    WAITREL                     
 
-.rdlop2:
+.rdlop6:
                      bsr                    CHECKMENU
                      tst.w                  d0
-                     blt.s                  .rdlop2
+                     blt.s                .rdlop6
 
                      rts
  
@@ -1563,6 +1624,9 @@ WAITREL2:
 *********************************************************************************************
 
 PUTINLINE:
+; line = 40 chars
+; a0 = source line
+; a1 = destination line
 
                      moveq                  #39,d0
 
@@ -1663,12 +1727,29 @@ noselect:
 
 *********************************************************************************************
 
+UpdateHLSettings:
+; d0=line
+; a0=from
+; a1=to
+
+                     mulu.l               #8,d0
+                     add.l                d0,a0
+                     move.l               #3,d0
+
+cpyHLSettings:
+                     move.w               (a0)+,(a1)+
+                     dbeq                 d0,cpyHLSettings
+
+                     rts
+
+*********************************************************************************************
+
 HIGHLIGHT:
 
                      SAVEREGS
  
                      move.w                 OptScrn,d0
-                     move.l                 #MENUDATA,a0
+                     lea                  MENUDATA,a0
                      move.l                 4(a0,d0.w*8),a0
                      move.w                 OPTNUM,d0
                      lea                    (a0,d0.w*8),a0
@@ -1836,6 +1917,13 @@ OptScrn::            dc.w                   0
 
 *********************************************************************************************
 
+; Selected level
+PLOPT:               dc.w                 0
+; Note: Mode 1 = CO-OP - Only the master (plr1) can pickup a key (etc) in the coop mode 
+MPMode:              dc.w                 0 
+
+*********************************************************************************************
+
 MENUDATA:
 ;0
                      dc.l                   ONEPLAYERMENU_TXT
@@ -1847,8 +1935,8 @@ MENUDATA:
                      dc.l                   CREDITMENU_TXT
                      dc.l                   CREDITMENU_OPTS
 ;3
-                     dc.l                   ASKFORDISK_TXT
-                     dc.l                   ASKFORDISK_OPTS
+                     dc.l                 INSTRUCTIONS_TXT                              ; ASKFORDISK_TXT
+                     dc.l                 INSTRUCTIONS_OPTS                             ; ASKFORDISK_OPTS
 ;4
                      dc.l                   MASTERPLAYERMENU_TXT
                      dc.l                   MASTERPLAYERMENU_OPTS
@@ -1867,45 +1955,6 @@ MENUDATA:
 
 *********************************************************************************************
 
-ASKFORDISK_TXT:
-;      0123456789012345678901234567890123456789
-                     dc.b                   '                                        '    ;0
-                     dc.b                   '                                        '    ;1
-                     dc.b                   '                                        '    ;2
-                     dc.b                   '                                        '    ;3
-                     dc.b                   '                                        '    ;4
-                     dc.b                   '                                        '    ;5
-                     dc.b                   '                                        '    ;6
-                     dc.b                   '                                        '    ;7
-                     dc.b                   '                                        '    ;8
-                     dc.b                   '                                        '    ;9
-                     dc.b                   '                                        '    ;0
-                     dc.b                   '                                        '    ;1
-                     dc.b                   '                                        '    ;2
-                     dc.b                   '          INSERT LEVEL DISK             '    ;3
-                     dc.b                   '                                        '    ;4
-                     dc.b                   '          PRESS MOUSE BUTTON            '    ;5
-                     dc.b                   '          WHEN DISK ACTIVITY            '    ;6
-                     dc.b                   '               FINISHES                 '    ;7
-                     dc.b                   '                                        '    ;8
-                     dc.b                   '                                        '    ;9
-                     dc.b                   '                                        '    ;0
-                     dc.b                   '                                        '    ;1
-                     dc.b                   '                                        '    ;2
-                     dc.b                   '                                        '    ;3
-                     dc.b                   '                                        '    ;4
-                     dc.b                   '                                        '    ;5
-                     dc.b                   '                                        '    ;6
-                     dc.b                   '                                        '    ;7
-                     dc.b                   '                                        '    ;8
-                     dc.b                   '                                        '    ;9
-                     dc.b                   '                                        '    ;0
-                     dc.b                   '                                        '    ;1
-
-ASKFORDISK_OPTS:
-                     dc.w                   -1
- 
- 
 ONEPLAYERMENU_TXT:
 ;      0123456789012345678901234567890123456789
                      dc.b                   '                                        '    ;0
@@ -1951,6 +2000,7 @@ ONEPLAYERMENU_OPTS:
                      dc.w                   12,23,16,1
                      dc.w                   -1
 
+*********************************************************************************************
 
 MASTERPLAYERMENU_TXT:
 ;      0123456789012345678901234567890123456789
@@ -1966,10 +2016,9 @@ MASTERPLAYERMENU_TXT:
                      dc.b                   '                                        '    ;9
                      dc.b                   '                                        '    ;0
                      dc.b                   '                                        '    ;1
-                     dc.b                   '            2 PLAYER  MASTER            '    ;2
+CURRENTMPMODELINE:   dc.b                 '            2 PLAYER  MASTER            '    ;2
                      dc.b                   '                                        '    ;3
-CURRENTLEVELLINEM:
-                     dc.b                   '           LEVEL 1 : THE GATE           '    ;4 
+CURRENTLEVELLINEM:   dc.b                 '           LEVEL 1 : THE GATE           '    ;4 
                      dc.b                   '                                        '    ;5
                      dc.b                   '               PLAY  GAME               '    ;6
                      dc.b                   '                                        '    ;7
@@ -1987,6 +2036,17 @@ CURRENTLEVELLINEM:
                      dc.b                   '                                        '    ;9
                      dc.b                   '                                        '    ;0
                      dc.b                   '                                        '    ;1
+                     even
+                     
+MPMODE_OPTS:            
+;                                          0123456789012345678901234567890123456789
+                     dc.b                 '            2 PLAYER  MASTER            '    ;2
+                     dc.b                 '        2 PLAYER  MASTER (CO-OP)        '    ;2
+                     even
+
+MPMODE_HIGHLIGHT_OPTS:
+                     dc.w                 12,12,16,1
+                     dc.w                 8,12,24,1
 
 MASTERPLAYERMENU_OPTS:
                      dc.w                   12,12,16,1
@@ -1994,6 +2054,8 @@ MASTERPLAYERMENU_OPTS:
                      dc.w                   15,16,10,1
                      dc.w                   12,18,16,1
                      dc.w                   -1
+
+*********************************************************************************************
 
 SLAVEPLAYERMENU_TXT:
 ;      0123456789012345678901234567890123456789
@@ -2033,7 +2095,7 @@ SLAVEPLAYERMENU_TXT:
 *********************************************************************************************
 
 SLAVEPLAYERMENU_OPTS:
-                     dc.w                   12,12,16,1
+                     dc.w                 13,12,14,1
                      dc.w                   15,14,10,1
                      dc.w                   12,16,16,1
                      dc.w                   -1
@@ -2117,7 +2179,7 @@ CONTROL_OPTS:
                      dc.w                   15,27,10,1
                      dc.w                   -1
 
-PLOPT:               dc.w                   0
+*********************************************************************************************
 
 INSTRUCTIONS_TXT:
 ;      0123456789012345678901234567890123456789
@@ -2158,8 +2220,9 @@ INSTRUCTIONS_OPTS:
                      dc.w                   0,0,0,1
                      dc.w                   -1
 
-CREDITMENU_TXT:
+*********************************************************************************************
 
+CREDITMENU_TXT:
 ;      0123456789012345678901234567890123456789
                      dc.b                   '    Programming, Game Code, Graphics    '    ;0
                      dc.b                   '         Game Design and Manual         '    ;1
@@ -2195,7 +2258,7 @@ CREDITMENU_TXT:
                      dc.b                   '                                        '    ;1
  
 CREDITMENUPART2_TXT:
-
+;                                          0123456789012345678901234567890123456789
                      dc.b                   '    Serial Link and 3D Object Editor:   '    ;4
                      dc.b                   '                   by                   '    ;5
                      dc.b                   '            Charles Blessing            '    ;6
@@ -2231,6 +2294,8 @@ CREDITMENUPART2_TXT:
 CREDITMENU_OPTS:
                      dc.w                   0,0,1,1
                      dc.w                   -1
+
+*********************************************************************************************
 
 ;      0123456789012345678901234567890123456789
                      dc.b                   '                                        '    ;0
@@ -2414,7 +2479,7 @@ LOADTITLESCRN2:
 
                      move.l                 doslib,a6
                      move.l                 TITLESCRNADDR,d2
-                     move.l                 #10240*7,d3
+                     move.l               #TitleScrAddrSize,d3
                      jsr                    _LVORead(a6)
 
                      move.l                 doslib,a6
@@ -2427,14 +2492,14 @@ LOADTITLESCRN2:
 
 GETTITLEMEM:
 
-                     move.l                 #MEMF_CHIP,d1
-                     move.l                 #10240*7,d0
+                     move.l               #MEMF_CHIP|MEMF_CLEAR,d1
+                     move.l               #TitleScrAddrSize,d0
                      move.l                 4.w,a6
                      jsr                    _LVOAllocMem(a6)
                      move.l                 d0,TITLESCRNADDR
  
-                     move.l                 #MEMF_CHIP,d1
-                     move.l                 #258*16*5,d0
+                     move.l               #MEMF_CHIP|MEMF_CLEAR,d1
+                     move.l               #OptSprAddrSize,d0
                      move.l                 4.w,a6
                      jsr                    _LVOAllocMem(a6)
                      move.l                 d0,OPTSPRADDR
@@ -2449,7 +2514,7 @@ RELEASETITLEMEM:
                      beq                    SkipTitleScr
 
                      move.l                 d1,a1
-                     move.l                 #10240*7,d0
+                     move.l               #TitleScrAddrSize,d0
                      move.l                 4.w,a6
                      jsr                    _LVOFreeMem(a6)
                      move.l                 #0,TITLESCRNADDR
@@ -2459,7 +2524,7 @@ SkipTitleScr:
                      beq                    SkipOptScr
 
                      move.l                 d1,a1
-                     move.l                 #258*16*5,d0
+                     move.l               #OptSprAddrSize,d0
                      move.l                 4.w,a6
                      jsr                    _LVOFreeMem(a6)
                      move.l                 #0,OPTSPRADDR
@@ -2480,7 +2545,7 @@ LOADTITLESCRN:
 
                      move.l                 doslib,a6
                      move.l                 TITLESCRNADDR,d2
-                     move.l                 #10240*7,d3
+                     move.l               #TitleScrAddrSize,d3
                      jsr                    _LVORead(a6)
 
                      move.l                 doslib,a6

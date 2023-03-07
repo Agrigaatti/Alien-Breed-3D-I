@@ -113,6 +113,14 @@ fdupwt:
                     dbra               d3,fdupwt
  
 *********************************************************
+; Init BG music
+
+                    move.l             #endgame,mt_data                         
+                    st                 UseAllChannels
+                    clr.b              reachedend
+                    jsr                mt_init
+
+*********************************************************
 ; Scroll loop
 
                     move.w             #0,SCROLLPOS
@@ -128,6 +136,8 @@ SCROLLINGLOOP:
 
                     lea                $dff000,a6 
                     WAITFORVERTBREQ
+
+                    jsr                mt_music
 
                     bsr                DoTheScroll
 
@@ -358,6 +368,8 @@ okitsaline:
 ExitEndScroll: 
 
                     bsr                ClearScreen
+
+                    jsr                mt_end
 
                     move.w             #0,TXTBGCOL
 

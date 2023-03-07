@@ -6,6 +6,7 @@
 
                    incdir        "includes"
                    include       "macros.i"
+                   include       "AB3DI.i"
 
 *********************************************************************************************
 
@@ -27,12 +28,12 @@ Flash:
                    add.l         LEVELDATA,a0
  
                    move.l        a0,-(a7)
- 
                    add.w         ToZonePts(a0),a0
 
 flashpts:
                    move.w        (a0)+,d2
                    blt.s         flashedall
+
                    add.w         d1,(a1,d2.w*4)
                    add.w         d1,2(a1,d2.w*4)
                    bra           flashpts
@@ -49,6 +50,7 @@ flashedall:
 doemall:
                    move.w        (a0),d0
                    blt.s         doneemall
+
                    add.w         d1,(a1,d0.w*4)
                    add.w         d1,2(a1,d0.w*4)
                    addq          #8,a0
@@ -65,6 +67,9 @@ radius:            dc.w          0
 *********************************************************************************************
 
 ExplodeIntoBits:
+; d0=
+; d2=
+; d3=radius
 
                    move.w        d3,radius
 
@@ -77,9 +82,10 @@ ExplodeIntoBits:
                    move.w        #19,d1
 
 .findeight:
-                   move.w        12(a5),d0
+                   move.w        objZone(a5),d0
                    blt.s         .gotonehere
-                   adda.w        #64,a5
+
+                   adda.w        #ObjectSize,a5
                    dbra          d1,.findeight
                    rts
  
@@ -91,22 +97,26 @@ ExplodeIntoBits:
                    move.w        (a5),d3
                    lea           (a2,d3.w*8),a2
 
+****************************************************
                     ; jsr GetRand
                     ; lsr.w #4,d0
                     ; move.w radius,d1
                     ; and.w d1,d0
                     ; asr.w #1,d1
                     ; sub.w d1,d0
+****************************************************
 
                    move.w        newx,d0
                    move.w        d0,(a2)
 
+****************************************************
                     ; jsr GetRand
                     ; lsr.w #4,d0
                     ; move.w radius,d1
                     ; and.w d1,d0
                     ; asr.w #1,d1
                     ; sub.w d1,d0
+****************************************************
 
                    move.w        newz,d0
                    move.w        d0,4(a2)
@@ -117,7 +127,7 @@ ExplodeIntoBits:
                    adda.w        d0,a2
                    move.w        (a2),d3
                    move.w        2048(a2),d4
-                   Jsr           GetRand
+                   jsr           GetRand
                    and.w         #3,d0
                    add.w         #1,d0
                    ext.l         d3
@@ -140,14 +150,16 @@ ExplodeIntoBits:
                    neg.w         d0
                    move.w        d0,shotyvel(a5)
                    move.l        #0,EnemyFlags(a5)
-                   move.w        12(a0),12(a5)
+                   move.w        objZone(a0),objZone(a5)
  
+ ****************************************************
                     ; jsr GetRand
                     ; lsr.w #4,d0
                     ; move.w radius,d1
                     ; and.w d1,d0
                     ; asr.w #1,d1
                     ; sub.w d1,d0
+****************************************************
 
                    move.w        4(a0),d0
                    add.w         #6,d0
@@ -164,8 +176,8 @@ ExplodeIntoBits:
                    move.w        #-1,shotlife(a5)
                    move.b        #2,16(a5)
                    clr.b         shotstatus(a5)
-                   move.b        ObjInTop(a0),ObjInTop(a5)
-                   st            worry(a0)
+                   move.b        objInTop(a0),objInTop(a5)
+                   st            objWorry(a0)
                    adda.w        #64,a5
                    sub.w         #1,d2
                    blt.s         .gotemall
@@ -176,29 +188,31 @@ ExplodeIntoBits:
 
 *********************************************************************************************
 
-brightanim:
+BrightAnimHandler:
 
                    move.l        #BrightAnimTable,a1
                    move.l        #BrightAnimPtrs,a3
                    move.l        #BrightAnimStarts,a4
 
-dobrightanims:
+doBrightAnims:
                    move.l        (a3),d0
-                   blt           nomoreanims
+                   blt           noMoreAnims
+
                    move.l        d0,a2
                    move.w        (a2)+,d0
                    cmp.w         #999,d0
-                   bne.s         itsabright
+                   bne.s         itsABright
+
                    move.l        (a4),a2
                    move.w        (a2)+,d0
 
-itsabright:
+itsABright:
                    move.l        a2,(a3)+
                    addq          #4,a4
                    move.w        d0,(a1)+
-                   bra.s         dobrightanims
+                   bra.s         doBrightAnims
 
-nomoreanims:
+noMoreAnims:
                    rts
  
 *********************************************************************************************
@@ -254,7 +268,7 @@ TempFrames:        dc.w          0
 
 *********************************************************************************************
 
-objmoveanim:
+ObjMoveAnim:
 
                    move.l        PLR1_Roompt,a0
                    move.w        (a0),PLR1_Zone
@@ -264,15 +278,18 @@ objmoveanim:
 
                    bsr           Player1Shot
                    bsr           Player2Shot
+
                    bsr           SwitchRoutine
                    bsr           DoorRoutine
                    bsr           LiftRoutine
-                   bsr           ObjectHandler
-                   bsr           brightanim
+
+                   bsr           ObjectDataHandler
+                   bsr           BrightAnimHandler
  
                    subq.w        #1,animtimer
                    bgt.s         notzero
                    move.w        #2,animtimer
+
                    move.l        otherrip,d0
                    move.l        RipTear,otherrip
                    move.l        d0,RipTear
@@ -282,14 +299,15 @@ notzero:
  
 *********************************************************************************************
 
-tstdir:            dc.w          0
-
 liftheighttab:     ds.w          40
 doorheighttab:     ds.w          40
+
 PLR1_stoodonlift:  dc.b          0
 PLR2_stoodonlift:  dc.b          0
+
 liftattop:         dc.b          0
 liftatbot:         dc.b          0
+
 ZoneBrightTable:   ds.l          300
 
 *********************************************************************************************
@@ -674,7 +692,9 @@ noraise:
                    neg.w         d0
                    and.w         #255,d0
 
+****************************************************
                     ; add.w #64,d0
+****************************************************
 
                    cmp.w         PLR1_Zone,d5
                    bne.s         NotGoBackUp
@@ -714,16 +734,18 @@ simplecheck:
                    bra.s         simplecheck
                    bra           nomoredoorwalls 
  
- 
 satisfied:
                    moveq         #0,d4
                    moveq         #0,d5
                    move.b        (a0)+,d5
                    move.b        (a0)+,d4
+
                    tst.b         dooropen
                    bne           tstdoortoclose
+
                    tst.b         doorclosed
                    bne           tstdoortoopen
+
                    move.w        #$0,d1
 
 backfromtst:
@@ -732,6 +754,7 @@ backfromtst:
 doorwalls:
                    move.w        (a0)+,d5
                    blt.s         nomoredoorwalls
+
                    asl.w         #4,d5
                    lea           (a3,d5.w),a4
                    move.w        14(a4),d4
@@ -763,6 +786,8 @@ nomoredoorwalls:
                    bra           doadoor
                    rts
  
+****************************************************
+
 tstdoortoopen:
                    cmp.w         #1,d5
                    blt.s         door0
@@ -813,6 +838,8 @@ door5:
                    move.w        #$0,d1
                    bra           backfromtst
  
+****************************************************
+
 tstdoortoclose:
                    tst.w         d4
                    beq.s         dclose0
@@ -827,6 +854,8 @@ dclose1:
                    move.w        #$0,d1
                    bra           backfromtst
  
+****************************************************
+
 SwitchRoutine:
                    move.l        SwitchData,a0
                    move.w        #7,d0
@@ -889,6 +918,7 @@ p1_SpaceIsPressed:
                    move.w        p1_zoff,d2
                    move.w        (a0),d3
                    blt           .NotCloseEnough
+
                    move.w        4(a0),d3
                    lea           (a1,d3.w*4),a2
                    move.w        (a2),d3
@@ -904,6 +934,7 @@ p1_SpaceIsPressed:
                    add.l         d3,d4
                    cmp.l         #60*60,d4
                    bge           .NotCloseEnough
+
                    move.l        6(a0),a3
                    add.l         LEVELGRAPHICS,a3
                    move.w        #11,4(a3)
@@ -1035,21 +1066,23 @@ double:            dc.w          0
 ivescreamed:       dc.w          0
 
 *********************************************************************************************
+; Handle level object data
 
-ObjectHandler:
+ObjectDataHandler:
 
                    move.l        ObjectData,a0
 
 Objectloop:
                    tst.w         (a0)
-                   blt           doneallobj
+                   blt           doneAllObj
 
-                   move.w        12(a0),GraphicRoom(a0)
-                   tst.b         worry(a0)
-                   beq           dontworryyourprettyhead
+                   move.w        objZone(a0),GraphicRoom(a0)
 
-                   move.b        16(a0),d0
-                   blt.s         doneobj
+                   tst.b         objWorry(a0)
+                   beq           dontWorryYourPrettyHead
+
+                   move.b        objNumber(a0),d0                  
+                   blt.s         doneObj
                    beq           JUMPNASTY
 
                    cmp.b         #2,d0
@@ -1061,11 +1094,11 @@ Objectloop:
                    beq           JUMPKEY
 
                    cmp.b         #6,d0
-                   blt           doneobj
+                   blt           doneObj                                                         ; 5 = Plr1
                    beq           JUMPROBOT
 
                    cmp.b         #8,d0
-                   blt           doneobj
+                   blt           doneObj                                                         ; 7 = Big Nasty Alien
                    beq           JUMPFLYINGNASTY
 
                    cmp.b         #10,d0
@@ -1073,7 +1106,7 @@ Objectloop:
                    beq           JUMPBARREL
 
                    cmp.b         #12,d0
-                   blt           doneobj
+                   blt           doneObj                                                         ; 11 = Plr2
                    beq           JUMPMARINE
 
                    cmp.b         #14,d0
@@ -1091,93 +1124,102 @@ Objectloop:
                    blt           JUMPFLAMEMARINE
                    beq           JUMPGASPIPE
 
-doneobj:
-dontworryyourprettyhead:
-                   adda.w        #64,a0
+doneObj:
+dontWorryYourPrettyHead:
+                   adda.w        #ObjectSize,a0
                    bra           Objectloop
 
-doneallobj:
+doneAllObj:
                    rts
 
 *********************************************************
+; Level object jump table
 
 JUMPNASTY: 
-                   jsr           ItsANasty
-                   bra           doneobj
+                   jsr           ItsANasty                                                       ; 0
+                   bra           doneObj
 
 JUMPMEDI:
-                   jsr           ItsAMediKit
-                   bra           doneobj
+                   jsr           ItsAMediKit                                                     ; 1
+                   bra           doneObj
 
 JUMPBULLET:
-                   jsr           ItsABullet
-                   bra           doneobj
+                   jsr           ItsABullet                                                      ; 2
+                   bra           doneObj
 
 JUMPGUN:
-                   jsr           ItsABigGun
-                   bra           doneobj
+                   jsr           ItsABigGun                                                      ; 3
+                   bra           doneObj
 
 JUMPKEY:
-                   jsr           ItsAKey
-                   bra           doneobj
+                   jsr           ItsAKey                                                         ; 4
+                   bra           doneObj
 
-; FIVE IS PLAYER 1
+; 5 - FIVE IS PLAYER 1
+
 JUMPROBOT:
-                   jsr           ItsARobot
-                   bra           doneobj
+                   jsr           ItsARobot                                                       ; 6 
+                   bra           doneObj
  
-                   jsr           ItsABigNasty
-                   bra           doneobj
+JUMPBIGNASTY: 
+                   jsr           ItsABigNasty                                                    ; 7
+                   bra           doneObj
  
 JUMPFLYINGNASTY:
-                   jsr           ItsAFlyingNasty
-                   bra           doneobj
+                   jsr           ItsAFlyingNasty                                                 ; 8
+                   bra           doneObj
+
 
 JUMPAMMO:
-                   jsr           ItsAnAmmoClip
-                   bra           doneobj
+                   jsr           ItsAnAmmoClip                                                   ; 9
+                   bra           doneObj
+
 
 JUMPBARREL:
-                   jsr           ItsABarrel
-                   bra           doneobj
+                   jsr           ItsABarrel                                                      ; 10
+                   bra           doneObj
 
-; ELEVEN IS PLAYER 2
+; 11 - ELEVEN IS PLAYER 2
+
 JUMPMARINE:
-                   jsr           ItsAMutantMarine
-                   bra           doneobj
+                   jsr           ItsAMutantMarine                                                ; 12 - Marine
+                   bra           doneObj
 
 JUMPWORM:
-                   jsr           ItsAHalfWorm
-                   bra           doneobj
+                   jsr           ItsAHalfWorm                                                    ; 13
+                   bra           doneObj
 
 JUMPWELLHARD:
-                   jsr           ItsABigRedThing
-                   bra           doneobj
+                   jsr           ItsABigRedThing                                                 ; 14
+                   bra           doneObj
+
+; 15 - Small Red Thing
 
 JUMPTREE:
-                   jsr           ItsATree
-                   bra           doneobj
+                   jsr           ItsATree                                                        ; 16
+                   bra           doneObj
 
 JUMPEYEBALL:
-                   jsr           ItsAEyeBall
-                   bra           doneobj
+                   jsr           ItsAEyeBall                                                     ; 17
+                   bra           doneObj
 
 JUMPTOUGHMARINE:
-                   jsr           ItsAToughMarine
-                   bra           doneobj
+                   jsr           ItsAToughMarine                                                 ; 18
+                   bra           doneObj
 
 JUMPFLAMEMARINE:
-                   jsr           ItsAFlameMarine
-                   bra           doneobj
+                   jsr           ItsAFlameMarine                                                 ; 19
+                   bra           doneObj
 
 JUMPGASPIPE:
-                   jsr           ItsAGasPipe
-                   bra           doneobj
+                   jsr           ItsAGasPipe                                                     ; 20
+                   bra           doneObj
 
-*********************************************************
+*********************************************************************************************
+*********************************************************************************************
 
 ItsAGasPipe:
-                   clr.b         worry(a0)
+                   clr.b         objWorry(a0)
  
                    move.w        TempFrames,d0
                    tst.w         ThirdTimer(a0)
@@ -1219,26 +1261,23 @@ notdoneflame:
 
 .nowhoosh:
 
-*********************************************************
-; Gas pipe: facing direction is given by
-; leved (perpendicular to wall) so
-; just continuously spray out flame!
-*********************************************************
+; Gas pipe: facing direction is given by leved (perpendicular to wall) so just continuously spray out flame!
 
                    move.l        NastyShotData,a5
                    move.w        #19,d1
 
 .findonefree
-                   move.w        12(a5),d0
+                   move.w        objZone(a5),d0
                    blt.s         .foundonefree
-                   adda.w        #64,a5
+
+                   adda.w        #ObjectSize,a5
                    dbra          d1,.findonefree
 
                    rts
 
 .foundonefree:
-                   move.b        #2,16(a5)
-                   move.w        12(a0),12(a5)
+                   move.b        #2,objNumber(a5)
+                   move.w        objZone(a0),objZone(a5)
                    move.w        4(a0),d0
                    sub.w         #80,d0
                    move.w        d0,4(a5)
@@ -1272,19 +1311,20 @@ notdoneflame:
                    swap          d2
                    move.w        d1,shotxvel(a5)
                    move.w        d2,shotzvel(a5)
-                   st            worry(a5)
+                   st            objWorry(a5)
  
                    rts
 
 *********************************************************************************************
+; ItsAMarine
 
                     ; include "AI.s"
 
 *********************************************************************************************
 
 ItsABarrel:
-                   clr.b         worry(a0)
-                   move.w        12(a0),GraphicRoom(a0)
+                   clr.b         objWorry(a0)
+                   move.w        objZone(a0),GraphicRoom(a0)
 
                    cmp.w         #8,8(a0)
                    bne.s         notexploding
@@ -1296,7 +1336,7 @@ ItsABarrel:
                    cmp.w         #8,d0
                    bne.s         .notdone
  
-                   move.w        #-1,12(a0)
+                   move.w        #-1,objZone(a0)
                    move.w        #-1,GraphicRoom(a0)
                    rts
  
@@ -1305,12 +1345,12 @@ ItsABarrel:
                    rts
 
 notexploding:
-                   move.w        12(a0),d0
+                   move.w        objZone(a0),d0
                    move.l        ZoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
-                   tst.b         ObjInTop(a0)
+                   tst.b         objInTop(a0)
                    beq.s         .okinbot
                    move.l        ToUpperFloor(a1),d0
 
@@ -1355,11 +1395,11 @@ nodamage:
                    move.l        ObjectPoints,a1
                    move.w        (a1,d0.w*8),Viewerx
                    move.w        4(a1,d0.w*8),Viewerz
-                   move.b        ObjInTop(a0),ViewerTop
+                   move.b        objInTop(a0),ViewerTop
                    move.b        PLR1_StoodInTop,TargetTop
                    move.l        PLR1_Roompt,ToRoom
  
-                   move.w        12(a0),d0
+                   move.w        objZone(a0),d0
                    move.l        ZoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
@@ -1413,16 +1453,17 @@ HealFactor EQU 18
 
 ItsAMediKit:
 
-                   clr.b         worry(a0)
-                   move.w        12(a0),GraphicRoom(a0)
+                   clr.b         objWorry(a0)
+                   move.w        objZone(a0),GraphicRoom(a0)
 
-                   move.w        12(a0),d0
+                   move.w        objZone(a0),d0
                    move.l        ZoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
-                   tst.b         ObjInTop(a0)
+                   tst.b         objInTop(a0)
                    beq.s         .okinbot
+
                    move.l        ToUpperFloor(a1),d0
 
 .okinbot:
@@ -1434,7 +1475,7 @@ ItsAMediKit:
                    bge           .NotSameZone
 
                    move.b        PLR1_StoodInTop,d0
-                   move.b        ObjInTop(a0),d1
+                   move.b        objInTop(a0),d1
                    eor.b         d1,d0
                    bne           .NotSameZone
  
@@ -1442,8 +1483,9 @@ ItsAMediKit:
                    move.w        PLR1_zoff,oldz
                    move.w        PLR1_Zone,d7
  
-                   cmp.w         12(a0),d7
+                   cmp.w         objZone(a0),d7
                    bne           .NotSameZone
+
                    move.w        (a0),d0
                    move.l        ObjectPoints,a1
                    move.w        (a1,d0.w*8),newx
@@ -1466,7 +1508,7 @@ ItsAMediKit:
                    jsr           MakeSomeNoise
                    movem.l       (a7)+,a0/a1/d2/d6/d7
  
-                   move.w        #-1,12(a0)
+                   move.w        #-1,objZone(a0)
                    move.w        #-1,GraphicRoom(a0)
                    move.w        HealFactor(a0),d0
                    add.w         PLR1_energy,d0
@@ -1484,17 +1526,18 @@ MEDIPLR2:
                    bge           .NotSameZone
 
                    move.b        PLR2_StoodInTop,d0
-                   move.b        ObjInTop(a0),d1
+                   move.b        objInTop(a0),d1
                    eor.b         d1,d0
                    bne           .NotSameZone
  
                    move.w        PLR2_xoff,oldx
                    move.w        PLR2_zoff,oldz
                    move.w        PLR2_Zone,d7
-                   move.w        12(a0),d0
+                   move.w        objZone(a0),d0
  
-                   cmp.w         12(a0),d7
+                   cmp.w         objZone(a0),d7
                    bne           .NotSameZone
+
                    move.w        (a0),d0
                    move.l        ObjectPoints,a1
                    move.w        (a1,d0.w*8),newx
@@ -1517,7 +1560,7 @@ MEDIPLR2:
                    jsr           MakeSomeNoise
                    movem.l       (a7)+,a0/a1/d2/d6/d7
  
-                   move.w        #-1,12(a0)
+                   move.w        #-1,objZone(a0)
                    move.w        #-1,GraphicRoom(a0)
                    move.w        HealFactor(a0),d0
                    add.w         PLR2_energy,d0
@@ -1541,25 +1584,25 @@ AMGR:              dc.w          3,4,5,0,29,0,0,28
 AmmoType   EQU 18
 
 ItsAnAmmoClip:
-                   clr.b         worry(a0)
-                   move.w        12(a0),GraphicRoom(a0)
+                   clr.b         objWorry(a0)
+                   move.w        objZone(a0),GraphicRoom(a0)
 
                    move.w        AmmoType(a0),d0
                    move.w        AMGR(pc,d0.w*2),10(a0)
 
                    move.b        PLR1_StoodInTop,d0
-                   move.b        ObjInTop(a0),d1
+                   move.b        objInTop(a0),d1
                    eor.b         d1,d0
                    bne           .NotSameZone
                    move.w        PLR1_xoff,oldx
                    move.w        PLR1_zoff,oldz
                    move.w        PLR1_Zone,d7
-                   move.w        12(a0),d0
+                   move.w        objZone(a0),d0
                    move.l        ZoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
-                   tst.b         ObjInTop(a0)
+                   tst.b         objInTop(a0)
                    beq.s         .okinbot
                    move.l        ToUpperFloor(a1),d0
 
@@ -1568,8 +1611,9 @@ ItsAnAmmoClip:
                    sub.w         #32,d0
                    move.w        d0,4(a0)
  
-                   cmp.w         12(a0),d7
+                   cmp.w         objZone(a0),d7
                    bne           .NotSameZone
+
                    move.w        (a0),d0
                    move.l        ObjectPoints,a1
                    move.w        (a1,d0.w*8),newx
@@ -1598,7 +1642,7 @@ ItsAnAmmoClip:
                    jsr           MakeSomeNoise
                    movem.l       (a7)+,a0/a1/d2/d6/d7
  
-                   move.w        #-1,12(a0)
+                   move.w        #-1,objZone(a0)
                    move.w        #-1,GraphicRoom(a0)
                    move.w        AmmoType(a0),d0
                    lea           PLR1_GunData,a6
@@ -1615,18 +1659,18 @@ ItsAnAmmoClip:
 .NotSameZone:
 AMMOPLR2:
                    move.b        PLR2_StoodInTop,d0
-                   move.b        ObjInTop(a0),d1
+                   move.b        objInTop(a0),d1
                    eor.b         d1,d0
                    bne           .NotSameZone
                    move.w        PLR2_xoff,oldx
                    move.w        PLR2_zoff,oldz
                    move.w        PLR2_Zone,d7
-                   move.w        12(a0),d0
+                   move.w        objZone(a0),d0
                    move.l        ZoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
-                   tst.b         ObjInTop(a0)
+                   tst.b         objInTop(a0)
                    beq.s         .okinbot
                    move.l        ToUpperFloor(a1),d0
 
@@ -1635,8 +1679,9 @@ AMMOPLR2:
                    sub.w         #16,d0
                    move.w        d0,4(a0)
  
-                   cmp.w         12(a0),d7
+                   cmp.w         objZone(a0),d7
                    bne           .NotSameZone
+
                    move.w        (a0),d0
                    move.l        ObjectPoints,a1
                    move.w        (a1,d0.w*8),newx
@@ -1666,7 +1711,7 @@ AMMOPLR2:
                    jsr           MakeSomeNoise
                    movem.l       (a7)+,a0/a1/d2/d6/d7
  
-                   move.w        #-1,12(a0)
+                   move.w        #-1,objZone(a0)
                    move.w        #-1,GraphicRoom(a0)
                    move.w        AmmoType(a0),d0
                    lea           PLR2_GunData,a6
@@ -1686,23 +1731,23 @@ AMMOPLR2:
 *********************************************************************************************
 
 ItsABigGun:
-                   move.w        12(a0),GraphicRoom(a0)
+                   move.w        objZone(a0),GraphicRoom(a0)
 
-                   clr.b         worry(a0)
+                   clr.b         objWorry(a0)
 
                    move.b        PLR1_StoodInTop,d0
-                   move.b        ObjInTop(a0),d1
+                   move.b        objInTop(a0),d1
                    eor.b         d1,d0
                    bne           .NotSameZone
                    move.w        PLR1_xoff,oldx
                    move.w        PLR1_zoff,oldz
                    move.w        PLR1_Zone,d7
-                   move.w        12(a0),d0
+                   move.w        objZone(a0),d0
                    move.l        ZoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
-                   tst.b         ObjInTop(a0)
+                   tst.b         objInTop(a0)
                    beq.s         .okinbot
                    move.l        ToUpperFloor(a1),d0
 
@@ -1714,8 +1759,9 @@ ItsABigGun:
                    sub.w         d1,d0
  
                    move.w        d0,4(a0)
-                   cmp.w         12(a0),d7
+                   cmp.w         objZone(a0),d7
                    bne           .NotSameZone
+
                    move.w        (a0),d0
                    move.l        ObjectPoints,a1
                    move.w        (a1,d0.w*8),newx
@@ -1751,7 +1797,6 @@ ItsABigGun:
                    move.w        (a2,d1.w*2),d1
                    add.w         d1,(a1,d0.w*8)
 
- 
                    move.w        #-1,12(a0)
                    move.w        #-1,GraphicRoom(a0)
 
@@ -1762,7 +1807,7 @@ ItsABigGun:
 
 GUNPLR2:
                    move.b        PLR2_StoodInTop,d0
-                   move.b        ObjInTop(a0),d1
+                   move.b        objInTop(a0),d1
                    eor.b         d1,d0
                    bne           .NotSameZone
                    move.w        PLR2_xoff,oldx
@@ -1773,7 +1818,7 @@ GUNPLR2:
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
-                   tst.b         ObjInTop(a0)
+                   tst.b         objInTop(a0)
                    beq.s         .okinbot
                    move.l        ToUpperFloor(a1),d0
 
@@ -1854,12 +1899,12 @@ ItsAKey:
 
 .yesnas:
                    move.w        12(a0),GraphicRoom(a0)
-                   clr.b         worry(a0)
+                   clr.b         objWorry(a0)
 
 *********************************************************
 
                    move.b        PLR1_StoodInTop,d0
-                   move.b        ObjInTop(a0),d1
+                   move.b        objInTop(a0),d1
                    eor.b         d1,d0
                    bne           .NotSameZone
 
@@ -2715,7 +2760,7 @@ timeout:           dc.w          0
 ItsABullet:
 
                    move.b        #0,timeout
-                   move.w        12(a0),d0
+                   move.w        objZone(a0),d0
                    move.w        d0,GraphicRoom(a0)
                    blt           doneshot
  
@@ -2815,7 +2860,7 @@ notdoneanim:
  
                    move.l        objroom,a3
  
-                   tst.b         ObjInTop(a0)
+                   tst.b         objInTop(a0)
                    beq.s         .notintop
                    adda.w        #8,a3
 
@@ -2877,7 +2922,7 @@ notdoneanim:
                    move.w        newz,Viewerz
  
                    move.w        4(a0),Viewery
-                   move.b        ObjInTop(a0),ViewerTop
+                   move.b        objInTop(a0),ViewerTop
  
                    bsr           ComputeBlast
  
@@ -2948,7 +2993,7 @@ notdoneanim:
                    move.w        4(a0),Viewery
                    move.w        newx,Viewerx
                    move.w        newz,Viewerz
-                   move.b        ObjInTop(a0),ViewerTop
+                   move.b        objInTop(a0),ViewerTop
                    bsr           ComputeBlast
  
 .noexplosion2:
@@ -3015,7 +3060,7 @@ nograv:
                    seq           exitfirst
 
                    clr.b         hitwall
-                   move.b        ObjInTop(a0),StoodInTop
+                   move.b        objInTop(a0),StoodInTop
                    move.w        #%0000010000000000,wallflags
                    move.l        #0,StepUpVal
                    move.l        #$1000000,StepDownVal
@@ -3034,7 +3079,7 @@ lalal:
                    movem.l       (a7)+,d0/d7/a0/a1/a2/a4/a5
 
 nomovebul:
-                   move.b        StoodInTop,ObjInTop(a0)
+                   move.b        StoodInTop,objInTop(a0)
   
                    tst.b         wallbounce
                    beq.s         .notabouncything
@@ -3120,7 +3165,7 @@ nomovebul:
                    move.w        newx,Viewerx
                    move.w        newz,Viewerz
                    move.w        4(a0),Viewery
-                   move.b        ObjInTop(a0),ViewerTop
+                   move.b        objInTop(a0),ViewerTop
                    bsr           ComputeBlast
  
 .noexplosion:
@@ -3135,7 +3180,7 @@ nomovebul:
 
 lab:
                    move.l        objroom,a3
-                   move.w        (a3),12(a0)
+                   move.w        (a3),objZone(a0)
                    move.w        (a3),GraphicRoom(a0)
                    move.l        newx,(a1)
                    move.l        newz,4(a1)
@@ -3215,13 +3260,16 @@ notasplut:
 .checkloop:
                    tst.w         (a3)
                    blt           .checkedall
-                   tst.w         12(a3)
+
+                   tst.w         objZone(a3)
                    blt           .notanasty
+
                    moveq         #0,d1
-                   move.b        16(a3),d1
+                   move.b        objNumber(a3),d1
                    move.l        EnemyFlags(a0),d7
                    btst          d1,d7
                    beq           .notanasty
+
                    tst.b         numlives(a3)
                    beq           .notanasty
  
@@ -3463,7 +3511,7 @@ HitObjLoop:
                    move.w        (a3,d0.w*8),Targetx
                    move.w        4(a3,d0.w*8),Targetz
                    move.w        4(a2),Targety
-                   move.b        ObjInTop(a2),TargetTop
+                   move.b        objInTop(a2),TargetTop
                    jsr           CanItBeSeen
                    tst.b         CanSee
                    beq           HitObjLoop
@@ -3479,10 +3527,12 @@ HitObjLoop:
                    add.l         d3,d2 
                    beq           .oksqr
                    move.w        #31,d4
-.findhigh
+
+.findhigh:
                    btst          d4,d2
                    dbne          d4,.findhigh
-.foundhigh
+
+.foundhigh:
                    asr.w         #1,d4
                    clr.l         d3
                    bset          d4,d3
@@ -3496,8 +3546,8 @@ HitObjLoop:
                    sub.w         d3,d4                                                           ; second approx
                    bgt           .stillnot0
                    move.w        #1,d4
-.stillnot0
 
+.stillnot0:
                    move.w        d4,d3
                    muls          d1,d3
                    sub.l         d2,d3
@@ -3506,8 +3556,8 @@ HitObjLoop:
                    sub.w         d3,d4                                                           ; second approx
                    bgt           .stillnot02
                    move.w        #1,d4
-.stillnot02
 
+.stillnot02:
                    move.w        d4,d3
                    muls          d3,d3
                    sub.l         d2,d3
@@ -3516,19 +3566,17 @@ HitObjLoop:
                    sub.w         d3,d4                                                           ; second approx
                    bgt           .stillnot03
                    move.w        #1,d4
-.stillnot03
  
-.oksqr
- 
- 
+.stillnot03:
+                   .oksqr:
                    move.w        d4,d3
                    asr.w         #3,d3
  
                    sub.w         #4,d3
                    bge.s         OkItsnotzero
                    moveq         #0,d3
-OkItsnotzero:
 
+OkItsnotzero:
                    cmp.w         #31,d3
                    bgt           HitObjLoop
                    neg.w         d3
@@ -3540,6 +3588,7 @@ OkItsnotzero:
                    cmp.w         MaxDamage,d5
                    blt.s         okdamage
                    move.w        MaxDamage,d5
+
 okdamage:
                    add.b         d5,damagetaken(a2)
                    ext.l         d0
@@ -3608,7 +3657,7 @@ DOFLAMES:
                    move.w        middlez,d2
                    move.w        d1,oldx
                    move.w        d2,oldz
-                   move.b        ObjInTop(a0),StoodInTop
+                   move.b        objInTop(a0),StoodInTop
  
                    jsr           GetRand
                    ext.w         d0
@@ -3616,6 +3665,7 @@ DOFLAMES:
                    asr.w         #1,d0
                    bne.s         .xnz
                    moveq         #2,d0
+
 .xnz:
                    add.w         d0,d1
                    jsr           GetRand
@@ -3624,6 +3674,7 @@ DOFLAMES:
                    asr.w         #1,d0
                    bne.s         .znz
                    moveq         #2,d0
+
 .znz: 
                    add.w         d0,d2
                    move.l        oldy,d3
@@ -3651,22 +3702,22 @@ DOFLAMES:
 
                    move.l        ToZoneFloor(a2),d1
                    move.l        ToZoneRoof(a2),d2
-                   tst.b         ObjInTop(a0)
+                   tst.b         objInTop(a0)
                    beq.s         .okinbot
                    move.l        ToUpperFloor(a2),d1
                    move.l        ToUpperRoof(a2),d2
-.okinbot:
 
+.okinbot:
                    cmp.l         d0,d1
                    bgt.s         .abovefloor
                    move.l        d1,d0
-.abovefloor: 
 
+.abovefloor: 
                    cmp.l         d0,d2
                    blt.s         .belowroof
                    move.l        d2,d0
-.belowroof:
  
+.belowroof:
                    move.l        d0,accypos(a3)
                    asr.l         #7,d0
                    move.w        d0,4(a3)
@@ -3674,9 +3725,9 @@ DOFLAMES:
                    move.b        #5,shotanim(a3)
                    sub.b         d5,shotanim(a3)
                    st            shotstatus(a3)
-                   move.b        StoodInTop,ObjInTop(a3)
+                   move.b        StoodInTop,objInTop(a3)
                    move.b        #2,shotsize(a3)
-                   st            worry(a3)
+                   st            objWorry(a3)
                    move.w        (a3),d0
                    move.l        ObjectPoints,a2
                    move.w        newx,(a2,d0.w*8)

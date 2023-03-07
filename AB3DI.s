@@ -19,7 +19,7 @@
 *
 *********************************************************************************************
 
-VERSION             EQU "1.02"                                                                                    ; 4 chars
+VERSION             EQU "1.10"                                                                                    ; 4 chars
 LABEL               EQU "EXTE"                                                                                    ; 4 chars
 
 *********************************************************************************************
@@ -29,9 +29,8 @@ LABEL               EQU "EXTE"                                                  
 *********************************************************************************************
 
                           incdir             "includes"
-                          include            "hardware/intbits.i"
                           include            "exec/memory.i"
-                          
+                          include            "hardware/intbits.i"
                           include            "AB3DI.i"
                           include            "macros.i"
                           include            "defs.i"
@@ -53,7 +52,6 @@ ENABLEGLASSBALL     EQU 0
 ENABLEPATH          EQU 0
 ENABLESEEWALL       EQU 0
 ENABLEADVSERIAL     EQU 0                                                                                         ; Note: Not tested!
-ENABLECOOP          EQU 0                                                                                         ; Note: Only the master (plr1) can pickup a key (etc) in the coop mode 
 ENABLEENDSCROLLTEST EQU 0
 
 *********************************************************************************************
@@ -123,14 +121,14 @@ SetupGame:
 
 *******************************************************************
 
-                          moveq              #MEMF_CHIP,d1	
-                          move.l             #10240*4,d0                                                          ; *2 => EndScroll *4
+                          move.l             #MEMF_CHIP|MEMF_CLEAR,d1	
+                          move.l             #TextScrSize,d0                                                          ; *2 => EndScroll *4
                           move.l             4.w,a6
                           jsr                _LVOAllocMem(a6)
                           move.l             d0,TEXTSCRN
 
-                          moveq              #MEMF_FAST,d1	
-                          move.l             #120000,d0
+                          move.l             #MEMF_FAST|MEMF_CLEAR,d1	
+                          move.l             #LevelDataSize,d0
                           move.l             4.w,a6
                           jsr                _LVOAllocMem(a6)
                           move.l             d0,LEVELDATA
@@ -262,12 +260,6 @@ TearDownGame:
 
 *********************************************************************************************
 *********************************************************************************************
-; Very simple debug log function
-
-;                          include            "debug/WriteLog.s"
-
-*********************************************************************************************
-*********************************************************************************************
 
 DrawLevelText:
 
@@ -342,6 +334,7 @@ DRAWLINEOFTEXT:
 ; a1 = screen pointer
 ; a0 = text
 ; d0 = text line
+
                           movem.l            d0/a0/d7,-(a7)
 
                           muls               #80*16,d0
@@ -483,14 +476,14 @@ fdup:
 ********************************************************************
 ; Get level memory
  
-                          moveq              #MEMF_FAST,d1
-                          move.l             #50000,d0
+                          move.l             #MEMF_FAST|MEMF_CLEAR,d1
+                          move.l             #LevelGraphicsSize,d0
                           move.l             4.w,a6
                           jsr                _LVOAllocMem(a6)
                           move.l             d0,LEVELGRAPHICS
 
-                          moveq              #MEMF_FAST,d1
-                          move.l             #40000,d0
+                          move.l             #MEMF_FAST|MEMF_CLEAR,d1
+                          move.l             #LevelClipsSize,d0
                           move.l             4.w,a6
                           jsr                _LVOAllocMem(a6)
                           move.l             d0,LEVELCLIPS
@@ -512,7 +505,7 @@ fdup:
                           move.l             doslib,a6
                           move.l             d0,d1
                           move.l             LEVELCLIPS,d2
-                          move.l             #40000,d3
+                          move.l             #LevelClipsSize,d3
                           jsr                _LVORead(a6)
 
                           move.l             doslib,a6
@@ -539,7 +532,7 @@ fdup:
                           move.l             doslib,a6
                           move.l             d0,d1
                           move.l             LEVELCLIPS,d2
-                          move.l             #40000,d3
+                          move.l             #LevelClipsSize,d3
                           jsr                _LVORead(a6)
 
                           move.l             doslib,a6
@@ -718,6 +711,8 @@ blag:
                           adda.w             #16,a0
                           move.l             a0,ZoneAdds
 
+****************************************************************
+
                           move.l             LEVELDATA,a1
 
                           move.l             16+6(a1),a2
@@ -750,7 +745,7 @@ blag:
 
                           move.l             32+6(a1),a2
                           add.l              a1,a2
-                          move.l             a2,NastyShotData
+                          move.l             a2,NastyShotData                                                     ; Max 20 shots
  
                           lea                64*20(a2),a2
                           move.l             a2,OtherNastyData
@@ -771,6 +766,8 @@ blag:
 
                           ; bra noclips
   
+****************************************************************
+
                           move.l             LEVELCLIPS,a2
                           moveq              #0,d0
                           move.w             10+6(a1),d7                                                          ; numzones
@@ -783,6 +780,7 @@ assignclips:
 dowholezone:
                           tst.w              (a3)
                           blt.s              nomorethiszone
+
                           tst.w              2(a3)
                           blt.s              thisonenull
 
@@ -793,6 +791,7 @@ dowholezone:
 findnextclip:
                           cmp.w              #-2,(a2,d0.l)
                           beq.s              foundnextclip
+
                           addq.l             #2,d0
                           bra.s              findnextclip
 
@@ -811,8 +810,7 @@ nomorethiszone:
  
 noclips:
 
-*********************************************************************
-; Put in addresses of glowything
+****************************************************************
  
                           cmp.b              #'k',Prefsfile
                           bne.s              nkb
@@ -860,9 +858,10 @@ njc:
 
 nfp:
 
-*********************************************************************
+****************************************************************
 
                           clr.b              PLR1_StoodInTop
+
                           move.l             #playerheight,PLR1s_height
  
                           move.l             #empty,pos1LEFT
@@ -874,6 +873,8 @@ nfp:
                           move.l             #emptyend,Samp0endRIGHT
                           move.l             #emptyend,Samp1endRIGHT
  
+ ****************************************************************
+
                           move.l             #nullspr,d0
                           move.w             d0,s4l
                           move.w             d0,s5l
@@ -885,11 +886,15 @@ nfp:
                           move.w             d0,s6h
                           move.w             d0,s7h 
  
+ ****************************************************************
+
                           move.l             #nullline,d0
                           move.w             d0,n1l
                           swap               d0
                           move.w             d0,n1h
  
+ ****************************************************************
+
                           move.l             Panel,d0
                           move.w             d0,p1l
                           swap               d0
@@ -930,7 +935,7 @@ nfp:
                           swap               d0
                           move.w             d0,p8h
  
-*********************************************************************************************
+****************************************************************
 ; TIMER SCREEN SETUP
 
                           IFNE               ENABLETIMER
@@ -947,7 +952,7 @@ nfp:
                           move.w             #$9201,Panelcon
                           ENDC 
 
-*********************************************************************************************
+****************************************************************
 
                           move.l             #borders,d0
                           move.w             d0,s0l
@@ -975,7 +980,7 @@ nfp:
                           move.w             #52*256+192,borders+2592*3
                           move.w             #212*256+128,borders+8+2592*3
  
- *********************************************************************************************
+ ****************************************************************
 ; Faces
 
                           IFNE               ENABLEFACES
@@ -1003,19 +1008,22 @@ nfp:
                           move.w             d0,f5h
                           ENDC
 
- *********************************************************************************************
+ ****************************************************************
 
                           move.l             #bigfield,d0
                           move.w             d0,ocl
                           swap               d0
                           move.w             d0,och
                           
-                          bset.b             #1,$bfe001                                                           ; LED / Filter
+****************************************************************
 
                           lea                $dff000,a6
 
+                          bset.b             #1,$bfe001                                                           ; LED / Filter
                           move.w             #$00ff,adkcon(a6)
                           ;move.l             #Blurbfield,cop1lch(a6)
+
+****************************************************************
 
                           move.l             #scrn,d0
                           move.w             d0,pl1l
@@ -1052,13 +1060,14 @@ nfp:
                           swap               d0
                           move.w             d0,pl7h
 
-*********************************************************************************************
+****************************************************************
 
-                          jsr                INITPLAYER
+                          jsr                InitPlayer
 
                           ; bsr                initobjpos
 
-*********************************************************************************************
+****************************************************************
+ ; Audio
  
                           lea                $dff000,a6
  
@@ -1082,7 +1091,7 @@ nfp:
                           move.w             #443,$dff0d6
                           move.w             #63,$dff0d8
 
-*********************************************************************************************
+****************************************************************
 
                           move.l             #tab,a1
                           move.w             #64,d7
@@ -1103,7 +1112,7 @@ scaledownlop:
                           addq               #1,d6
                           dbra               d7,outerlop
  
-*********************************************************************************************
+****************************************************************
 
                           lea                $dff000,a6
 
@@ -1119,14 +1128,15 @@ scaledownlop:
                           move.w             #%111111111111,Conditions              
                           ENDC
 
-                          IFEQ               ENABLECOOP
                           cmp.b              #'n',mors
                           beq.s              .nokeys
+
+                          cmp.w              #1,MPMode
+                          beq.b              .nokeys
 
                           move.w             #%111111111111,Conditions                                            ; Multi player game
 
 .nokeys:
-                          ENDC
 
 ****************************************************************
 
@@ -1165,6 +1175,7 @@ scaledownlop:
                           move.l             #playerheight,PLR2s_targheight
                           move.l             #playerheight,PLR2s_height
 
+*****************************************
                           ; cmp.b #'n',mors
                           ; beq.s nohandshake
                           ;
@@ -1174,14 +1185,13 @@ scaledownlop:
                           ; btst.b #4,$bfd000
                           ; bne.s waitloop
                           ; move.b #%11000000,$bfd200
-                          
+;                          
                           ;wtmouse:
                           ; btst #6,$bfe001 ; LMB port 1
                           ; bne.s wtmouse
-                          
+;                          
                           ;nohandshake:
-                          
-                          ; jmp end
+*****************************************
  
                           move.l             COPSCRN1,drawpt
                           move.l             COPSCRN2,olddrawpt
@@ -1199,7 +1209,7 @@ scaledownlop:
                           move.w             #0,hitcol
                           move.w             #0,hitcol2
 
-***************************************************************
+****************************************************************
 ; Single- / Multiplayer
 
                           clr.b              MASTERQUITTING
@@ -1216,7 +1226,7 @@ skipPlrEnergy:
                           cmp.b              #'n',mors
                           bne.s              NOCLTXT
 
-***************************************************************
+****************************************************************
 ; Wait single player
  
                           move.b             #0,lastpressed
@@ -1233,7 +1243,7 @@ skipPlrEnergy:
 
 CLOSETXT:
 
-*********************************************************************************************
+****************************************************************
 ; Fade text
 
                           lea                $dff000,a6
@@ -1250,7 +1260,7 @@ fdup1:
 
                           move.w             #0,TXTCOLL
 
-*********************************************************************************************
+****************************************************************
 
 NOCLTXT:
                           lea                $dff000,a6
@@ -1261,14 +1271,14 @@ NOCLTXT:
                           clr.b              p1_ducked
                           clr.b              p2_ducked
 
-****************************************************************************
+****************************************************************
 ; Test end scroll text
                           
                           IFNE               ENABLEENDSCROLLTEST
                           jmp                testEndScroll
                           ENDC
 
-****************************************************************************
+****************************************************************
 
                           st                 doAnything
 
@@ -1539,6 +1549,7 @@ okwat:
                           move.l             a4,CHEATPTR
 
 ****************************************************************
+; Single player 
 
                           move.w             PLR1_energy,Energy
                           move.l             PLR1s_xoff,p1_xoff
@@ -1565,8 +1576,8 @@ okwat:
                           move.l             #$60000,p2_yoff
                           move.l             PLR2_Obj,a0
                           move.w             #-1,GraphicRoom(a0)
-                          move.w             #-1,12(a0)
-                          move.b             #0,17(a0)
+                          move.w             #-1,objZone(a0)
+                          move.b             #0,objCanSee(a0)
                           move.l             #BollocksRoom,PLR2_Roompt
  
                           bra                doneTalking
@@ -1622,9 +1633,6 @@ handleMaster:
  
                           bra                doneTalking
 
-; End of Multi player - master
-****************************************************************
-
 ****************************************************************
 ; Multi player - slave
 
@@ -1666,8 +1674,6 @@ handleSlave:
                           move.w             p2_xoff,THISPLRxoff
                           move.w             p2_zoff,THISPLRzoff
 
-
-; End of Multi player - slave
 ****************************************************************
 
 doneTalking:
@@ -1820,6 +1826,7 @@ whythehell:
 nosee:
                           move.l             PLR1_Obj,a0
                           move.b             #5,16(a0)
+
                           move.l             PLR2_Obj,a0
                           move.b             #11,16(a0)
 
@@ -1915,7 +1922,7 @@ noze:
                           move.l             PLR1_Roompt,Roompt
 
                           bsr                OrderZones
-                          jsr                objmoveanim
+                          jsr                ObjMoveAnim
 
                           bsr                EnergyBar
                           bsr                AmmoBar
@@ -2060,13 +2067,15 @@ drawSlavePlr2:
                           move.l             PLR2_Roompt,Roompt
 
                           bsr                OrderZones
-                          jsr                objmoveanim
+                          jsr                ObjMoveAnim
+
                           bsr                EnergyBar
                           bsr                AmmoBar
 
                           move.w             #0,leftclip
                           move.w             #96,rightclip
                           move.w             #0,deftopclip
+
                           move.w             #79,defbotclip
                           move.w             #0,topclip
                           move.w             #79,botclip
@@ -2122,8 +2131,7 @@ noFastBufferCpy:
 
 **************************************************************************** 
 
-                          move.l             PLR2_Roompt,a0
-                          move.l             #WorkSpace,a1
+                          lea                WorkSpace,a1
                           clr.l              (a1)
                           clr.l              4(a1)
                           clr.l              8(a1)
@@ -2133,48 +2141,58 @@ noFastBufferCpy:
                           clr.l              24(a1)
                           clr.l              28(a1)
  
+ ****************************************************************************
+
                           cmp.b              #'n',mors
-                          beq.s              plr1only
+                          beq.s              plr1Only
  
+****************************************************************************
+
+                          move.l             PLR2_Roompt,a0
                           lea                ToListOfGraph(a0),a0
 
-.doallrooms:
+.doAllRoomsPlr2:
                           move.w             (a0),d0
-                          blt.s              .allroomsdone
+                          blt.s              .allRoomsDonePlr2
+
                           addq               #8,a0
                           move.w             d0,d1
                           asr.w              #3,d0
                           bset               d1,(a1,d0.w)
-                          bra.b              .doallrooms
+                          bra.b              .doAllRoomsPlr2
 
-.allroomsdone:
-plr1only:
+.allRoomsDonePlr2:
+
+****************************************************************************
+
+plr1Only:
                           move.l             PLR1_Roompt,a0
                           lea                ToListOfGraph(a0),a0
 
-.doallrooms2:
+.doAllRoomsPlr1:
                           move.w             (a0),d0
-                          blt.s              .allroomsdone2
+                          blt.s              .allRoomsDonePlr1
+
                           addq               #8,a0
                           move.w             d0,d1
                           asr.w              #3,d0
                           bset               d1,(a1,d0.w)
-                          bra.b              .doallrooms2
+                          bra.b              .doAllRoomsPlr1
 
-.allroomsdone2:
+.allRoomsDonePlr1:
 
 ****************************************************************************
 ; Through all objects to set worry flag
 
                           move.l             ObjectData,a0
-                          lea                -64(a0),a0
+                          lea                -(ObjectSize)(a0),a0
 
 .doallobs:
-                          lea                64(a0),a0
+                          lea                ObjectSize(a0),a0
                           move.w             (a0),d0
                           blt.s              .allobsdone
 
-                          move.w             12(a0),d0
+                          move.w             objZone(a0),d0
                           blt.s              .doallobs
 
                           move.w             d0,d1
@@ -2182,13 +2200,12 @@ plr1only:
                           btst               d1,(a1,d0.w)                                                         ; a1 = WorkSpace
                           beq.s              .doallobs
 
-                          or.b               #127,worry(a0)
+                          or.b               #127,objWorry(a0)
                           bra.s              .doallobs
 
 .allobsdone:
 
 ****************************************************************************
-
                           ; move.l #oldbrightentab,a0
                           ; move.l frompt,a3                    ; Copper chunky
                           ; adda.w #(4*33)+(widthOffset*20),a3
@@ -2204,11 +2221,11 @@ plr1only:
                           ; dbra d5,vertl
                           ; adda.w #widthOffset,a3
                           ; dbra d7,horl
+                          ;lea                $dff000,a6
+                          ; move.w #$300,col0(a6)
+*******************************************************************
 
                           lea                $dff000,a6
-                          ; move.w #$300,col0(a6)
-
-*******************************************************************
 
                           move.l             #KeyMap,a5                                                           
                           tst.b              $45(a5)                                                              ; (esc) Quit key
@@ -2249,11 +2266,13 @@ noend:
 
 *******************************************************************
 
-                          IFEQ               ENABLECOOP
+                          cmp.w              #1,MPMode
+                          beq.b              .addExit
+
                           cmp.b              #'n',mors
                           bne.s              .noExit
-                          ENDC
 
+.addExit:
                           move.l             PLR1_Roompt,a0
                           move.w             (a0),d0
                           move.w             PLOPT,d1
@@ -2765,7 +2784,7 @@ USEPLR1:
                           move.b             #0,damagetaken(a0)
                           move.b             PLR1_energy+1,numlives(a0)
 
-                          move.b             PLR1_StoodInTop,ObjInTop(a0)
+                          move.b             PLR1_StoodInTop,objInTop(a0)
  
                           move.w             (a1),12(a0)
                           move.w             (a1),d2
@@ -2820,7 +2839,7 @@ USEPLR1:
                           move.b             #0,damagetaken(a0)
                           move.b             PLR2_energy+1,numlives(a0)
 
-                          move.b             PLR2_StoodInTop,ObjInTop(a0)
+                          move.b             PLR2_StoodInTop,objInTop(a0)
  
                           move.w             (a1),12(a0)
                           move.w             (a1),d2
@@ -2989,7 +3008,7 @@ USEPLR2:
                           move.b             #0,damagetaken(a0)
                           move.b             PLR2_energy+1,numlives(a0)
 
-                          move.b             PLR2_StoodInTop,ObjInTop(a0)
+                          move.b             PLR2_StoodInTop,objInTop(a0)
  
                           move.w             (a1),12(a0)
                           move.w             (a1),d2
@@ -3046,7 +3065,7 @@ USEPLR2:
 .notbeenshot2:
                           move.b             #0,damagetaken(a0)
                           move.b             PLR1_energy+1,numlives(a0)
-                          move.b             PLR1_StoodInTop,ObjInTop(a0)
+                          move.b             PLR1_StoodInTop,objInTop(a0)
  
                           move.w             (a1),12(a0)
                           move.w             (a1),d2
@@ -4544,11 +4563,11 @@ CalcPLR1InLine:
                           move.w             4(a0),d1
                           addq               #8,a0
  
-                          tst.w              12(a4)
+                          tst.w              objZone(a4)
                           blt.b              .noworkout
  
                           moveq              #0,d2
-                          move.b             16(a4),d2
+                          move.b             objNumber(a4),d2
                           lea                ColBoxTable,a6
                           lea                (a6,d2.w*8),a6
  
@@ -4583,21 +4602,20 @@ CalcPLR1InLine:
 
 .notinline:
                           move.b             d3,(a2)+
-
                           move.w             d1,(a3)+
-
-                          lea                64(a4),a4
+                          lea                ObjectSize(a4),a4
                           dbra               d7,.objpointrotlop
-
                           rts
  
 .noworkout:
                           move.b             #0,(a2)+
                           move.w             #0,(a3)+
-                          lea                64(a4),a4
+                          lea                ObjectSize(a4),a4
                           dbra               d7,.objpointrotlop
                           rts
  
+*********************************************************************************************
+
 CalcPLR2InLine:
                           move.w             PLR2_sinval,d5
                           move.w             PLR2_cosval,d6
@@ -4613,11 +4631,11 @@ CalcPLR2InLine:
                           move.w             4(a0),d1
                           addq               #8,a0
  
-                          tst.w              12(a4)
+                          tst.w              objZone(a4)
                           blt.b              .noworkout
  
                           moveq              #0,d2
-                          move.b             16(a4),d2
+                          move.b             objNumber(a4),d2
                           lea                ColBoxTable,a6
                           lea                (a6,d2.w*8),a6
  
@@ -4652,21 +4670,19 @@ CalcPLR2InLine:
 
 .notinline:
                           move.b             d3,(a2)+
-
                           move.w             d1,(a3)+
-
-                          lea                64(a4),a4
+                          lea                ObjectSize(a4),a4
                           dbra               d7,.objpointrotlop
-
                           rts
  
 .noworkout:
                           move.w             #0,(a3)+
                           move.b             #0,(a2)+
-                          lea                64(a4),a4
+                          lea                ObjectSize(a4),a4
                           dbra               d7,.objpointrotlop
                           rts
  
+*********************************************************************************************
 
 RotateObjectPts:
                           move.w             sinval,d5
@@ -4693,7 +4709,6 @@ RotateObjectPts:
                           muls               d5,d3
                           sub.l              d3,d2
  
- 
                           add.l              d2,d2
                           swap               d2
                           move.w             d2,(a1)+
@@ -4712,7 +4727,7 @@ RotateObjectPts:
                           move.l             d2,(a1)+
                           sub.l              xwobble,d2
 
-                          lea                64(a4),a4
+                          lea                ObjectSize(a4),a4
                           dbra               d7,.objpointrotlop
 
                           rts
@@ -4720,7 +4735,7 @@ RotateObjectPts:
 .noworkout:
                           move.l             #0,(a1)+
                           move.l             #0,(a1)+
-                          lea                64(a4),a4
+                          lea                ObjectSize(a4),a4
                           dbra               d7,.objpointrotlop
                           rts
 
@@ -9372,6 +9387,20 @@ xspdval:                  dc.l               0
 zspdval:                  dc.l               0
 Zone:                     dc.w               0
 
+*****************************************************
+
+OLDX1:                    dc.l               0
+OLDX2:                    dc.l               0
+OLDZ1:                    dc.l               0
+OLDZ2:                    dc.l               0
+
+XDIFF1:                   dc.l               0
+ZDIFF1:                   dc.l               0
+XDIFF2:                   dc.l               0
+ZDIFF2:                   dc.l               0
+
+*****************************************************
+
 PLR1:                     dc.b               $ff
                           even
 PLR1_energy:              dc.w               191
@@ -9400,16 +9429,6 @@ PLR1_height:              dc.l               0
 
                           ds.w               4
  
-OLDX1:                    dc.l               0
-OLDX2:                    dc.l               0
-OLDZ1:                    dc.l               0
-OLDZ2:                    dc.l               0
-
-XDIFF1:                   dc.l               0
-ZDIFF1:                   dc.l               0
-XDIFF2:                   dc.l               0
-ZDIFF2:                   dc.l               0
-
 PLR1s_cosval:             dc.w               0
 PLR1s_sinval:             dc.w               0
 PLR1s_angpos:             dc.w               0
@@ -9431,6 +9450,8 @@ PLR1s_oldzoff:            dc.l               0
 PLR1s_height:             dc.l               0
 PLR1s_targheight:         dc.l               0
 
+;                          ds.w               4
+
 p1_xoff:                  dc.l               0
 p1_zoff:                  dc.l               0
 p1_yoff:                  dc.l               0
@@ -9446,6 +9467,10 @@ p1_fire:                  dc.b               0
 p1_holddown:              dc.w               0
 
                           ds.w               4
+
+;p1_nastyState:            dc.l               0                                                                    ; from NastyShotData
+
+*****************************************************
 
 PLR2:                     dc.b               $ff
                           even
@@ -9512,6 +9537,10 @@ p2_fire:                  dc.b               0
                           even
 p2_holddown:              dc.w               0
 
+;                          ds.w               4
+
+;p2_nastyState:            ds.l               0                                                                    ; from NastyShotData
+
 *********************************************************************************************
 ; Glassball
 
@@ -9520,11 +9549,6 @@ endglass:
                           even
                           
 glassballpt:              dc.l               glassball
-
-*********************************************************************************************
-
-rndtab:                   incbin             "data/randfile"
-endrnd:                   even
 
 *********************************************************************************************
 
@@ -9582,11 +9606,6 @@ consttab:                 incbin             "data/constantfile"
 
 *********************************************************************************************
 
-                        ; include "loadmod.s"
-                        ; include "proplayer.s"
-
-*********************************************************************************************
-
 WorkSpace:                ds.l               8192
                           cnop               0,8
 
@@ -9594,7 +9613,7 @@ WorkSpace:                ds.l               8192
 
 darkentab:                incbin             "data/darkenedcols"
                           even
-brightentab:              ;incbin              "data/OldBrightenFile"                     ; agi: from rtg version
+brightentab:              ;incbin              "data/OldBrightenFile"
                           include            "data/OldBrightenFile.s"
                           even
 waterfile:                incbin             "data/waterfile"
@@ -10145,7 +10164,7 @@ RELEASELEVELDATA:
                           beq                SkipLevelData
 
                           move.l             d1,a1
-                          move.l             #120000,d0
+                          move.l             #LevelDataSize,d0
                           move.l             4.w,a6
                           jsr                _LVOFreeMem(a6)
                           move.l             #0,LEVELDATA
@@ -10161,7 +10180,7 @@ RELEASELEVELMEM:
                           beq                SkipLevelGraph
 
                           move.l             d1,a1
-                          move.l             #50000,d0
+                          move.l             #LevelGraphicsSize,d0
                           move.l             4.w,a6
                           jsr                _LVOFreeMem(a6)
                           move.l             #0,LEVELGRAPHICS
@@ -10171,7 +10190,7 @@ SkipLevelGraph:
                           beq                SkipLevelClips
 
                           move.l             d1,a1
-                          move.l             #40000,d0
+                          move.l             #LevelClipsSize,d0
                           move.l             4.w,a6
                           jsr                _LVOFreeMem(a6)
                           move.l             #0,LEVELCLIPS
@@ -10187,7 +10206,7 @@ RELEASETEXTSCRN:
                           beq                SkipTextScr
 
                           move.l             d1,a1
-                          move.l             #10240*4,d0
+                          move.l             #TextScrSize,d0
                           move.l             4.w,a6
                           jsr                _LVOFreeMem(a6)
                           move.l             #0,TEXTSCRN
@@ -10262,6 +10281,7 @@ STOPCOUNT:
                           cmp.l              #-256,d0
                           bge.s              okcount
                           add.l              #313*256,d0
+
 okcount:
                           add.l              d0,TimeCount
                           addq.l             #1,NumTimes
@@ -10281,6 +10301,7 @@ STOPCOUNTNOADD:
                           cmp.l              #-256,d0
                           bge.s              okcount2
                           add.l              #313*256,d0
+
 okcount2:
                           add.l              d0,TimeCount
                           clr.b              counting
@@ -10329,6 +10350,7 @@ UseAllChannels:           dc.w               0
 *********************************************************************************************
 
 mt_init:                  
+
                           move.l             mt_data,a0
                           move.l             a0,a1
                           add.l              #$3b8,a1
@@ -10377,7 +10399,9 @@ mt_lop3:
 
 *********************************************************************************************
 
-mt_end:                   clr.w              $dff0a8
+mt_end:
+                  
+                          clr.w              $dff0a8
                           clr.w              $dff0b8
                           clr.w              $dff0c8
                           clr.w              $dff0d8
@@ -10387,6 +10411,7 @@ mt_end:                   clr.w              $dff0a8
 *********************************************************************************************
 
 mt_music:
+
                           movem.l            d0-d4/a0-a3/a5-a6,-(a7)
                           move.l             mt_data,a0
                           addq.b             #$1,mt_counter
@@ -10427,17 +10452,24 @@ mt_arpeggio:
                           move.b             $3(a6),d0
                           lsr.b              #4,d0
                           bra.s              mt_arp3
-mt_arp1:                  moveq              #0,d0
+
+mt_arp1:                  
+                          moveq              #0,d0
                           move.b             $3(a6),d0
                           and.b              #$f,d0
                           bra.s              mt_arp3
-mt_arp2:                  move.w             $10(a6),d2
+
+mt_arp2:                  
+                          move.w             $10(a6),d2
                           bra.s              mt_arp4
-mt_arp3:                  asl.w              #1,d0
+
+mt_arp3:                  
+                          asl.w              #1,d0
                           moveq              #0,d1
                           move.w             $10(a6),d1
                           lea                mt_periods(pc),a0
                           moveq              #$24,d7
+
 mt_arploop:
                           move.w             (a0,d0.w),d2
                           cmp.w              (a0),d1
@@ -10445,7 +10477,9 @@ mt_arploop:
                           addq.l             #2,a0
                           dbf                d7,mt_arploop
                           rts
-mt_arp4:                  move.w             d2,$6(a5)
+
+mt_arp4:                  
+                          move.w             d2,$6(a5)
                           rts
 
 mt_getnew:
@@ -10484,6 +10518,7 @@ mt_getnew:
 *********************************************************************************************
 
 mt_playvoice:
+
                           move.l             (a0,d1.l),(a6)
                           addq.l             #4,d1
                           moveq              #0,d2
@@ -10599,6 +10634,7 @@ mt_nex:
                           addq.b             #1,mt_songpos
                           and.b              #$7f,mt_songpos
                           move.b             mt_songpos,d1
+
                           ;	cmp.b	mt_data+$3b6,d1
                           ;	bne.s	mt_endr
                           ;	move.b	mt_data+$3b7,mt_songpos
@@ -10667,11 +10703,13 @@ mt_mysub:
                           move.w             $10(a6),$6(a5)
                           rts
 
-mt_vib:                   move.b             $3(a6),d0
+mt_vib:                   
+                          move.b             $3(a6),d0
                           beq.s              mt_vi
                           move.b             d0,$1a(a6)
 
-mt_vi:                    move.b             $1b(a6),d0
+mt_vi:                    
+                          move.b             $1b(a6),d0
                           lea                mt_sin(pc),a4
                           lsr.w              #$2,d0
                           and.w              #$1f,d0
@@ -10733,7 +10771,9 @@ mt_volslide:
                           cmp.w              #$40,$12(a6)
                           bmi.s              mt_vol2
                           move.w             #$40,$12(a6)
-mt_vol2:                  move.w             $12(a6),d0
+
+mt_vol2:                  
+                          move.w             $12(a6),d0
                           asr.w              #2,d0
                           move.w             d0,$8(a5)
                           rts
@@ -10745,7 +10785,9 @@ mt_voldown:
                           sub.w              d0,$12(a6)
                           bpl.s              mt_vol3
                           clr.w              $12(a6)
-mt_vol3:                  move.w             $12(a6),d0
+
+mt_vol3:                  
+                          move.w             $12(a6),d0
                           asr.w              #2,d0
                           move.w             d0,$8(a5)
                           rts
@@ -10760,7 +10802,9 @@ mt_portup:
                           bpl.s              mt_por2
                           and.w              #$f000,$10(a6)
                           or.w               #$71,$10(a6)
-mt_por2:                  move.w             $10(a6),d0
+
+mt_por2:                  
+                          move.w             $10(a6),d0
                           and.w              #$fff,d0
                           move.w             d0,$6(a5)
                           rts
@@ -10775,7 +10819,9 @@ mt_portdown:
                           bmi.s              mt_por3
                           and.w              #$f000,$10(a6)
                           or.w               #$358,$10(a6)
-mt_por3:                  move.w             $10(a6),d0
+
+mt_por3:                  
+                          move.w             $10(a6),d0
                           and.w              #$fff,d0
                           move.w             d0,$6(a5)
                           rts
@@ -10802,9 +10848,11 @@ mt_setfilt:
                           and.b              #$fd,$bfe001
                           or.b               d0,$bfe001
                           rts
+
 mt_pattbreak:
                           not.b              mt_break
                           rts
+
 mt_posjmp:
                           st                 reachedend
                           move.b             $3(a6),d0
@@ -10812,23 +10860,31 @@ mt_posjmp:
                           move.b             d0,mt_songpos
                           not.b              mt_break
                           rts
+
 mt_setvol:
                           cmp.b              #$40,$3(a6)
                           ble.s              mt_vol4
                           move.b             #$40,$3(a6)
-mt_vol4:                  move.b             $3(a6),d0
+
+mt_vol4:                  
+                          move.b             $3(a6),d0
                           asr.w              #2,d0
                           move.w             d0,$8(a5)
                           rts
+
 mt_setspeed:
                           cmp.b              #$1f,$3(a6)
                           ble.s              mt_sets
                           move.b             #$1f,$3(a6)
-mt_sets:                  move.b             $3(a6),d0
+
+mt_sets:                  
+                          move.b             $3(a6),d0
                           beq.s              mt_rts2
                           move.b             d0,mt_speed
                           clr.b              mt_counter
-mt_rts2:                  rts
+
+mt_rts2:                  
+                          rts
 
 *********************************************************************************************
 
@@ -10900,8 +10956,9 @@ tstchip:                  dc.l               0
 
 *********************************************************************************************
 
-ingame:                   incbin             "data/ingame"
-gameover:                 incbin             "data/gameover"
-welldone:                 incbin             "data/welldone"
+ingame:                   incbin             "sounds/mt/InGame.mt" 
+gameover:                 incbin             "sounds/mt/GameOver.mt"
+welldone:                 incbin             "sounds/mt/WellDone.mt"
+endgame:                  incbin             "sounds/mt/EndGame.mt" 
 
 *********************************************************************************************

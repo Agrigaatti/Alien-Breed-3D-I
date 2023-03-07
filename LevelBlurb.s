@@ -349,7 +349,6 @@ LEVELTEXT:
   dc.b    0,1,"a passkey to get me inside....                                                  "
   dc.b    0,0,"                                                                                "
 
-
 ; End of game text:
 ;      0123456789012345678901234567890123456789
 ENDGAMETEXT:
@@ -370,8 +369,6 @@ ENDGAMETEXT:
   dc.b    0,1,"awake no longer. All I can think as I sink into unconsciousness is that I'm     "
   dc.b    0,1,"feeling very... very... heavy...                                                "
 
-
-
 ;END OF GAME PLAN:
 
 ; load and start end of game music.
@@ -383,9 +380,7 @@ ENDGAMETEXT:
 ; Fade up "Brought to you by"
 ; slow scroll:
 
-
 ENDOFGAMESCROLL:
-    
 ;          01234567890123456789012345678901234567890123456789012345678901234567890123456789
   dc.b    -1,-1
   dc.b    -1,-1
@@ -598,7 +593,6 @@ ENDOFGAMESCROLL:
   dc.b    -1,-1
   dc.b    -1,-1
   dc.b    -1,-1
- 
  
 ; Alien design, Alien graphics, Weapon graphics and
 ;                    Title screen:

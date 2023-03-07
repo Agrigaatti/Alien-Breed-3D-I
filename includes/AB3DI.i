@@ -18,7 +18,20 @@ AB3DI_i                  EQU 1
 
   include    "dos/dos_lib.i"
 
-_LVOExamineFH            EQU -390
+;  >= v36 
+_LVOAllocDosObject       equ -228           
+_LVOExamineFH            equ -390
+_LVOReadArgs             equ -798
+_LVOFindArg              equ -804
+_LVOReadItem             equ -810
+_LVOStrToLong            equ -816
+_LVOMatchFirst           equ -822
+_LVOMatchNext            equ -828
+_LVOMatchEnd             equ -834
+_LVOParsePattern         equ -840
+_LVOMatchPattern         equ -846
+_LVODosNameFromAnchor    equ -852
+_LVOFreeArgs             equ -858
 
 *********************************************************************************************
 ; Graphics
@@ -175,6 +188,23 @@ copperNOP                EQU $01fe0000
 
 playerheight             EQU 12*1024
 playercrouched           EQU 8*1024
+
+*********************************************************************************************
+
+TextScrSize              EQU 10240*4
+LevelDataSize            EQU 120000
+LevelGraphicsSize        EQU 50000
+LevelClipsSize           EQU 40000
+
+*********************************************************************************************
+
+TitleScrAddrSize         EQU 10240*7
+OptSprAddrSize           EQU 258*16*5
+PanelSize                EQU 30720
+
+*********************************************************************************************
+
+FloorTileSize            EQU 65536
 
 *********************************************************************************************
 

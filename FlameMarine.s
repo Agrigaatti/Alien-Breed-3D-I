@@ -12,18 +12,18 @@ ItsAFlameMarine:
   rts
 
 .yesnas:
-
   move.w     #$4545,6(a0)
 
-  move.b     worry(a0),d0
+  move.b     objWorry(a0),d0
   move.b     d0,d1
   and.w      #128,d1
   and.b      #127,d0
   beq.s      .noless
   sub.b      #1,d0
+
 .noless:
   add.b      d0,d1
-  move.b     d1,worry(a0)
+  move.b     d1,objWorry(a0)
 
   move.w     (a0),CollId
   move.w     #80,extlen
@@ -38,11 +38,12 @@ ItsAFlameMarine:
   clr.b      gotgun
   move.w     12(a0),d2
   bge.s      .stillalive
+
 .notthisone:
   move.w     12(a0),GraphicRoom(a0)
   rts
-.stillalive:
 
+.stillalive:
   tst.b      numlives(a0)
   bgt        .notdying
  
@@ -50,9 +51,9 @@ ItsAFlameMarine:
   sub.w      TempFrames,d1
   bge.s      .noneg
   move.w     #0,d1
+
 .noneg:
   move.w     d1,ThirdTimer(a0)
- 
   move.w     .dyinganim(pc,d1.w*2),10(a0)
  
   move.b     #0,numlives(a0)
@@ -61,9 +62,10 @@ ItsAFlameMarine:
   add.l      LEVELDATA,a1
  
   move.l     ToZoneFloor(a1),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintopp
   move.l     ToUpperFloor(a1),d0
+
 .notintopp:
   asr.l      #7,d0
   sub.w      #64,d0
@@ -72,14 +74,16 @@ ItsAFlameMarine:
   move.w     12(a0),GraphicRoom(a0)
   rts
  
+*********************************************************************************************
+
 .dyinganim:
   dcb.w      6,18
   dcb.w      10,17
   dcb.w      10,16
 
+*********************************************************************************************
  
 .notdying: 
-
   tst.b      17(a0)
   beq.s      .cantseeplayer
   tst.w      ThirdTimer(a0)
@@ -89,7 +93,6 @@ ItsAFlameMarine:
   bra        .waitandsee
  
 .cantseeplayer:
-
   jsr        GetRand
   lsr.w      #4,d0
   and.w      #63,d0
@@ -97,7 +100,6 @@ ItsAFlameMarine:
   move.w     d0,ThirdTimer(a0)
 
 .waitandsee:
-
   move.w     #30,FourthTimer(a0)
 
   move.w     12(a0),d2
@@ -128,13 +130,13 @@ ItsAFlameMarine:
   asr.l      #7,d0
   add.w      d0,4(a0)
   bra        .nochangedir
-.notel:
  
+.notel:
   move.w     maxspd(a0),d2
   muls       TempFrames,d2
   move.w     d2,speed
   move.w     Facing(a0),d0
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   jsr        GoInDirection
   move.w     #%1000000000,wallflags
@@ -150,19 +152,17 @@ ItsAFlameMarine:
   bra        .hitathing
  
 .canmove:
- 
   clr.b      wallbounce
   jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
 
 .hitathing:
-
   tst.b      hitwall
   beq.s      .nochangedir
   move.w     #-1,ObjTimer(a0)
-.nochangedir
 
+.nochangedir
   move.l     objroom,a2
   move.w     (a2),12(a0)
   move.w     newx,(a1)
@@ -171,16 +171,18 @@ ItsAFlameMarine:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #64,d0
@@ -215,6 +217,7 @@ ItsAFlameMarine:
   tst.w      d2
   bgt.s      .ko
   moveq      #1,d2
+
 .ko:
   move.w     #31,d3
   jsr        ExplodeIntoBits
@@ -228,7 +231,6 @@ ItsAFlameMarine:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -262,10 +264,7 @@ ItsAFlameMarine:
   jsr        MakeSomeNoise
   movem.l    (a7)+,d0-d7/a0-a6
 
-
-.noscream
-
- 
+.noscream:
   move.w     TempFrames,d0
   sub.w      d0,ObjTimer(a0)
   bge.s      .keepsamedir
@@ -276,7 +275,6 @@ ItsAFlameMarine:
   move.w     #50,ObjTimer(a0)
  
 .keepsamedir:
-
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -305,8 +303,7 @@ ItsAFlameMarine:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -328,8 +325,7 @@ ItsAFlameMarine:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -349,8 +345,6 @@ ItsAFlameMarine:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   move.w     12(a0),GraphicRoom(a0)
   rts
  
@@ -394,16 +388,13 @@ FlameMarineAttack:
   cmp.l      d3,d4
   ble        FlameMarineAttackPLR2
  
- 
 FlameMarineAttackPLR1:
-
- 
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
-.oktoshoot:
  
+.oktoshoot:
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -436,18 +427,17 @@ FlameMarineAttackPLR1:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -459,16 +449,18 @@ FlameMarineAttackPLR1:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #64,d0
@@ -504,6 +496,7 @@ FlameMarineAttackPLR1:
   tst.w      d2
   bgt.s      .ko
   moveq      #1,d2
+
 .ko:
   move.w     #31,d3
   jsr        ExplodeIntoBits
@@ -517,7 +510,6 @@ FlameMarineAttackPLR1:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -553,10 +545,9 @@ FlameMarineAttackPLR1:
 
 
 .noscream
-
-
 ; tst.b canshootgun
 ; beq .cantshoot
+
   cmp.w      #20,FourthTimer(a0)
   bge        .cantshoot
 
@@ -580,7 +571,6 @@ FlameMarineAttackPLR1:
   moveq      #4,d7
 
 .shotlop:
-
   movem.l    a0/a1/d7,-(a7)
   jsr        GetRand
  
@@ -601,16 +591,17 @@ FlameMarineAttackPLR1:
   bgt.s      .hitplr
   jsr        SHOOTPLAYER1
   bra.s      .missplr
+
 .hitplr: 
   move.l     PLR1_Obj,a1
   add.b      #2,damagetaken(a1)
+
 .missplr:
   movem.l    (a7)+,a0/a1/d7
 
   dbra       d7,.shotlop
 
 .cantshoot:
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -635,8 +626,7 @@ FlameMarineAttackPLR1:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -657,12 +647,10 @@ FlameMarineAttackPLR1:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -682,8 +670,6 @@ FlameMarineAttackPLR1:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   move.w     12(a0),GraphicRoom(a0)
   rts
 
@@ -691,14 +677,12 @@ FlameMarineAttackPLR1:
 
 FlameMarineAttackPLR2:
  
-
- 
   move.w     TempFrames,d0
   sub.w      d0,FourthTimer(a0)
   bgt.s      .oktoshoot
   move.w     #50,ThirdTimer(a0)
-.oktoshoot:
  
+.oktoshoot:
   move.w     12(a0),d2
   move.l     ZoneAdds,a5
   move.l     (a5,d2.w*4),d0
@@ -731,18 +715,17 @@ FlameMarineAttackPLR2:
   move.l     d0,newy
   move.l     d0,oldy
 
-  move.b     ObjInTop(a0),StoodInTop
+  move.b     objInTop(a0),StoodInTop
   movem.l    a6/d0/a0/a1/a3/a4/d7,-(a7)
   clr.b      canshove
   clr.b      GotThere
   jsr        HeadTowardsAng
   move.w     #%1000000000,wallflags
  
-  
   clr.b      wallbounce
   Jsr        MoveObject
   movem.l    (a7)+,a6/d0/a0/a1/a3/a4/d7
-  move.b     StoodInTop,ObjInTop(a0)
+  move.b     StoodInTop,objInTop(a0)
  
   move.w     AngRet,Facing(a0)
  
@@ -754,16 +737,18 @@ FlameMarineAttackPLR2:
   move.w     (a2),d0
   move.l     #ZoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   bne.s      .okbit
   swap       d0
+
 .okbit:
   move.w     d0,2(a0)
  
   move.l     ToZoneFloor(a2),d0
-  tst.b      ObjInTop(a0)
+  tst.b      objInTop(a0)
   beq.s      .notintop
   move.l     ToUpperFloor(a2),d0
+
 .notintop:
   asr.l      #7,d0
   sub.w      #64,d0
@@ -802,7 +787,6 @@ FlameMarineAttackPLR2:
   rts
 
 .noexplode:
-
   movem.l    d0-d7/a0-a6,-(a7)
   sub.l      ObjectPoints,a1
   add.l      #ObjRotated,a1
@@ -835,9 +819,9 @@ FlameMarineAttackPLR2:
   movem.l    (a7)+,d0-d7/a0-a6
  
 .noscream
-
 ; tst.b canshootgun
 ; beq .cantshoot
+
   cmp.w      #20,FourthTimer(a0)
   bge        .cantshoot
  
@@ -857,7 +841,6 @@ FlameMarineAttackPLR2:
   jsr        FireAtPlayer1
 
 .cantshoot:
- 
   move.w     TempFrames,d0
   sub.w      d0,SecTimer(a0)
   bge.s      .nohiss
@@ -882,8 +865,7 @@ FlameMarineAttackPLR2:
   move.w     d0,SecTimer(a0)
 
 .nohiss:
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR1_StoodInTop,TargetTop
   move.l     PLR1_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -904,12 +886,10 @@ FlameMarineAttackPLR2:
   move.b     #1,17(a0)
 
 .carryonprowling:
-
   cmp.b      #'n',mors
   beq.s      .carryonprowling2
 
-
-  move.b     ObjInTop(a0),ViewerTop
+  move.b     objInTop(a0),ViewerTop
   move.b     PLR2_StoodInTop,TargetTop
   move.l     PLR2_Roompt,ToRoom
   move.l     objroom,FromRoom
@@ -929,9 +909,5 @@ FlameMarineAttackPLR2:
   or.b       #2,17(a0)
 
 .carryonprowling2:
-
-
   move.w     12(a0),GraphicRoom(a0)
   rts
-
-

@@ -57,6 +57,7 @@ Doleftend:
                   sub.w                  d0,d1
                   bge.s                  sometodraw
                   rts
+
 sometodraw:
                   move.w                 itertab(pc,d1.w*4),d7
                   swap                   d0
@@ -156,7 +157,7 @@ screendividethru:
 
 *********************************************************************************************
 
-.pastscrinto 
+.pastscrinto: 
 
                   swap                   d1
 
@@ -199,11 +200,13 @@ screendividethru:
                   add.w                  angbright(pc),d6
                   bge.s                  .brnotneg
                   moveq                  #0,d6
-.brnotneg
+
+.brnotneg:
                   cmp.w                  #32,d6
                   blt.s                  .brnotpos
                   move.w                 #32,d6
-.brnotpos
+
+.brnotpos:
                   move.l                 PaletteAddr,a2
                   move.l                 a2,a4
                   add.w                  .ffscrpickhowbright(pc,d6*2),a2
@@ -372,11 +375,13 @@ pastscrinto:
                   add.w                  d5,d6
                   bge.s                  .brnotneg
                   moveq                  #0,d6
-.brnotneg
+
+.brnotneg:
                   cmp.w                  #64,d6
                   blt.s                  .brnotpos
                   move.w                 #64,d6
-.brnotpos
+
+.brnotpos:
                   move.l                 PaletteAddr,a2
                   move.l                 a2,a4
                   add.w                  ffscrpickhowbright(pc,d6*2),a2
@@ -396,7 +401,6 @@ pastscrinto:
                   move.w                 (a7)+,d7
  
 toosmall:
- 
                   dbra                   d7,scrdrawlop
  
                   rts
@@ -1745,7 +1749,7 @@ totalyoff:        dc.w                   0
 wallyoff:         dc.w                   0
 
 *********************************************************************************************
-* Wall polygon
+; Wall polygon
 
 leftend:          dc.w                   0
 wallbrightoff:    dc.w                   0
