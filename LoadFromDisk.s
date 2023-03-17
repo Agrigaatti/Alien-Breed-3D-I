@@ -780,6 +780,6 @@ unLHA:
 ;
 ; (If D1 = 0 then the entire source file is decompressed).
 
-             incbin                 "data/Decomp4.raw"
+             incbin                 "data/code/Decomp4.bin"
 
 *********************************************************************************************

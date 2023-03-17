@@ -424,6 +424,6 @@ unLHA:
 ; Result:
 ; Note: d2/a2-a5 unchanged
 
-             incbin      "../data/DeComp4.raw"
+             incbin      "../data/code/DeComp4.bin"
 
 *********************************************************************************************

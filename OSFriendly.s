@@ -6,29 +6,12 @@
 
             incdir      "includes"
             include     "graphics/gfxbase.i"
+            include     "libraries/dos_lib.i"
             include     "libraries/dosextens.i"
+            include     "workbench/startup.i"
 
             include     "macros.i"
             include     "AB3DI.i"
-
-*********************************************************************************************
-
-olddmareq:  dc.w        0
-oldintena:  dc.w        0
-oldintreq:  dc.w        0
-oldadkcon:  dc.w        0
-
-oldview:    dc.l        0
-oldcopper:  dc.l        0
-
-wbMsg:      dc.l        0
-
-*********************************************************************************************
-
-gfxname:    dc.b        "graphics.library",0
-            cnop        0,32
-
-gfxbase:    dc.l        0
 
 *********************************************************************************************
 ; OS safe startup
@@ -40,10 +23,18 @@ OSFriendlyStartup:
             suba.l      a1,a1
             movea.l     $4,a6
             jsr         _LVOFindTask(a6)
-
+            move.l      d0,task
             movea.l     d0,a2
+
             tst.l       pr_CLI(a2)
             bne.s       NoWorkbench
+
+********************************************************
+
+            move.l      #dosName,a1              
+            moveq       #0,d0                    
+            jsr         _LVOOpenLibrary(a6)      
+            move.l      d0,dosBase 
 
             lea         pr_MsgPort(a2),a0
             jsr         _LVOWaitPort(a6)
@@ -52,14 +43,36 @@ OSFriendlyStartup:
             jsr         _LVOGetMsg(a6)
             move.l      d0,wbMsg
 
-NoWorkbench:
+********************************************************            
+
+            move.l      d0,a0
+            move.l      sm_NumArgs(a0),d0       
+            beq         skipCurrentDirectory
+
+            move.l      sm_ArgList(a0),a1       
+            
+            move.l      wa_Lock(a1),d1          
+            move.l      dosBase,a6
+            jsr         _LVOCurrentDir(a6)
+
             move.l      $4,a6
-            jsr         _LVOForbid(a6)              
+            move.l      dosBase,a1
+            jsr         _LVOCloseLibrary(a6)
+            move.l      #0,dosBase
+            
+skipCurrentDirectory:
+
+********************************************************
+
+NoWorkbench:
+            move.l      task,a1
+            moveq       #127,d0                    
+            jsr         _LVOSetTaskPri(a6)
            	
-            move.l      #gfxname,a1              
+            move.l      #gfxName,a1              
             moveq       #0,d0                    
             jsr         _LVOOpenLibrary(a6)      
-            move.l      d0,gfxbase               
+            move.l      d0,gfxBase               
 
             move.l      d0,a6                    
             move.l      gb_ActiView(a6),oldview    
@@ -112,7 +125,7 @@ OSFriendlyExit:
             move.l      oldcopper,cop1lch(a6)
             clr.w       copjmp1(a6)
 
-            move.l      gfxbase,a6
+            move.l      gfxBase,a6
             move.l      oldview,a1
             jsr         _LVOLoadView(a6)
 
@@ -123,21 +136,54 @@ OSFriendlyExit:
             jsr         _LVODisownBlitter(a6)
 
             move.l      $4,a6
-            move.l      gfxbase,a1
+            move.l      gfxBase,a1
             jsr         _LVOCloseLibrary(a6)
-            move.l      #0,gfxbase
-          
-            jsr         _LVOPermit(a6)
+            move.l      #0,gfxBase
 				
             tst.l       wbMsg
             beq.s       NoReplyNeeded
 
+********************************************************
+
+            move.l      $4,a6
+            jsr         _LVOForbid(a6)   
+
+            move.l      $4,a6
             movea.l     wbMsg,a1
             jsr         _LVOReplyMsg(a6)
+
+********************************************************
 
 NoReplyNeeded:  
             GETREGS
             rts
 
 *********************************************************************************************
-           
+
+olddmareq:  dc.w        0
+oldintena:  dc.w        0
+oldintreq:  dc.w        0
+oldadkcon:  dc.w        0
+
+oldview:    dc.l        0
+oldcopper:  dc.l        0
+
+wbMsg:      dc.l        0
+task:       dc.l        0
+
+newLock:    dc.l        0
+oldLock:    dc.l        0
+
+*********************************************************************************************
+
+gfxName:    dc.b        "graphics.library",0
+            cnop        0,32
+
+gfxBase:    dc.l        0
+
+dosName:    dc.b        "dos.library",0
+            cnop        0,32
+
+dosBase:    dc.l        0
+
+*********************************************************************************************

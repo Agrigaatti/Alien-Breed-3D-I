@@ -19,7 +19,7 @@
 *
 *********************************************************************************************
 
-VERSION             EQU "1.10"                                                                                    ; 4 chars
+VERSION             EQU "1.11"                                                           ; 4 chars
 LABEL               EQU "EXTE"                                                                                    ; 4 chars
 
 *********************************************************************************************
@@ -31,6 +31,7 @@ LABEL               EQU "EXTE"                                                  
                           incdir             "includes"
                           include            "exec/memory.i"
                           include            "hardware/intbits.i"
+                          
                           include            "AB3DI.i"
                           include            "macros.i"
                           include            "defs.i"
@@ -235,12 +236,18 @@ TearDownGame:
                           jsr                RELEASELEVELDATA                                                     ; AB3DI
                           jsr                RELEASELEVELMEM                                                      ; AB3DI
 
+*******************************************************************
+
                           jsr                RELEASEFLOORMEM                                                      ; LoadFromDisks
                           jsr                RELEASEOBJMEM                                                        ; LoadFromDisks
                           jsr                RELEASESAMPMEM                                                       ; LoadFromDisks
                           jsr                RELEASECOPSCRNMEM                                                    ; LoadFromDisks
 
+*******************************************************************
+
                           jsr                RELEASEWALLMEM                                                       ; WallChunk
+
+*******************************************************************
 
                           jsr                RELEASETITLEMEM                                                      ; ControlLoop
 
@@ -320,12 +327,12 @@ FONTADDRS:
 
 *********************************************************************************************						  
  
-ENDFONT0:                 incbin             "data/endfont0"
-CHARWIDTHS0:              incbin             "data/charwidths0"
-ENDFONT1:                 incbin             "data/endfont1"
-CHARWIDTHS1:              incbin             "data/charwidths1"
-ENDFONT2:                 incbin             "data/endfont2"
-CHARWIDTHS2:              incbin             "data/charwidths2"
+ENDFONT0:                 incbin             "data/fonts/endfont0"
+CHARWIDTHS0:              incbin             "data/fonts/charwidths0"
+ENDFONT1:                 incbin             "data/fonts/endfont1"
+CHARWIDTHS1:              incbin             "data/fonts/charwidths1"
+ENDFONT2:                 incbin             "data/fonts/endfont2"
+CHARWIDTHS2:              incbin             "data/fonts/charwidths2"
                           even
 
 *********************************************************************************************
@@ -6954,7 +6961,7 @@ rightedge:                dc.w               0
 
 *********************************************************************************************
 
-PLAINSCALE:               incbin             "data/plainscale"
+PLAINSCALE:               incbin             "data/math/plainscale"
                           cnop               0,32
 
 *********************************************************************************************
@@ -8045,7 +8052,6 @@ firenotpressed2:
                           ; st PLR2_fire
  
 dointer:
-
                           cmp.b              #'4',Prefsfile+1
                           beq                fourchannel
  
@@ -8059,6 +8065,7 @@ dointer:
                           tst.b              counting
                           beq.b              .nostartcounter1
                           jsr                STARTCOUNT
+                          
 .nostartcounter1:
                           ENDC
 
@@ -8066,1242 +8073,25 @@ dointer:
                           rts
  
 *********************************************************************************************
+; Sound player
 
-swappedem:                dc.w               0
-
-*********************************************************************************************
-; Called from coppper interrrupt
-
-newSampBitl:
-                          lea                $dff000,a6
-                          move.w             #$820f,dmacon(a6)                                                    ; Enable audio + master
-                          move.w             #$200,intreq(a6)                                                     ; 9 = AUD2
- 
-                          ; tst.b CHANNELDATA
-                          ; bne nochannel0
- 
-                          move.l             pos0LEFT,a0
-                          move.l             pos2LEFT,a1
-
-                          move.l             #tab,a2
- 
-                          moveq              #0,d0
-                          moveq              #0,d1
-                          move.b             vol0left,d0
-                          move.b             vol2left,d1
-                          cmp.b              d1,d0
-                          slt                swappedem
-                          bge.s              fbig0
-
-; d1 is bigger so scale d0 and use d1 as audiochannel volume.
-
-                          exg                a0,a1
-                          asl.w              #6,d0
-                          divs               d1,d0
-                          lsl.w              #8,d0
-                          adda.w             d0,a2
-                          move.w             d1,$dff0a8
-                          bra.s              donechan0
-
-fbig0:
-                          tst.w              d0
-                          beq.s              donechan0
-                          asl.w              #6,d1
-                          divs               d0,d1
-                          lsl.w              #8,d1
-                          adda.w             d1,a2
-                          move.w             d0,$dff0a8
-
-donechan0:
-                          move.l             Aupt0,a3
-                          move.l             a3,$dff0a0
-                          move.l             Auback0,Aupt0
-                          move.l             a3,Auback0
- 
-                          move.l             Auback0,a3
- 
-                          moveq              #0,d0
-                          moveq              #0,d1
-                          moveq              #0,d2
-                          moveq              #0,d3
-                          moveq              #0,d4
-                          moveq              #0,d5
-                          move.w             #49,d7
-
-loop:
-                          move.l             (a0)+,d0
-                          move.b             (a1)+,d1
-                          move.b             (a1)+,d2
-                          move.b             (a1)+,d3
-                          move.b             (a1)+,d4
-                          move.b             (a2,d3.w),d5
-                          swap               d5
-                          move.b             (a2,d1.w),d5
-                          asl.l              #8,d5
-                          move.b             (a2,d2.w),d5
-                          swap               d5
-                          move.b             (a2,d4.w),d5
-                          add.l              d5,d0
-                          move.l             d0,(a3)+
-                          dbra               d7,loop
-
-                          tst.b              swappedem
-                          beq.s              .ok23
-                          exg                a0,a1
-
-.ok23:
-                          cmp.l              Samp0endLEFT,a0
-                          blt.s              .notoffendsamp1
-                          move.l             SampleList+6*8,a0
-                          move.l             SampleList+6*8+4,Samp0endLEFT
-                          move.b             #63,vol0left
-                          st                 LEFTCHANDATA+1
-                          move.w             #0,LEFTCHANDATA+2
-
-.notoffendsamp1:
-                          cmp.l              Samp2endLEFT,a1
-                          blt.s              .notoffendsamp2
-                          move.l             #empty,a1
-                          move.l             #emptyend,Samp2endLEFT
-                          move.b             #0,vol2left
-                          st                 LEFTCHANDATA+1+8
-                          move.w             #0,LEFTCHANDATA+2+8
-
-.notoffendsamp2:
-                          move.l             a0,pos0LEFT
-                          move.l             a1,pos2LEFT
-
-nochannel0:
-                          tst.b              CHANNELDATA+16
-                          bne                nochannel1
-
-                          move.l             pos0RIGHT,a0
-                          move.l             pos2RIGHT,a1
-
-                          move.l             Aupt1,a3
-                          move.l             a3,$dff0b0
-                          move.l             Auback1,Aupt1
-                          move.l             a3,Auback1
-
-                          move.l             #tab,a2
- 
-                          moveq              #0,d0
-                          moveq              #0,d1
-                          move.b             vol0right,d0
-                          move.b             vol2right,d1
-                          cmp.b              d1,d0
-                          slt                swappedem
-                          bge.s              fbig1
-
-; d1 is bigger so scale d0 and use d1 as audiochannel volume.
-
-                          exg                a0,a1
-                          asl.w              #6,d0
-                          divs               d1,d0
-                          lsl.w              #8,d0
-                          adda.w             d0,a2
-                          move.w             d1,$dff0b8
-                          bra.s              donechan1
-
-fbig1:
-                          tst.w              d0
-                          beq.s              donechan1
-                          asl.w              #6,d1
-                          divs               d0,d1
-                          lsl.w              #8,d1
-                          adda.w             d1,a2
-                          move.w             d0,$dff0b8
-
-donechan1:
-                          moveq              #0,d0
-                          moveq              #0,d1
-                          moveq              #0,d2
-                          moveq              #0,d3
-                          moveq              #0,d4
-                          moveq              #0,d5
-                          move.w             #49,d7
-
-loop2:
-                          move.l             (a0)+,d0
-                          move.b             (a1)+,d1
-                          move.b             (a1)+,d2
-                          move.b             (a1)+,d3
-                          move.b             (a1)+,d4
-                          move.b             (a2,d3.w),d5
-                          swap               d5
-                          move.b             (a2,d1.w),d5
-                          asl.l              #8,d5
-                          move.b             (a2,d2.w),d5
-                          swap               d5
-                          move.b             (a2,d4.w),d5
-                          add.l              d5,d0
-                          move.l             d0,(a3)+
-                          dbra               d7,loop2
- 
-                          tst.b              swappedem
-                          beq.s              ok01
-                          exg                a0,a1
-
-ok01:
-                          cmp.l              Samp0endRIGHT,a0
-                          blt.s              .notoffendsamp1
-                          move.l             #empty,a0
-                          move.l             #emptyend,Samp0endRIGHT
-                          move.b             #0,vol0right
-                          st                 RIGHTCHANDATA+1
-                          move.w             #0,RIGHTCHANDATA+2
-
-.notoffendsamp1:
-                          cmp.l              Samp2endRIGHT,a1
-                          blt.s              .notoffendsamp2
-                          move.l             #empty,a1
-                          move.l             #emptyend,Samp2endRIGHT
-                          move.b             #0,vol2right
-                          st                 RIGHTCHANDATA+1+8
-                          move.w             #0,RIGHTCHANDATA+2+8
-
-.notoffendsamp2:
-                          move.l             a0,pos0RIGHT
-                          move.l             a1,pos2RIGHT
-
-nochannel1:
-; Other two channels
-
-                          move.l             pos1LEFT,a0
-                          move.l             pos3LEFT,a1
-
-                          move.l             #tab,a2
- 
-                          moveq              #0,d0
-                          moveq              #0,d1
-                          move.b             vol1left,d0
-                          move.b             vol3left,d1
-                          cmp.b              d1,d0
-                          slt                swappedem
-                          bge.s              fbig2
-
-; d1 is bigger so scale d0 and use d1 as audiochannel volume.
-
-                          exg                a0,a1
-                          asl.w              #6,d0
-                          divs               d1,d0
-                          lsl.w              #8,d0
-                          adda.w             d0,a2
-                          move.w             d1,$dff0d8
-                          bra.s              donechan2
-
-fbig2:
-                          tst.w              d0
-                          beq.s              donechan2
-                          asl.w              #6,d1
-                          divs               d0,d1
-                          lsl.w              #8,d1
-                          adda.w             d1,a2
-                          move.w             d0,$dff0d8
-
-donechan2:
-                          move.l             Aupt2,a3
-                          move.l             a3,$dff0d0
-                          move.l             Auback2,Aupt2
-                          move.l             a3,Auback2
- 
-                          moveq              #0,d0
-                          moveq              #0,d1
-                          moveq              #0,d2
-                          moveq              #0,d3
-                          moveq              #0,d4
-                          moveq              #0,d5
-                          move.w             #49,d7
-
-loop3:
-                          move.l             (a0)+,d0
-                          move.b             (a1)+,d1
-                          move.b             (a1)+,d2
-                          move.b             (a1)+,d3
-                          move.b             (a1)+,d4
-                          move.b             (a2,d3.w),d5
-                          swap               d5
-                          move.b             (a2,d1.w),d5
-                          asl.l              #8,d5
-                          move.b             (a2,d2.w),d5
-                          swap               d5
-                          move.b             (a2,d4.w),d5
-                          add.l              d5,d0
-                          move.l             d0,(a3)+
-                          dbra               d7,loop3
-
-                          tst.b              swappedem
-                          beq.s              .ok23
-                          exg                a0,a1
-
-.ok23:
-                          cmp.l              Samp1endLEFT,a0
-                          blt.s              .notoffendsamp3
-                          move.l             #empty,a0
-                          move.l             #emptyend,Samp1endLEFT
-                          move.b             #0,vol1left
-                          st                 LEFTCHANDATA+1+4
-                          move.w             #0,LEFTCHANDATA+2+4
-
-.notoffendsamp3:
-                          cmp.l              Samp3endLEFT,a1
-                          blt.s              .notoffendsamp4
-                          move.l             #empty,a1
-                          move.l             #emptyend,Samp3endLEFT
-                          move.b             #0,vol3left
-                          st                 LEFTCHANDATA+1+12
-                          move.w             #0,LEFTCHANDATA+2+12
-
-.notoffendsamp4:
-                          move.l             a0,pos1LEFT
-                          move.l             a1,pos3LEFT
- 
-                          move.l             pos1RIGHT,a0
-                          move.l             pos3RIGHT,a1
-
-                          move.l             Aupt3,a3
-                          move.l             a3,$dff0c0
-                          move.l             Auback3,Aupt3
-                          move.l             a3,Auback3
-
-                          move.l             #tab,a2
- 
-                          moveq              #0,d0
-                          moveq              #0,d1
-                          move.b             vol1right,d0
-                          move.b             vol3right,d1
-                          cmp.b              d1,d0
-                          slt                swappedem
-                          bge.s              fbig3
-
-                          exg                a0,a1
-                          asl.w              #6,d0
-                          divs               d1,d0
-                          lsl.w              #8,d0
-                          adda.w             d0,a2
-                          move.w             d1,$dff0c8
-                          bra.s              donechan3
-
-fbig3:
-                          tst.w              d0
-                          beq.s              donechan3
-                          asl.w              #6,d1
-                          divs               d0,d1
-                          lsl.w              #8,d1
-                          adda.w             d1,a2
-                          move.w             d0,$dff0c8
-
-donechan3:
-                          moveq              #0,d0
-                          moveq              #0,d1
-                          moveq              #0,d2
-                          moveq              #0,d3
-                          moveq              #0,d4
-                          moveq              #0,d5
-                          move.w             #49,d7
-
-loop4:
-                          move.l             (a0)+,d0
-                          move.b             (a1)+,d1
-                          move.b             (a1)+,d2
-                          move.b             (a1)+,d3
-                          move.b             (a1)+,d4
-                          move.b             (a2,d3.w),d5
-                          swap               d5
-                          move.b             (a2,d1.w),d5
-                          asl.l              #8,d5
-                          move.b             (a2,d2.w),d5
-                          swap               d5
-                          move.b             (a2,d4.w),d5
-                          add.l              d5,d0
-                          move.l             d0,(a3)+
-                          dbra               d7,loop4
- 
-                          tst.b              swappedem
-                          beq.s              .ok23
-                          exg                a0,a1
-
-.ok23:
-                          cmp.l              Samp1endRIGHT,a0
-                          blt.s              notoffendsamp3
-                          move.l             #empty,a0
-                          move.l             #emptyend,Samp1endRIGHT
-                          move.b             #0,vol1right
-                          st                 RIGHTCHANDATA+1+4
-                          move.w             #0,RIGHTCHANDATA+2+4
-
-notoffendsamp3:
-                          cmp.l              Samp3endRIGHT,a1
-                          blt.s              notoffendsamp4
-                          move.l             #empty,a1
-                          move.l             #emptyend,Samp3endRIGHT
-                          move.b             #0,vol3right
-                          st                 RIGHTCHANDATA+1+12
-                          move.w             #0,RIGHTCHANDATA+2+12
-
-notoffendsamp4:
-                          move.l             a0,pos1RIGHT
-                          move.l             a1,pos3RIGHT
-
-                          GETREGS
-
-                          IFNE               ENABLETIMER
-                          tst.b              counting
-                          beq.b              .nostartcounter2
-                          jsr                STARTCOUNT
-.nostartcounter2:
-                          ENDC
-
-                          moveq              #0,d0
-                          rts
-
-*********************************************************************************************
-; 4 channel sound routine
-
-fourchannel:
-
-                          lea                $dff000,a6
-
-                          btst               #7,intreqrl(a6)                                                      ; 7 = Audi 0 block not finnished
-                          beq.s              nofinish0
-
-                          ; move.w #0,LEFTCHANDATA+2
-                          ; st LEFTCHANDATA+1
-
-                          move.l             #null,$0a0(a6)                                                       ; aud0
-                          move.w             #100,$0a4(a6)                                                        ; aud0 + ac_len  
-                          move.w             #$0080,intreq(a6)                                                    ; 7 = aud0 block finnished
-nofinish0:
- 
-                          tst.b              NoiseMade0pLEFT
-                          beq.s              NoChan0sound
-
-                          move.l             Samp0endLEFT,d0
-                          move.l             pos0LEFT,d1
-                          sub.l              d1,d0
-                          lsr.l              #1,d0
-                          move.w             d0,$a4(a6)
-                          move.l             d1,$a0(a6)
-                          move.w             #$8201,dmacon(a6)
-                          moveq              #0,d0
-                          move.b             vol0left,d0
-                          move.w             d0,$a8(a6)
-
-NoChan0sound:
-                          btst               #0,intreqr(a6)                                                       ; 0 = AUD1
-                          beq.s              nofinish1
-                          move.l             #null,$b0(a6)
-                          move.w             #100,$b4(a6)
-                          move.w             #$0100,intreq(a6)                                                    ; 0 = AUD1
-
-nofinish1:
-                          tst.b              NoiseMade0pRIGHT
-                          beq.s              NoChan1sound
-
-                          move.l             Samp0endRIGHT,d0
-                          move.l             pos0RIGHT,d1
-                          sub.l              d1,d0
-                          lsr.l              #1,d0
-                          move.w             d0,$b4(a6)
-                          move.l             d1,$b0(a6)
-                          move.w             d0,playnull1
-                          move.w             #$8202,dmacon(a6)
-                          moveq              #0,d0
-                          move.b             vol0right,d0
-                          move.w             d0,$b8(a6)
-
-NoChan1sound:
-                          btst               #1,intreqr(a6)                                                       ; 0 = AUD2
-                          beq.s              nofinish2
-                          move.l             #null,$c0(a6)
-                          move.w             #100,$c4(a6)
-                          move.w             #$0200,intreq(a6)                                                    ; 0 = AUD2
-
-nofinish2:
-                          tst.b              NoiseMade1pRIGHT
-                          beq.s              NoChan2sound
-
-                          move.l             Samp1endRIGHT,d0
-                          move.l             pos1RIGHT,d1
-                          sub.l              d1,d0
-                          lsr.l              #1,d0
-                          move.w             d0,$c4(a6)
-                          move.w             d0,playnull2
- 
-                          move.l             d1,$c0(a6)
-                          move.w             #$8204,dmacon(a6)
-                          moveq              #0,d0
-                          move.b             vol1right,d0
-                          move.w             d0,$c8(a6)
-
-NoChan2sound:
-                          btst               #2,intreqr(a6)                                                       ; 0 = AUD3
-                          beq.s              nofinish3
-                          move.l             #null,$d0(a6)
-                          move.w             #100,$d4(a6)
-                          move.w             #$0400,intreq(a6)                                                    ; 0 = AUD3
-
-nofinish3:
-                          tst.b              NoiseMade1pLEFT
-                          beq.s              NoChan3sound
-
-                          move.l             Samp1endLEFT,d0
-                          move.l             pos1LEFT,d1
-                          sub.l              d1,d0
-                          lsr.l              #1,d0
-                          move.w             d0,$d4(a6)
-                          move.w             d0,playnull3
-                          move.l             d1,$d0(a6)
-                          move.w             #$8208,dmacon(a6)
-                          moveq              #0,d0
-                          move.b             vol1left,d0
-                          move.w             d0,$d8(a6)
- 
-NoChan3sound:
-nomorechannels:
-                          move.l             NoiseMade0LEFT,NoiseMade0pLEFT
-                          move.l             #0,NoiseMade0LEFT
-                          move.l             NoiseMade0RIGHT,NoiseMade0pRIGHT
-                          move.l             #0,NoiseMade0RIGHT
-
-                          ; tst.b playnull0
-                          ; beq.s .nnul
-                          ; sub.b #1,playnull0
-                          ; bra.s chan0still
-                          ;.nnul:
-                          ; 
-                          ;chan0still:
-
-                          tst.b              NoiseMade0pLEFT
-                          bne.s              chan0still
-                          tst.w              playnull0
-                          beq.s              nnul0
-                          sub.w              #100,playnull0
-                          bra.s              chan0still
-
-nnul0:
-                          move.w             #0,LEFTCHANDATA+2
-                          st                 LEFTCHANDATA+1
-
-chan0still:
-                          tst.b              NoiseMade0pRIGHT
-                          bne.s              chan1still
-                          tst.w              playnull1
-                          beq.s              nnul1
-                          sub.w              #100,playnull1
-                          bra.s              chan1still
-
-nnul1:
-                          move.w             #0,RIGHTCHANDATA+2
-                          st                 RIGHTCHANDATA+1
-
-chan1still:
-                          tst.b              NoiseMade1pRIGHT
-                          bne.s              chan2still
-                          tst.w              playnull2
-                          beq.s              nnul2
-                          sub.w              #100,playnull2
-                          bra.s              chan2still
-
-nnul2:
-                          move.w             #0,RIGHTCHANDATA+2+4
-                          st                 RIGHTCHANDATA+1+4
-
-chan2still:
-                          tst.b              NoiseMade1pLEFT
-                          bne.s              chan3still
-                          tst.w              playnull3
-                          beq.s              nnul3
-                          sub.w              #100,playnull3
-                          bra.s              chan3still
-
-nnul3:
-                          move.w             #0,LEFTCHANDATA+2+4
-                          st                 LEFTCHANDATA+1+4
- 
-chan3still:
-                          GETREGS
-
-                          IFNE               ENABLETIMER
-                          tst.b              counting
-                          beq.b              .nostartcounter3
-                          jsr                STARTCOUNT
-.nostartcounter3:
-                          ENDC
-
-                          moveq              #0,d0
-                          rts
-
-*********************************************************************************************
-
-backbeat:                 dc.w               0
-
-playnull0:                dc.w               0
-playnull1:                dc.w               0
-playnull2:                dc.w               0
-playnull3:                dc.w               0
-
-*********************************************************************************************
-
-Samp0endRIGHT:            dc.l               emptyend
-Samp1endRIGHT:            dc.l               emptyend
-Samp2endRIGHT:            dc.l               emptyend
-Samp3endRIGHT:            dc.l               emptyend
-Samp0endLEFT:             dc.l               emptyend
-Samp1endLEFT:             dc.l               emptyend
-Samp2endLEFT:             dc.l               emptyend
-Samp3endLEFT:             dc.l               emptyend
-
-Aupt0:                    dc.l               null
-Auback0:                  dc.l               null+500
-Aupt2:                    dc.l               null3
-Auback2:                  dc.l               null3+500
-Aupt3:                    dc.l               null4
-Auback3:                  dc.l               null4+500
-Aupt1:                    dc.l               null2
-Auback1:                  dc.l               null2+500
-
-NoiseMade0LEFT:           dc.b               0
-NoiseMade1LEFT:           dc.b               0
-NoiseMade2LEFT:           dc.b               0
-NoiseMade3LEFT:           dc.b               0
-NoiseMade0pLEFT:          dc.b               0
-NoiseMade1pLEFT:          dc.b               0
-NoiseMade2pLEFT:          dc.b               0
-NoiseMade3pLEFT:          dc.b               0
-NoiseMade0RIGHT:          dc.b               0
-NoiseMade1RIGHT:          dc.b               0
-NoiseMade2RIGHT:          dc.b               0
-NoiseMade3RIGHT:          dc.b               0
-NoiseMade0pRIGHT:         dc.b               0
-NoiseMade1pRIGHT:         dc.b               0
-NoiseMade2pRIGHT:         dc.b               0
-NoiseMade3pRIGHT:         dc.b               0
-
-empty:                    ds.l               100
-emptyend:
-
-*********************************************************************************************
-; I want a routine to calculate all the
-; info needed for the sound player to
-; work, given say position of noise, volume
-; and sample number.
-
-Samplenum:                dc.w               0
-Noisex:                   dc.w               0
-Noisez:                   dc.w               0
-Noisevol:                 dc.w               0
-chanpick:                 dc.w               0
-IDNUM:                    dc.w               0
-needleft:                 dc.b               0
-needright:                dc.b               0
-STEREO:                   dc.b               $0
-                          even
- 
-CHANNELDATA:
-LEFTCHANDATA:             dc.l               $00000000
-                          dc.l               $00000000
-                          dc.l               $FF000000
-                          dc.l               $FF000000
-
-RIGHTCHANDATA:            dc.l               $00000000
-                          dc.l               $00000000
-                          dc.l               $FF000000
-                          dc.l               $FF000000
- 
-RIGHTPLAYEDTAB:           ds.l               20
-LEFTPLAYEDTAB:            ds.l               20
-
-*********************************************************************************************
-
-MakeSomeNoise:
-
-; Plan for new sound handler:
-; It is sent a sample number,
-; a position relative to the
-; player, an id number and a volume.
-; Also notifplaying.
-
-; indirect inputs are the available
-; channel flags and whether or not
-; stereo sound is selected.
-
-; the algorithm must decide
-; whether the new sound is more
-; important than the ones already
-; playing. Thus an 'importance'
-; must be calculated, probably
-; using volume.
-
-; The output needs to be:
-
-; Write the pointers and volumes of
-; the sound channels
-
-
-                          tst.b              notifplaying
-                          beq.s              dontworry
-
-; find if we are already playing
-
-                          move.b             IDNUM,d0
-                          move.w             #7,d1
-                          lea                CHANNELDATA,a3
-
-findsameasme:
-                          tst.b              (a3)
-                          bne.s              notavail
-                          cmp.b              1(a3),d0
-                          beq.b              SameAsMe
-
-notavail:
-                          add.w              #4,a3
-                          dbra               d1,findsameasme
-                          bra.b              dontworry
-
-SameAsMe:
-                          rts
-
-*********************************************************************************************
-
-noiseloud:                dc.w               0
-
-*********************************************************************************************
-
-dontworry:
-
-; Ok its fine for us to play a sound.
-; So calculate left/right volume.
-
-                          move.w             Noisex,d1
-                          muls               d1,d1
-                          move.w             Noisez,d2
-                          muls               d2,d2
-                          move.w             #64,d3
-                          move.w             #32767,noiseloud
-                          moveq              #1,d0
-                          add.l              d1,d2
-                          beq.b              pastcalc
-
-                          move.w             #31,d0
-
-.findhigh:
-                          btst               d0,d2
-                          bne.b              .foundhigh
-                          dbra               d0,.findhigh
-
-.foundhigh:
-                          asr.w              #1,d0
-                          clr.l              d3
-                          bset               d0,d3
-                          move.l             d3,d0
-
-                          move.w             d0,d3
-                          muls               d3,d3                                                                ; x*x
-                          sub.l              d2,d3                                                                ; x*x-a
-                          asr.l              #1,d3                                                                ; (x*x-a)/2
-                          divs               d0,d3                                                                ; (x*x-a)/2x
-                          sub.w              d3,d0                                                                ; second approx
-                          bgt.b              .stillnot0
-                          move.w             #1,d0
-
-.stillnot0:
-                          move.w             d0,d3
-                          muls               d3,d3
-                          sub.l              d2,d3
-                          asr.l              #1,d3
-                          divs               d0,d3
-                          sub.w              d3,d0                                                                ; second approx
-                          bgt.b              .stillnot02
-                          move.w             #1,d0
-
-.stillnot02:
-                          move.w             Noisevol,d3
-                          ext.l              d3
-                          asl.l              #6,d3
-                          cmp.l              #32767,d3
-                          ble.s              .nnnn
-                          move.l             #32767,d3
-
-.nnnn:
-                          asr.w              #2,d0
-                          addq               #1,d0
-                          divs               d0,d3
- 
-                          move.w             d3,noiseloud
-
-                          cmp.w              #64,d3
-                          ble.s              notooloud
-                          move.w             #64,d3
-
-notooloud:
-pastcalc:
-	; d3 contains volume of noise.
-	
-                          move.w             d3,d4
- 
-                          move.w             d3,d2
-                          muls               Noisex,d2
-                          asl.w              #3,d0
-                          divs               d0,d2
- 
-                          bgt.s              quietleft
-                          add.w              d2,d4
-                          bge.s              donequiet
-                          move.w             #0,d4
-                          bra.s              donequiet
-
-quietleft:
-                          sub.w              d2,d3
-                          bge.s              donequiet
-                          move.w             #0,d3
-
-donequiet:
-; d3=leftvol?
-; d4=rightvol?
-
-                          clr.w              needleft
-
-                          cmp.b              d3,d4
-                          bgt.s              RightLouder
- 
-; Left is louder; is it MUCH louder?
-
-                          st                 needleft
-                          move.w             d3,d2
-                          sub.w              d4,d2
-                          cmp.w              #32,d2
-                          slt                needright
-                          bra.b              aboutsame
- 
-RightLouder:
-                          st                 needright
-                          move.w             d4,d2
-                          sub.w              d3,d2
-                          cmp.w              #32,d2
-                          slt                needleft
- 
-aboutsame:
-                          tst.b              STEREO
-                          beq                NOSTEREO
-
-; Find least important sound on left
-
-                          move.l             #0,a2
-                          move.l             #0,d5
-                          move.w             #32767,d2
-                          move.b             IDNUM,d0
-                          lea                LEFTCHANDATA,a3
-                          move.w             #3,d1
-
-FindLeftChannel
-                          tst.b              (a3)
-                          bne.s              .notactive
-                          cmp.b              1(a3),d0
-                          beq.s              FOUNDLEFT
-                          cmp.w              2(a3),d2
-                          blt.s              .notactive
-                          move.w             2(a3),d2
-                          move.l             a3,a2
-                          move.w             d5,d6
-
-.notactive:
-                          add.w              #4,a3
-                          add.w              #1,d5
-                          dbra               d1,FindLeftChannel
-                          move.l             a2,a3
-                          bra.s              gopastleft
-
-FOUNDLEFT:
-                          move.w             d5,d6
-
-gopastleft:
-                          tst.l              a3
-                          bne.s              FOUNDALEFT
-                          rts
-
-FOUNDALEFT:
-; d6 = channel number
-                          move.b             d0,1(a3)
-                          move.w             d3,2(a3)
-
-                          move.w             Samplenum,d5
-                          move.l             #SampleList,a3
-                          move.l             (a3,d5.w*8),a1
-                          move.l             4(a3,d5.w*8),a2
-
-                          tst.b              d6
-                          seq                NoiseMade0LEFT
-                          beq.s              .chan0
-                          cmp.b              #2,d6
-                          slt                NoiseMade1LEFT
-                          blt.b              .chan1
-                          seq                NoiseMade2LEFT
-                          beq.b              .chan2
-                          st                 NoiseMade3LEFT
-
-                          move.b             d5,LEFTPLAYEDTAB+9
-                          move.b             d3,LEFTPLAYEDTAB+1+9
-                          move.b             d4,LEFTPLAYEDTAB+2+9
-                          move.b             d3,vol3left
-                          move.l             a1,pos3LEFT
-                          move.l             a2,Samp3endLEFT
-                          bra.b              dorightchan
- 
-.chan0: 
-                          move.b             d5,LEFTPLAYEDTAB
-                          move.b             d3,LEFTPLAYEDTAB+1
-                          move.b             d4,LEFTPLAYEDTAB+2
-                          move.l             a1,pos0LEFT
-                          move.l             a2,Samp0endLEFT
-                          move.b             d3,vol0left
-                          bra.b              dorightchan
- 
-.chan1:
-                          move.b             d5,LEFTPLAYEDTAB+3
-                          move.b             d3,LEFTPLAYEDTAB+1+3
-                          move.b             d4,LEFTPLAYEDTAB+2+3
-                          move.b             d3,vol1left
-                          move.l             a1,pos1LEFT
-                          move.l             a2,Samp1endLEFT
-                          bra.b              dorightchan
-
-.chan2: 
-                          move.b             d5,LEFTPLAYEDTAB+6
-                          move.b             d3,LEFTPLAYEDTAB+1+6
-                          move.b             d4,LEFTPLAYEDTAB+2+6
-                          move.l             a1,pos2LEFT
-                          move.l             a2,Samp2endLEFT
-                          move.b             d3,vol2left
- 
-dorightchan:
-; Find least important sound on right
-
-                          move.l             #0,a2
-                          move.l             #0,d5
-                          move.w             #10000,d2
-                          move.b             IDNUM,d0
-                          lea                RIGHTCHANDATA,a3
-                          move.w             #3,d1
-
-FindRightChannel:
-                          tst.b              (a3)
-                          bne.s              .notactive
-                          cmp.b              1(a3),d0
-                          beq.s              FOUNDRIGHT
-                          cmp.w              2(a3),d2
-                          blt.s              .notactive
-                          move.w             2(a3),d2
-                          move.l             a3,a2
-                          move.w             d5,d6
-
-.notactive:
-                          add.w              #4,a3
-                          add.w              #1,d5
-                          dbra               d1,FindRightChannel
-                          move.l             a2,a3
-                          bra.s              gopastright
-FOUNDRIGHT:
-                          move.w             d5,d6
-gopastright:
-                          tst.l              a3
-                          bne.s              FOUNDARIGHT
-                          rts
-
-FOUNDARIGHT:
-; d6 = channel number
-                          move.b             d0,1(a3)
-                          move.w             d3,2(a3)
-
-                          move.w             Samplenum,d5
-                          move.l             #SampleList,a3
-                          move.l             (a3,d5.w*8),a1
-                          move.l             4(a3,d5.w*8),a2
-
-                          tst.b              d6
-                          seq                NoiseMade0RIGHT
-                          beq.s              .chan0
-                          cmp.b              #2,d6
-                          slt                NoiseMade1RIGHT
-                          blt.b              .chan1
-                          seq                NoiseMade2RIGHT
-                          beq.b              .chan2
-                          st                 NoiseMade3RIGHT
-
-                          move.b             d5,RIGHTPLAYEDTAB+9
-                          move.b             d3,RIGHTPLAYEDTAB+1+9
-                          move.b             d4,RIGHTPLAYEDTAB+2+9
-                          move.b             d4,vol3right
-                          move.l             a1,pos3RIGHT
-                          move.l             a2,Samp3endRIGHT
-                          rts
- 
-.chan0: 
-                          move.b             d5,RIGHTPLAYEDTAB
-                          move.b             d3,RIGHTPLAYEDTAB+1
-                          move.b             d4,RIGHTPLAYEDTAB+2
-                          move.l             a1,pos0RIGHT
-                          move.l             a2,Samp0endRIGHT
-                          move.b             d4,vol0right
-                          rts
- 
-.chan1:
-                          move.b             d5,RIGHTPLAYEDTAB+3
-                          move.b             d3,RIGHTPLAYEDTAB+1+3
-                          move.b             d4,RIGHTPLAYEDTAB+2+3
-                          move.b             d3,vol1right
-                          move.l             a1,pos1RIGHT
-                          move.l             a2,Samp1endRIGHT
-                          rts
-
-.chan2: 
-                          move.b             d5,RIGHTPLAYEDTAB+6
-                          move.b             d3,RIGHTPLAYEDTAB+1+6
-                          move.b             d4,RIGHTPLAYEDTAB+2+6
-                          move.l             a1,pos2RIGHT
-                          move.l             a2,Samp2endRIGHT
-                          move.b             d3,vol2right
-                          rts
-
-NOSTEREO:
-                          move.l             #0,a2
-                          move.l             #-1,d5
-                          move.w             #32767,d2
-                          move.b             IDNUM,d0
-                          lea                CHANNELDATA,a3
-                          move.w             #7,d1
-FindChannel
-                          tst.b              (a3)
-                          bne.s              .notactive
-                          cmp.b              1(a3),d0
-                          beq.s              FOUNDCHAN
-                          cmp.w              2(a3),d2
-                          blt.s              .notactive
-                          move.w             2(a3),d2
-                          move.l             a3,a2
-                          move.w             d5,d6
-                          add.w              #1,d6
-
-.notactive:
-                          add.w              #4,a3
-                          add.w              #1,d5
-                          dbra               d1,FindChannel
- 
-                          move.l             a2,a3
-                          bra.s              gopastchan
-
-FOUNDCHAN:
-                          move.w             d5,d6
-                          add.w              #1,d6
-
-gopastchan:
-                          tst.w              d6
-                          bge.s              FOUNDACHAN
-
-tooquiet:
-                          rts
-
-FOUNDACHAN:
-; d6 = channel number
-
-                          cmp.w              noiseloud,d2
-                          bgt.s              tooquiet
-
-                          move.b             d0,1(a3)
-                          move.w             noiseloud,2(a3)
-
-                          move.w             Samplenum,d5
-                          move.l             #SampleList,a3
-                          move.l             (a3,d5.w*8),a1
-                          move.l             4(a3,d5.w*8),a2
-
-                          tst.b              d6
-                          beq.b              .chan0
-                          cmp.b              #2,d6
-                          blt                .chan1
-                          beq                .chan2
-                          cmp.b              #4,d6
-                          blt.b              .chan3
-                          beq                .chan4
-                          cmp.b              #6,d6
-                          blt                .chan5
-                          beq                .chan6
-                          st                 NoiseMade3RIGHT
-
-                          move.b             d5,RIGHTPLAYEDTAB+9
-                          move.b             d3,RIGHTPLAYEDTAB+1+9
-                          move.b             d4,RIGHTPLAYEDTAB+2+9
-                          move.b             d4,vol3right
-                          move.l             a1,pos3RIGHT
-                          move.l             a2,Samp3endRIGHT
-                          rts
-
-.chan3:
-                          st                 NoiseMade3LEFT
-                          move.b             d5,LEFTPLAYEDTAB+9
-                          move.b             d3,LEFTPLAYEDTAB+1+9
-                          move.b             d4,LEFTPLAYEDTAB+2+9
-                          move.b             d3,vol3left
-                          move.l             a1,pos3LEFT
-                          move.l             a2,Samp3endLEFT
-                          bra                dorightchan
- 
-.chan0: 
-                          st                 NoiseMade0LEFT
-                          move.b             d5,LEFTPLAYEDTAB
-                          move.b             d3,LEFTPLAYEDTAB+1
-                          move.b             d4,LEFTPLAYEDTAB+2
-                          move.l             a1,pos0LEFT
-                          move.l             a2,Samp0endLEFT
-                          move.b             d3,vol0left
-                          rts
- 
-.chan1:
-                          st                 NoiseMade1LEFT
-                          move.b             d5,LEFTPLAYEDTAB+3
-                          move.b             d3,LEFTPLAYEDTAB+1+3
-                          move.b             d4,LEFTPLAYEDTAB+2+3
-                          move.b             d3,vol1left
-                          move.l             a1,pos1LEFT
-                          move.l             a2,Samp1endLEFT
-                          rts
-
-.chan2: 
-                          st                 NoiseMade2LEFT
-                          move.b             d5,LEFTPLAYEDTAB+6
-                          move.b             d3,LEFTPLAYEDTAB+1+6
-                          move.b             d4,LEFTPLAYEDTAB+2+6
-                          move.l             a1,pos2LEFT
-                          move.l             a2,Samp2endLEFT
-                          move.b             d3,vol2left
-                          rts
- 
-.chan4: 
-                          st                 NoiseMade0RIGHT
-                          move.b             d5,RIGHTPLAYEDTAB
-                          move.b             d3,RIGHTPLAYEDTAB+1
-                          move.b             d4,RIGHTPLAYEDTAB+2
-                          move.l             a1,pos0RIGHT
-                          move.l             a2,Samp0endRIGHT
-                          move.b             d4,vol0right
-                          rts
- 
-.chan5:
-                          st                 NoiseMade1RIGHT
-                          move.b             d5,RIGHTPLAYEDTAB+3
-                          move.b             d3,RIGHTPLAYEDTAB+1+3
-                          move.b             d4,RIGHTPLAYEDTAB+2+3
-                          move.b             d3,vol1right
-                          move.l             a1,pos1RIGHT
-                          move.l             a2,Samp1endRIGHT
-                          rts
-
-.chan6: 
-                          st                 NoiseMade2RIGHT
-                          move.b             d5,RIGHTPLAYEDTAB+6
-                          move.b             d3,RIGHTPLAYEDTAB+1+6
-                          move.b             d4,RIGHTPLAYEDTAB+2+6
-                          move.l             a1,pos2RIGHT
-                          move.l             a2,Samp2endRIGHT
-                          move.b             d3,vol2right
-                          rts
-
-*********************************************************************************************
-; SFX memory begin, end and sample number
-
-SampleList:
-                          dc.l               0,0                                                                  ; 0 : Scream,EndScream
-                          dc.l               0,0                                                                  ; 1 : Shoot,EndShoot
-                          dc.l               0,0                                                                  ; 2 : Munch,EndMunch
-                          dc.l               0,0                                                                  ; 3 : PooGun,EndPooGun
-                          dc.l               0,0                                                                  ; 4 : Collect,EndCollect
-
-                          dc.l               0,0                                                                  ; 5 : DoorNoise,EndDoorNoise 
-                          dc.l               0,0                                                                  ; 6 : Bass,BassEnd
-                          dc.l               0,0                                                                  ; 7 : Stomp,EndStomp
-                          dc.l               0,0                                                                  ; 8 : LowScream,EndLowScream
-                          dc.l               0,0                                                                  ; 9 : BaddieGun,EndBaddieGun
-
-                          dc.l               0,0                                                                  ; 10 : SwitchNoise,EndSwitch
-                          dc.l               0,0                                                                  ; 11 : Reload,EndReload
-                          dc.l               0,0                                                                  ; 12 : NoAmmo,EndNoAmmo
-                          dc.l               0,0                                                                  ; 13 : Splotch,EndSplotch 
-                          dc.l               0,0                                                                  ; 14 : SplatPop,EndSplatPop
-
-                          dc.l               0,0                                                                  ; 15 : Boom,EndBoom
-                          dc.l               0,0                                                                  ; 16 : Hiss,EndHiss
-                          dc.l               0,0                                                                  ; 17 : Howl1,EndHowl1
-                          dc.l               0,0                                                                  ; 18 : Howl2,EndHowl2
-                          dc.l               0,0                                                                  ; 19 : Pant,EndPant
-
-                          dc.l               0,0                                                                  ; 20 : Whoosh,EndWhoosh
-                          dc.l               0,0                                                                  ; 21  ShotGun : ROAR,EndROAR
-
-                          dc.l               0,0                                                                  ; 22 : Flame,EndFlame 
-                          dc.l               0,0                                                                  ; 23  Muffled
-                          dc.l               0,0                                                                  ; 24  Clop
-                          dc.l               0,0                                                                  ; 25  Clank
-                          dc.l               0,0                                                                  ; 26  Teleport 
-                          dc.l               0,0                                                                  ; 27  HalfWormPain
-
-                          dc.l               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-                          dc.l               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-                          dc.l               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-                          dc.l               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-
-                          dc.l               0
-
-*********************************************************************************************
-
-storeval:                 dc.w               0
+                          include            "SoundPlayer.s"
 
 *********************************************************************************************
 
                           include            "WallChunk.s"
-                          include            "LoadFromDisk.s"
-                          include            "ScreenSetup.s"
-                          include            "ControlLoop.s"
 
 *********************************************************************************************
 
-saveinters:               dc.w               0
+                          include            "LoadFromDisk.s"
 
-z:                        dc.w               10
+*********************************************************************************************
 
-notifplaying:             dc.w               0
+                          include            "ScreenSetup.s"
 
-audpos1:                  dc.w               0
-audpos1b:                 dc.w               0
-audpos2:                  dc.w               0
-audpos2b:                 dc.w               0
-audpos3:                  dc.w               0
-audpos3b:                 dc.w               0
-audpos4:                  dc.w               0
-audpos4b:                 dc.w               0
+*********************************************************************************************
 
-vol0left:                 dc.w               0
-vol0right:                dc.w               0
-vol1left:                 dc.w               0
-vol1right:                dc.w               0
-vol2left:                 dc.w               0
-vol2right:                dc.w               0
-vol3left:                 dc.w               0
-vol3right:                dc.w               0
-
-pos:                      dc.l               0
-
-pos0LEFT:                 dc.l               empty
-pos1LEFT:                 dc.l               empty
-pos2LEFT:                 dc.l               empty
-pos3LEFT:                 dc.l               empty
-pos0RIGHT:                dc.l               empty
-pos1RIGHT:                dc.l               empty
-pos2RIGHT:                dc.l               empty
-pos3RIGHT:                dc.l               empty
-
-numtodo:                  dc.w               0
-
-npt:                      dc.w               0
+                          include            "ControlLoop.s"
 
 *********************************************************************************************
 
@@ -9343,7 +8133,7 @@ Bumptile:                 ; incbin "bumptile"
 *********************************************************************************************	
 
 floorscalecols:           ;incbin              "data/FloorPalScaled"
-                          include            "data/FloorPalScaled.s"
+                          include            "data/pal/FloorPalScaled.s"
                           ds.w               256*4
                           even
 
@@ -9358,7 +8148,7 @@ floortile:                dc.l               0
 
 *********************************************************************************************
 
-BackPicture:              incbin             "data/backfile"
+BackPicture:              incbin             "data/gfx/backfile"
 EndBackPicture:
                           even
 
@@ -9371,7 +8161,7 @@ frompt:                   dc.l               0                                  
 
 *********************************************************************************************
 
-SineTable:                incbin             "data/bigsine"
+SineTable:                incbin             "data/math/bigsine"
                           even
 
 *********************************************************************************************
@@ -9544,7 +8334,7 @@ p2_holddown:              dc.w               0
 *********************************************************************************************
 ; Glassball
 
-glassball:                incbin             "data/glassball"
+glassball:                incbin             "data/helper/glassball"
 endglass:                 
                           even
                           
@@ -9596,12 +8386,12 @@ endwait:                  dc.w               0
 
 *********************************************************************************************
 
-Faces:                    incbin             "data/faces2raw"
+Faces:                    incbin             "data/gfx/faces2raw"
                           even
 
 *********************************************************************************************
 
-consttab:                 incbin             "data/constantfile"
+consttab:                 incbin             "data/math/constantfile"
                           even
 
 *********************************************************************************************
@@ -9611,12 +8401,12 @@ WorkSpace:                ds.l               8192
 
 *********************************************************************************************
 
-darkentab:                incbin             "data/darkenedcols"
+darkentab:                incbin             "data/pal/darkenedcols"
                           even
-brightentab:              ;incbin              "data/OldBrightenFile"
-                          include            "data/OldBrightenFile.s"
+brightentab:              ;incbin              "data/helper/OldBrightenFile"
+                          include            "data/helper/OldBrightenFile.s"
                           even
-waterfile:                incbin             "data/waterfile"
+waterfile:                incbin             "data/helper/waterfile"
                           even
 
 *********************************************************************************************
@@ -9630,31 +8420,31 @@ nullspr:                  dc.l               0
 
 *********************************************************************************************
 
-borders:                  incbin             "data/newleftbord"
-                          incbin             "data/newrightbord"
+borders:                  incbin             "data/gfx/newleftbord"
+                          incbin             "data/gfx/newrightbord"
                           even
                           
 *********************************************************************************************
 
-health:                   incbin             "data/healthstrip"
+health:                   incbin             "data/gfx/healthstrip"
                           even
                           
 *********************************************************************************************
 
-Ammunition:               incbin             "data/ammostrip"
+Ammunition:               incbin             "data/gfx/ammostrip"
                           even
 
 *********************************************************************************************
 
-HealthPal:                incbin             "data/HealthPal"
+HealthPal:                incbin             "data/pal/HealthPal"
                           even
 
 *********************************************************************************************
 
-PanelKeys:                incbin             "data/greenkey"                                                      ; 1056 bytes 
-                          incbin             "data/redkey"                                                        ; 1056 bytes 
-                          incbin             "data/yellowkey"                                                     ; 1056 bytes 
-                          incbin             "data/bluekey"                                                       ; 1056 bytes 
+PanelKeys:                incbin             "data/gfx/greenkey"                         ; 1056 bytes 
+                          incbin             "data/gfx/redkey"                           ; 1056 bytes 
+                          incbin             "data/gfx/yellowkey"                        ; 1056 bytes 
+                          incbin             "data/gfx/bluekey"                          ; 1056 bytes 
                           even
 
 *********************************************************************************************
@@ -9772,7 +8562,7 @@ fetchstop:                dc.w               $88
 
 ***************************************************************************
 
-bordercols:               incbin             "data/borderpal"
+bordercols:               incbin             "data/copper/borderpal"
 
                           dc.w               spr0ptl
 s0l:                      dc.w               0
@@ -9810,7 +8600,7 @@ s7h:                      dc.w               0
 ***************************************************************************
 
                           dc.w               bplcon3,$0c42
-                          incbin             "data/borderpal"
+                          incbin             "data/copper/borderpal"
 
                           dc.w               bplcon3,$8c42
                           dc.w               color00
@@ -9934,7 +8724,7 @@ n1l:                      dc.w               0
                           dc.w               bpl1pth
 n1h:                      dc.w               0
 
-                          incbin             "data/Panelpal"
+                          incbin             "data/copper/Panelpal"
 
                           dc.w               bpl2pth
 p2h:                      dc.w               0
@@ -10027,7 +8817,7 @@ doSkipFaces:              dc.w               $ffff,$fffe                        
                           dc.w               bpl2mod
                           dc.w               0 
 
-                          include            "data/faces2cols.s"
+                          include            "data/copper/faces2cols.s"
 
                           dc.w               bpl1pth
 f1h:                      dc.w               0
@@ -10251,9 +9041,8 @@ INITTIMER:
 
                           move.l             #0,TimeCount
                           move.l             #0,NumTimes
-
-                          ;clr.b         counting                                                             ; agi: added
-                          ;clr.b         oktodisplay
+                          clr.b              counting                                                             
+                          clr.b              oktodisplay
 
                           rts
 
@@ -10322,7 +9111,7 @@ STOPTIMER:
 
 *********************************************************************************************
 
-digits:                   incbin             "data/numbers"
+digits:                   incbin             "data/fonts/numbers"
                           even
 
 *********************************************************************************************
@@ -10341,606 +9130,7 @@ CHEATNUM:                 dc.l               0
 
 *********************************************************************************************
 
-                          SECTION            MusicCode,CODE_F
-
-*********************************************************************************************
-
-UseAllChannels:           dc.w               0
-
-*********************************************************************************************
-
-mt_init:                  
-
-                          move.l             mt_data,a0
-                          move.l             a0,a1
-                          add.l              #$3b8,a1
-                          moveq              #$7f,d0
-                          moveq              #0,d1
-
-mt_loop:                  
-                          move.l             d1,d2
-                          subq.w             #1,d0
-
-mt_lop2:                  
-                          move.b             (a1)+,d1
-                          cmp.b              d2,d1
-                          bgt.s              mt_loop
-                          dbf                d0,mt_lop2
-                          addq.b             #1,d2
-
-                          lea                mt_samplestarts(pc),a1
-                          asl.l              #8,d2
-                          asl.l              #2,d2
-                          add.l              #$43c,d2
-                          add.l              a0,d2
-                          move.l             d2,a2
-                          moveq              #$1e,d0
-
-mt_lop3:                  
-                          clr.l              (a2)
-                          move.l             a2,(a1)+
-                          moveq              #0,d1
-                          move.w             42(a0),d1
-                          asl.l              #1,d1
-                          add.l              d1,a2
-                          add.l              #$1e,a0
-                          dbf                d0,mt_lop3
-
-                          or.b               #$2,$bfe001
-                          move.b             #$6,mt_speed
-                          clr.w              $dff0a8
-                          clr.w              $dff0b8
-                          clr.w              $dff0c8
-                          clr.w              $dff0d8
-                          clr.b              mt_songpos
-                          clr.b              mt_counter
-                          clr.w              mt_pattpos
-                          rts
-
-*********************************************************************************************
-
-mt_end:
-                  
-                          clr.w              $dff0a8
-                          clr.w              $dff0b8
-                          clr.w              $dff0c8
-                          clr.w              $dff0d8
-                          move.w             #$f,$dff096
-                          rts
-
-*********************************************************************************************
-
-mt_music:
-
-                          movem.l            d0-d4/a0-a3/a5-a6,-(a7)
-                          move.l             mt_data,a0
-                          addq.b             #$1,mt_counter
-                          move.b             mt_counter,D0
-                          cmp.b              mt_speed,D0
-                          blt.s              mt_nonew
-                          clr.b              mt_counter
-                          bra                mt_getnew
-
-mt_nonew:
-                          lea                mt_voice1(pc),a6
-                          lea                $dff0a0,a5
-                          bsr                mt_checkcom
-                          lea                mt_voice2(pc),a6
-                          lea                $dff0b0,a5
-                          bsr                mt_checkcom
-                          tst.b              UseAllChannels
-                          beq                mt_endr
-                          lea                mt_voice3(pc),a6
-                          lea                $dff0c0,a5
-                          bsr                mt_checkcom
-                          lea                mt_voice4(pc),a6
-                          lea                $dff0d0,a5
-                          bsr                mt_checkcom
-                          bra                mt_endr
-
-mt_arpeggio:
-                          moveq              #0,d0
-                          move.b             mt_counter,d0
-                          divs               #$3,d0
-                          swap               d0
-                          cmp.w              #$0,d0
-                          beq.s              mt_arp2
-                          cmp.w              #$2,d0
-                          beq.s              mt_arp1
-
-                          moveq              #0,d0
-                          move.b             $3(a6),d0
-                          lsr.b              #4,d0
-                          bra.s              mt_arp3
-
-mt_arp1:                  
-                          moveq              #0,d0
-                          move.b             $3(a6),d0
-                          and.b              #$f,d0
-                          bra.s              mt_arp3
-
-mt_arp2:                  
-                          move.w             $10(a6),d2
-                          bra.s              mt_arp4
-
-mt_arp3:                  
-                          asl.w              #1,d0
-                          moveq              #0,d1
-                          move.w             $10(a6),d1
-                          lea                mt_periods(pc),a0
-                          moveq              #$24,d7
-
-mt_arploop:
-                          move.w             (a0,d0.w),d2
-                          cmp.w              (a0),d1
-                          bge.s              mt_arp4
-                          addq.l             #2,a0
-                          dbf                d7,mt_arploop
-                          rts
-
-mt_arp4:                  
-                          move.w             d2,$6(a5)
-                          rts
-
-mt_getnew:
-                          move.l             mt_data,a0
-                          move.l             a0,a3
-                          move.l             a0,a2
-                          add.l              #$c,a3
-                          add.l              #$3b8,a2
-                          add.l              #$43c,a0
-
-                          moveq              #0,d0
-                          move.l             d0,d1
-                          move.b             mt_songpos,d0
-                          move.b             (a2,d0.w),d1
-                          asl.l              #8,d1
-                          asl.l              #2,d1
-                          add.w              mt_pattpos,d1
-                          clr.w              mt_dmacon
-
-                          lea                $dff0a0,a5
-                          lea                mt_voice1(pc),a6
-                          bsr                mt_playvoice
-                          lea                $dff0b0,a5
-                          lea                mt_voice2(pc),a6
-                          bsr                mt_playvoice
-                          tst.b              UseAllChannels
-                          beq                mt_setdma
-                          lea                $dff0c0,a5
-                          lea                mt_voice3(pc),a6
-                          bsr                mt_playvoice
-                          lea                $dff0d0,a5
-                          lea                mt_voice4(pc),a6
-                          bsr                mt_playvoice
-                          bra                mt_setdma
-
-*********************************************************************************************
-
-mt_playvoice:
-
-                          move.l             (a0,d1.l),(a6)
-                          addq.l             #4,d1
-                          moveq              #0,d2
-                          move.b             $2(a6),d2
-                          and.b              #$f0,d2
-                          lsr.b              #4,d2
-                          move.b             (a6),d0
-                          and.b              #$f0,d0
-                          or.b               d0,d2
-                          tst.b              d2
-                          beq.s              mt_setregs
-                          moveq              #0,d3
-                          lea                mt_samplestarts(pc),a1
-                          move.l             d2,d4
-                          subq.l             #$1,d2
-                          asl.l              #2,d2
-                          mulu               #$1e,d4
-                          move.l             (a1,d2.l),$4(a6)
-                          move.w             (a3,d4.l),$8(a6)
-                          move.w             $2(a3,d4.l),$12(a6)
-                          move.w             $4(a3,d4.l),d3
-                          tst.w              d3
-                          beq.s              mt_noloop
-                          move.l             $4(a6),d2
-                          asl.w              #1,d3
-                          add.l              d3,d2
-                          move.l             d2,$a(a6)
-                          move.w             $4(a3,d4.l),d0
-                          add.w              $6(a3,d4.l),d0
-                          move.w             d0,8(a6)
-                          move.w             $6(a3,d4.l),$e(a6)
-                          move.w             $12(a6),d0
-                          asr.w              #2,d0
-                          move.w             d0,$8(a5)
-                          bra.s              mt_setregs
-
-mt_noloop:
-                          move.l             $4(a6),d2
-                          add.l              d3,d2
-                          move.l             d2,$a(a6)
-                          move.w             $6(a3,d4.l),$e(a6)
-                          move.w             $12(a6),d0
-                          asr.w              #2,d0
-                          move.w             d0,$8(a5)
-
-mt_setregs:
-                          move.w             (a6),d0
-                          and.w              #$fff,d0
-                          beq                mt_checkcom2
-                          move.b             $2(a6),d0
-                          and.b              #$F,d0
-                          cmp.b              #$3,d0
-                          bne.s              mt_setperiod
-                          bsr                mt_setmyport
-                          bra                mt_checkcom2
-
-mt_setperiod:
-                          move.w             (a6),$10(a6)
-                          and.w              #$fff,$10(a6)
-                          move.w             $14(a6),d0
-                          move.w             d0,$dff096
-                          clr.b              $1b(a6)
-
-                          move.l             $4(a6),(a5)
-                          move.w             $8(a6),$4(a5)
-                          move.w             $10(a6),d0
-                          and.w              #$fff,d0
-                          move.w             d0,$6(a5)
-                          move.w             $14(a6),d0
-                          or.w               d0,mt_dmacon
-                          bra                mt_checkcom2
-
-mt_setdma:
-                          move.w             #250,d0
-
-mt_wait:
-                          add.w              #1,testchip
-                          dbra               d0,mt_wait
-                          move.w             mt_dmacon,d0
-                          or.w               #$8000,d0
-                          and.w              #%1111111111110011,d0
-                          move.w             d0,$dff096
-                          move.w             #250,d0
-
-mt_wait2:
-                          add.w              #1,testchip
-                          dbra               d0,mt_wait2
-                          lea                $dff000,a5
-                          tst.b              UseAllChannels
-                          beq.s              noall
-                          lea                mt_voice4(pc),a6
-                          move.l             $a(a6),$d0(a5)
-                          move.w             $e(a6),$d4(a5)
-                          lea                mt_voice3(pc),a6
-                          move.l             $a(a6),$c0(a5)
-                          move.w             $e(a6),$c4(a5)
-
-noall:
-                          lea                mt_voice2(pc),a6
-                          move.l             $a(a6),$b0(a5)
-                          move.w             $e(a6),$b4(a5)
-                          lea                mt_voice1(pc),a6
-                          move.l             $a(a6),$a0(a5)
-                          move.w             $e(a6),$a4(a5)
-
-                          add.w              #$10,mt_pattpos
-                          cmp.w              #$400,mt_pattpos
-                          bne.s              mt_endr
-
-mt_nex:                   
-                          clr.w              mt_pattpos
-                          clr.b              mt_break
-                          addq.b             #1,mt_songpos
-                          and.b              #$7f,mt_songpos
-                          move.b             mt_songpos,d1
-
-                          ;	cmp.b	mt_data+$3b6,d1
-                          ;	bne.s	mt_endr
-                          ;	move.b	mt_data+$3b7,mt_songpos
-
-mt_endr:                  
-                          tst.b              mt_break
-                          bne.s              mt_nex
-                          movem.l            (a7)+,d0-d4/a0-a3/a5-a6
-                          rts
-
-mt_setmyport:
-                          move.w             (a6),d2
-                          and.w              #$fff,d2
-                          move.w             d2,$18(a6)
-                          move.w             $10(a6),d0
-                          clr.b              $16(a6)
-                          cmp.w              d0,d2
-                          beq.s              mt_clrport
-                          bge.s              mt_rt
-                          move.b             #$1,$16(a6)
-                          rts
-
-mt_clrport:
-                          clr.w              $18(a6)
-
-mt_rt:                    
-                          rts
-
-*********************************************************************************************
-
-CODESTORE:                dc.l               0
-
-*********************************************************************************************
-
-mt_myport:
-                          move.b             $3(a6),d0
-                          beq.s              mt_myslide
-                          move.b             d0,$17(a6)
-                          clr.b              $3(a6)
-
-mt_myslide:
-                          tst.w              $18(a6)
-                          beq.s              mt_rt
-                          moveq              #0,d0
-                          move.b             $17(a6),d0
-                          tst.b              $16(a6)
-                          bne.s              mt_mysub
-                          add.w              d0,$10(a6)
-                          move.w             $18(a6),d0
-                          cmp.w              $10(a6),d0
-                          bgt.s              mt_myok
-                          move.w             $18(a6),$10(a6)
-                          clr.w              $18(a6)
-
-mt_myok:                  
-                          move.w             $10(a6),$6(a5)
-                          rts
-
-mt_mysub:
-                          sub.w              d0,$10(a6)
-                          move.w             $18(a6),d0
-                          cmp.w              $10(a6),d0
-                          blt.s              mt_myok
-                          move.w             $18(a6),$10(a6)
-                          clr.w              $18(a6)
-                          move.w             $10(a6),$6(a5)
-                          rts
-
-mt_vib:                   
-                          move.b             $3(a6),d0
-                          beq.s              mt_vi
-                          move.b             d0,$1a(a6)
-
-mt_vi:                    
-                          move.b             $1b(a6),d0
-                          lea                mt_sin(pc),a4
-                          lsr.w              #$2,d0
-                          and.w              #$1f,d0
-                          moveq              #0,d2
-                          move.b             (a4,d0.w),d2
-                          move.b             $1a(a6),d0
-                          and.w              #$f,d0
-                          mulu               d0,d2
-                          lsr.w              #$6,d2
-                          move.w             $10(a6),d0
-                          tst.b              $1b(a6)
-                          bmi.s              mt_vibmin
-                          add.w              d2,d0
-                          bra.s              mt_vib2
-
-mt_vibmin:
-                          sub.w              d2,d0
-
-mt_vib2:                  
-                          move.w             d0,$6(a5)
-                          move.b             $1a(a6),d0
-                          lsr.w              #$2,d0
-                          and.w              #$3c,d0
-                          add.b              d0,$1b(a6)
-                          rts
-
-mt_nop:                   
-                          move.w             $10(a6),$6(a5)
-                          rts
-
-mt_checkcom:
-                          move.w             $2(a6),d0
-                          and.w              #$fff,d0
-                          beq.s              mt_nop
-                          move.b             $2(a6),d0
-                          and.b              #$f,d0
-                          tst.b              d0
-                          beq                mt_arpeggio
-                          cmp.b              #$1,d0
-                          beq.s              mt_portup
-                          cmp.b              #$2,d0
-                          beq                mt_portdown
-                          cmp.b              #$3,d0
-                          beq                mt_myport
-                          cmp.b              #$4,d0
-                          beq                mt_vib
-                          move.w             $10(a6),$6(a5)
-                          cmp.b              #$a,d0
-                          beq.s              mt_volslide
-                          rts
-
-mt_volslide:
-                          moveq              #0,d0
-                          move.b             $3(a6),d0
-                          lsr.b              #4,d0
-                          tst.b              d0
-                          beq.s              mt_voldown
-                          add.w              d0,$12(a6)
-                          cmp.w              #$40,$12(a6)
-                          bmi.s              mt_vol2
-                          move.w             #$40,$12(a6)
-
-mt_vol2:                  
-                          move.w             $12(a6),d0
-                          asr.w              #2,d0
-                          move.w             d0,$8(a5)
-                          rts
-
-mt_voldown:
-                          moveq              #0,d0
-                          move.b             $3(a6),d0
-                          and.b              #$f,d0
-                          sub.w              d0,$12(a6)
-                          bpl.s              mt_vol3
-                          clr.w              $12(a6)
-
-mt_vol3:                  
-                          move.w             $12(a6),d0
-                          asr.w              #2,d0
-                          move.w             d0,$8(a5)
-                          rts
-
-mt_portup:
-                          moveq              #0,d0
-                          move.b             $3(a6),d0
-                          sub.w              d0,$10(a6)
-                          move.w             $10(a6),d0
-                          and.w              #$fff,d0
-                          cmp.w              #$71,d0
-                          bpl.s              mt_por2
-                          and.w              #$f000,$10(a6)
-                          or.w               #$71,$10(a6)
-
-mt_por2:                  
-                          move.w             $10(a6),d0
-                          and.w              #$fff,d0
-                          move.w             d0,$6(a5)
-                          rts
-
-mt_portdown:
-                          clr.w              d0
-                          move.b             $3(a6),d0
-                          add.w              d0,$10(a6)
-                          move.w             $10(a6),d0
-                          and.w              #$fff,d0
-                          cmp.w              #$358,d0
-                          bmi.s              mt_por3
-                          and.w              #$f000,$10(a6)
-                          or.w               #$358,$10(a6)
-
-mt_por3:                  
-                          move.w             $10(a6),d0
-                          and.w              #$fff,d0
-                          move.w             d0,$6(a5)
-                          rts
-
-mt_checkcom2:
-                          move.b             $2(a6),d0
-                          and.b              #$f,d0
-                          cmp.b              #$e,d0
-                          beq.s              mt_setfilt
-                          cmp.b              #$d,d0
-                          beq.s              mt_pattbreak
-                          cmp.b              #$b,d0
-                          beq.s              mt_posjmp
-                          cmp.b              #$c,d0
-                          beq.s              mt_setvol
-                          cmp.b              #$f,d0
-                          beq.s              mt_setspeed
-                          rts
-
-mt_setfilt:
-                          move.b             $3(a6),d0
-                          and.b              #$1,d0
-                          asl.b              #$1,d0
-                          and.b              #$fd,$bfe001
-                          or.b               d0,$bfe001
-                          rts
-
-mt_pattbreak:
-                          not.b              mt_break
-                          rts
-
-mt_posjmp:
-                          st                 reachedend
-                          move.b             $3(a6),d0
-                          subq.b             #$1,d0
-                          move.b             d0,mt_songpos
-                          not.b              mt_break
-                          rts
-
-mt_setvol:
-                          cmp.b              #$40,$3(a6)
-                          ble.s              mt_vol4
-                          move.b             #$40,$3(a6)
-
-mt_vol4:                  
-                          move.b             $3(a6),d0
-                          asr.w              #2,d0
-                          move.w             d0,$8(a5)
-                          rts
-
-mt_setspeed:
-                          cmp.b              #$1f,$3(a6)
-                          ble.s              mt_sets
-                          move.b             #$1f,$3(a6)
-
-mt_sets:                  
-                          move.b             $3(a6),d0
-                          beq.s              mt_rts2
-                          move.b             d0,mt_speed
-                          clr.b              mt_counter
-
-mt_rts2:                  
-                          rts
-
-*********************************************************************************************
-
-mt_sin:
-                          DC.b               $00,$18,$31,$4a,$61,$78,$8d,$a1,$b4,$c5,$d4,$e0,$eb,$f4,$fa,$fd
-                          DC.b               $ff,$fd,$fa,$f4,$eb,$e0,$d4,$c5,$b4,$a1,$8d,$78,$61,$4a,$31,$18
-                          even
-
-*********************************************************************************************
-
-mt_periods:
-                          DC.w               $0358,$0328,$02fa,$02d0,$02a6,$0280,$025c,$023a,$021a,$01fc,$01e0
-                          DC.w               $01c5,$01ac,$0194,$017d,$0168,$0153,$0140,$012e,$011d,$010d,$00fe
-                          DC.w               $00f0,$00e2,$00d6,$00ca,$00be,$00b4,$00aa,$00a0,$0097,$008f,$0087
-                          DC.w               $007f,$0078,$0071,$0000,$0000
-
-*********************************************************************************************
-
-reachedend:               dc.b               0
-mt_speed:                 DC.b               6
-mt_songpos:               DC.b               0
-mt_pattpos:               DC.w               0
-mt_counter:               DC.b               0
-                          even
-
-*********************************************************************************************
-
-mt_break:                 DC.b               0
-mt_dmacon:                DC.w               0
-mt_samplestarts:          DS.L               $1f
-mt_voice1:                DS.w               10
-                          DC.w               1
-                          DS.w               3
-mt_voice2:                DS.w               10
-                          DC.w               2
-                          DS.w               3
-mt_voice3:                DS.w               10
-                          DC.w               4
-                          DS.w               3
-mt_voice4:                DS.w               10
-                          DC.w               8
-                          DS.w               3
-                          even
-
-*********************************************************************************************
-
-testchip:                 dc.w               0
-
-*********************************************************************************************
-
-mt_data:                  dc.l               0
-tstchip:                  dc.l               0
-
-*********************************************************************************************
-
-                          SECTION            SerialCode,CODE_F
+                          SECTION            SerialTransferCode,CODE_F
 
 *********************************************************************************************
 ; Multi player
@@ -10952,7 +9142,16 @@ tstchip:                  dc.l               0
 
 *********************************************************************************************
 
-                          SECTION            SampleData,DATA_C
+                          SECTION            MtPlayerCode,CODE_F
+
+*********************************************************************************************
+; Music player
+
+                          include            "MtPlayer.s"
+
+*********************************************************************************************
+
+                          SECTION            MtPlayerMusicData,DATA_C
 
 *********************************************************************************************
 

@@ -139,7 +139,6 @@ FINISHEDLEVEL:       dc.w                   STARTLEVEL
 ; mors (multi or single): m = master, s = slave, n = single, q = quit/exit
 
 PlayGame:
-
                      move.b                 #'n',mors
 
 *********************************************************************************************
@@ -2475,8 +2474,9 @@ LOADTITLESCRN2:
                      move.l                 doslib,a6
                      jsr                    _LVOOpen(a6)
                      move.l                 d0,handle
-                     move.l                 d0,d1
+                     beq                  ScrName2FileNotFound
 
+                     move.l                 d0,d1
                      move.l                 doslib,a6
                      move.l                 TITLESCRNADDR,d2
                      move.l               #TitleScrAddrSize,d3
@@ -2486,6 +2486,7 @@ LOADTITLESCRN2:
                      move.l                 handle,d1
                      jsr                    _LVOClose(a6)
 
+ScrName2FileNotFound:
                      rts
 
 *********************************************************************************************
@@ -2541,8 +2542,9 @@ LOADTITLESCRN:
                      move.l                 doslib,a6
                      jsr                    _LVOOpen(a6)
                      move.l                 d0,handle
-                     move.l                 d0,d1
+                     beq                  ScrNamefileNotFound
 
+                     move.l                 d0,d1
                      move.l                 doslib,a6
                      move.l                 TITLESCRNADDR,d2
                      move.l               #TitleScrAddrSize,d3
@@ -2552,6 +2554,7 @@ LOADTITLESCRN:
                      move.l                 handle,d1
                      jsr                    _LVOClose(a6)
  
+ScrNamefileNotFound:
                      rts
 
 *********************************************************************************************
@@ -2649,18 +2652,21 @@ putinrain:
 
 *********************************************************************************************
 
-font:                incbin                 "data/OptFont"
+font:                incbin               "data/fonts/OptFont"
                      even
 
-rain:                incbin                 "data/optcop"
+rain:                incbin               "data/copper/optcop"
                      even
 
 *********************************************************************************************
+; MED-Player
 
                      IFNE                   ENABLETITLEMUSIC
                      include                "ProPlayer.s"
                      even
+                     
                      include                "LoadMod.s"
+                     even
                      ENDC
 
 *********************************************************************************************

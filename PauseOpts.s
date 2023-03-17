@@ -375,4 +375,4 @@ FLOOROPTS:
 
 *********************************************************************************************
 
-PAUSEFONT:            incbin     "data/PAUSEFONT"
+PAUSEFONT:            incbin             "data/fonts/PAUSEFONT"

@@ -1,0 +1,17 @@
+*************************************************
+* Stuff to do to get a C2P version:
+* Change copperlist
+* Change wall drawing
+* change floor drawing
+* change object drawing
+* change polygon drawing (ugh)
+* Write a palette generator program in AMOS
+* to provide a good 256 colour palette and
+* convert all graphics files specified
+* (possibly included in the game linker
+* program).
+* Possibly change the wall/floor/object
+* palettes to look nicer with more shades.
+* RE-implement stippling (if not present)
+* as it will look gorgeous now.
+*************************************************
