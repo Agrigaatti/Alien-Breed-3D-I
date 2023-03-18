@@ -31,11 +31,6 @@ OSFriendlyStartup:
 
 ********************************************************
 
-            move.l      #dosName,a1              
-            moveq       #0,d0                    
-            jsr         _LVOOpenLibrary(a6)      
-            move.l      d0,dosBase 
-
             lea         pr_MsgPort(a2),a0
             jsr         _LVOWaitPort(a6)
                
@@ -43,15 +38,20 @@ OSFriendlyStartup:
             jsr         _LVOGetMsg(a6)
             move.l      d0,wbMsg
 
-********************************************************            
-
             move.l      d0,a0
             move.l      sm_NumArgs(a0),d0       
-            beq         skipCurrentDirectory
+            beq         skipCurrentDir
 
             move.l      sm_ArgList(a0),a1       
+            move.l      wa_Lock(a1),curDirLock
             
-            move.l      wa_Lock(a1),d1          
+            move.l      #dosName,a1              
+            moveq       #0,d0                    
+            jsr         _LVOOpenLibrary(a6)      
+            move.l      d0,dosBase   
+
+            move.l      d0,a6
+            move.l      curDirLock,d1
             move.l      dosBase,a6
             jsr         _LVOCurrentDir(a6)
 
@@ -60,7 +60,7 @@ OSFriendlyStartup:
             jsr         _LVOCloseLibrary(a6)
             move.l      #0,dosBase
             
-skipCurrentDirectory:
+skipCurrentDir:
 
 ********************************************************
 
@@ -171,8 +171,7 @@ oldcopper:  dc.l        0
 wbMsg:      dc.l        0
 task:       dc.l        0
 
-newLock:    dc.l        0
-oldLock:    dc.l        0
+curDirLock: dc.l        0
 
 *********************************************************************************************
 
