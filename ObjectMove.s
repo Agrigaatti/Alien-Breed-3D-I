@@ -67,7 +67,8 @@ checkwalls:
                    moveq      #0,d1
                    move.w     8(a2),d1
                    blt        thisisawall2
-                   move.l     ZoneAdds,a4
+                   
+                   move.l     zoneAdds,a4
                    move.l     (a4,d1.w*4),a4
                    add.l      LEVELDATA,a4
 
@@ -482,7 +483,7 @@ anotherwalls:
                    moveq      #0,d1
                    move.w     8(a2),d1
                    blt        .thisisawall2
-                   move.l     ZoneAdds,a4
+                   move.l     zoneAdds,a4
                    move.l     (a4,d1.w*4),a4
                    add.l      LEVELDATA,a4
  
@@ -790,7 +791,7 @@ CheckMoreFloorLines
  
                    moveq      #0,d1
                    move.w     8(a2),d1
-                   move.l     ZoneAdds,a4
+                   move.l     zoneAdds,a4
                    move.l     (a4,d1.w*4),a4
                    add.l      LEVELDATA,a4
  
@@ -846,7 +847,7 @@ okthebottom:
                    muls       6(a2),d0
                    moveq      #0,d3
                    move.w     8(a2),d3
-                   move.l     ZoneAdds,a3
+                   move.l     zoneAdds,a3
                    move.l     (a3,d3.w*4),a3
                    add.l      LEVELDATA,a3
                    sub.l      d1,d0
@@ -1625,7 +1626,7 @@ madeit:
 
                    moveq      #0,d3
                    move.w     8(a2),d3
-                   move.l     ZoneAdds,a3
+                   move.l     zoneAdds,a3
                    move.l     (a3,d3.w*4),a5
                    add.l      LEVELDATA,a5
 
@@ -1741,7 +1742,7 @@ FindCollisionPt:
                    moveq      #0,d3
                    move.w     8(a2),d3
                    blt        foundpt
-                   move.l     ZoneAdds,a3
+                   move.l     zoneAdds,a3
                    move.l     (a3,d3.w*4),a5
                    add.l      LEVELDATA,a5
 
@@ -1983,7 +1984,7 @@ floortemp:         dc.l       0
 CheckTeleport:
                    clr.b      OKTEL
                    move.w     FromZone,d0
-                   move.l     ZoneAdds,a2
+                   move.l     zoneAdds,a2
                    move.l     (a2,d0.w*4),a2
                    add.l      LEVELDATA,a2
                    tst.w      ToTelZone(a2)
@@ -1993,7 +1994,7 @@ CheckTeleport:
 ITSATEL:
                    move.l     ToZoneFloor(a2),floortemp
                    move.w     ToTelZone(a2),d0
-                   move.l     ZoneAdds,a3
+                   move.l     zoneAdds,a3
                    move.l     (a3,d0.w*4),a3
                    add.l      LEVELDATA,a3
                    move.l     ToZoneFloor(a3),d0
@@ -2016,7 +2017,7 @@ ITSATEL:
                    rts
 .teleport:
                    move.w     ToTelZone(a2),d0
-                   move.l     ZoneAdds,a2
+                   move.l     zoneAdds,a2
                    move.l     (a2,d0.w*4),a2
                    add.l      LEVELDATA,a2
                    move.l     a2,objroom
@@ -2039,7 +2040,7 @@ FindCloseRoom:
                    move.w     4(a1),oldz
 
                    move.w     12(a0),d2
-                   move.l     ZoneAdds,a5
+                   move.l     zoneAdds,a5
                    move.l     (a5,d2.w*4),d2
                    add.l      LEVELDATA,d2
                    move.l     d2,objroom

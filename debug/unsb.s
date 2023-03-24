@@ -169,7 +169,7 @@ clearLoop:
              move.l      workBuf16,a1
              move.l      workBuf65,a2
              clr.l       d1
-             jsr         unLHA
+             jsr         UnLHA
 
 ***************************************************
 
@@ -407,7 +407,7 @@ workBuf65:   dc.l        0
 
 *********************************************************************************************
 
-unLHA:
+UnLHA:
 ; D0 = Source pointer
 ; A0 = Destination memory pointer
 ; A1 = 16K Workspace

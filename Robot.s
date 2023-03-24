@@ -112,7 +112,7 @@ ItsARobot:
 .waitandsee:
               move.w     #30,FourthTimer(a0)
  
-              move.l     ZoneAdds,a5
+              move.l     zoneAdds,a5
               move.l     (a5,d2.w*4),d0
               add.l      LEVELDATA,d0
               move.l     d0,objroom
@@ -233,7 +233,7 @@ ItsARobot:
               move.l     objroom,a2
               move.w     (a2),d0
               move.w     d0,12(a0)
-              move.l     #ZoneBrightTable,a5
+              move.l     #zoneBrightTable,a5
               move.l     (a5,d0.w*4),d0
               tst.b      objInTop(a0)
               bne.s      .okbit
@@ -410,7 +410,7 @@ COULDBE:
 
 MUSTPLR1:
               move.w     12(a0),d2
-              move.l     ZoneAdds,a5
+              move.l     zoneAdds,a5
               move.l     (a5,d2.w*4),d0
               add.l      LEVELDATA,d0
               move.l     d0,objroom
@@ -506,7 +506,7 @@ MUSTPLR1:
               move.l     objroom,a2
               move.w     (a2),d0
               move.w     d0,12(a0)
-              move.l     #ZoneBrightTable,a5
+              move.l     #zoneBrightTable,a5
               move.l     (a5,d0.w*4),d0
               tst.b      objInTop(a0)
               bne.s      .okbit2
@@ -668,7 +668,7 @@ MUSTPLR1:
 
 MUSTPLR2:
               move.w     12(a0),d2
-              move.l     ZoneAdds,a5
+              move.l     zoneAdds,a5
               move.l     (a5,d2.w*4),d0
               add.l      LEVELDATA,d0
               move.l     d0,objroom
@@ -764,7 +764,7 @@ MUSTPLR2:
               move.l     objroom,a2
               move.w     (a2),d0
               move.w     d0,12(a0)
-              move.l     #ZoneBrightTable,a5
+              move.l     #zoneBrightTable,a5
               move.l     (a5,d0.w*4),d0
               tst.b      objInTop(a0)
               bne.s      .okbit2

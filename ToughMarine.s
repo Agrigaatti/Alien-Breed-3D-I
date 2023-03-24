@@ -1,6 +1,6 @@
 *********************************************************************************************
 
-            opt        P=68020
+  opt        P=68020
 
 *********************************************************************************************
 
@@ -60,7 +60,7 @@ ItsAToughMarine:
   move.w     .dyinganim(pc,d1.w*2),10(a0)
  
   move.b     #0,numlives(a0)
-  move.l     ZoneAdds,a1
+  move.l     zoneAdds,a1
   move.l     (a1,d2.w*4),a1
   add.l      LEVELDATA,a1
  
@@ -106,7 +106,7 @@ ItsAToughMarine:
   move.w     #25,FourthTimer(a0)
 
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -172,7 +172,7 @@ ItsAToughMarine:
   move.w     newz,4(a1)
 
   move.w     (a2),d0
-  move.l     #ZoneBrightTable,a5
+  move.l     #zoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
   tst.b      objInTop(a0)
   bne.s      .okbit
@@ -353,7 +353,7 @@ ItsAToughMarine:
  
 ToughMarineAttack:
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -398,7 +398,7 @@ ToughMarineAttackPLR1:
 
 .oktoshoot:
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -449,7 +449,7 @@ ToughMarineAttackPLR1:
   move.w     oldz,4(a1)
 
   move.w     (a2),d0
-  move.l     #ZoneBrightTable,a5
+  move.l     #zoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
   tst.b      objInTop(a0)
   bne.s      .okbit
@@ -658,7 +658,7 @@ ToughMarineAttackPLR2:
 
 .oktoshoot:
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -709,7 +709,7 @@ ToughMarineAttackPLR2:
   move.w     oldz,4(a1)
 
   move.w     (a2),d0
-  move.l     #ZoneBrightTable,a5
+  move.l     #zoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
   tst.b      objInTop(a0)
   bne.s      .okbit

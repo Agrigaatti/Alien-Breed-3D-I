@@ -57,7 +57,7 @@ ItsAFlameMarine:
   move.w     .dyinganim(pc,d1.w*2),10(a0)
  
   move.b     #0,numlives(a0)
-  move.l     ZoneAdds,a1
+  move.l     zoneAdds,a1
   move.l     (a1,d2.w*4),a1
   add.l      LEVELDATA,a1
  
@@ -103,7 +103,7 @@ ItsAFlameMarine:
   move.w     #30,FourthTimer(a0)
 
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -169,7 +169,7 @@ ItsAFlameMarine:
   move.w     newz,4(a1)
 
   move.w     (a2),d0
-  move.l     #ZoneBrightTable,a5
+  move.l     #zoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
   tst.b      objInTop(a0)
   bne.s      .okbit
@@ -351,7 +351,7 @@ ItsAFlameMarine:
 FlameMarineAttack:
 
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -396,7 +396,7 @@ FlameMarineAttackPLR1:
  
 .oktoshoot:
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -447,7 +447,7 @@ FlameMarineAttackPLR1:
   move.w     oldz,4(a1)
 
   move.w     (a2),d0
-  move.l     #ZoneBrightTable,a5
+  move.l     #zoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
   tst.b      objInTop(a0)
   bne.s      .okbit
@@ -684,7 +684,7 @@ FlameMarineAttackPLR2:
  
 .oktoshoot:
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -735,7 +735,7 @@ FlameMarineAttackPLR2:
   move.w     oldz,4(a1)
 
   move.w     (a2),d0
-  move.l     #ZoneBrightTable,a5
+  move.l     #zoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
   tst.b      objInTop(a0)
   bne.s      .okbit

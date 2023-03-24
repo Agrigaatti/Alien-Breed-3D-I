@@ -77,7 +77,7 @@ AIControl:
 
                move.l      #ObjectData,a1
                move.l      #VisibleTab,a2
-               move.l      #ZoneAdds,a3
+               move.l      #zoneAdds,a3
                move.w      12(a0),d0
                move.l      (a3,d0.w*4),FromRoom
                move.w      (a0),d0

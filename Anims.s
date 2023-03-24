@@ -10,6 +10,12 @@
 
 *********************************************************************************************
 
+                   ifnd          ENABLEFACES
+ENABLEFACES equ 0
+                   endc
+
+*********************************************************************************************
+
 Flash:
 ; D0=number of a zone
 ; D1=brightness change
@@ -21,9 +27,9 @@ Flash:
 .okflash:
                    movem.l       d0/a0/a1,-(a7)
 
-                   move.l        #CurrentPointBrights,a1
+                   move.l        #currentPointBrights,a1
 
-                   move.l        ZoneAdds,a0
+                   move.l        zoneAdds,a0
                    move.l        (a0,d0.w*4),a0
                    add.l         LEVELDATA,a0
  
@@ -41,7 +47,7 @@ flashpts:
 flashedall:
                    move.l        (a7)+,a0
 
-                   move.l        #ZoneBrightTable,a1
+                   move.l        #zoneBrightTable,a1
                    add.w         d1,(a1,d0.w*4)
                    add.w         d1,2(a1,d0.w*4)
 
@@ -190,9 +196,9 @@ ExplodeIntoBits:
 
 BrightAnimHandler:
 
-                   move.l        #BrightAnimTable,a1
-                   move.l        #BrightAnimPtrs,a3
-                   move.l        #BrightAnimStarts,a4
+                   move.l        #brightAnimTable,a1
+                   move.l        #brightAnimPtrs,a3
+                   move.l        #brightAnimStarts,a4
 
 doBrightAnims:
                    move.l        (a3),d0
@@ -217,30 +223,31 @@ noMoreAnims:
  
 *********************************************************************************************
 
-BrightAnimTable:   ds.w          20
-BrightAnimPtrs:
-                   dc.l          PulseANIM
-                   dc.l          FlickerANIM
-                   dc.l          FireFlickerANIM
+brightAnimTable:   ds.w          20
+
+brightAnimPtrs:
+                   dc.l          pulseANIM
+                   dc.l          flickerANIM
+                   dc.l          fireFlickerANIM
                    dc.l          -1
 
 *********************************************************************************************
 
-BrightAnimStarts:
-                   dc.l          PulseANIM
-                   dc.l          FlickerANIM
-                   dc.l          FireFlickerANIM
+brightAnimStarts:
+                   dc.l          pulseANIM
+                   dc.l          flickerANIM
+                   dc.l          fireFlickerANIM
 
 *********************************************************************************************
 
-PulseANIM:
+pulseANIM:
                    dc.w          -10,-10,-9,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10
                    dc.w          10,9,8,7,6,5,4,3,2,1,0,-1,-2,-3,-4,-5,-6,-7,-8,-9
                    dc.w          999
 
 *********************************************************************************************
 
-FlickerANIM:
+flickerANIM:
                    dcb.w         20,10
                    dc.w          -10
                    dcb.w         30,10
@@ -251,7 +258,7 @@ FlickerANIM:
 
 *********************************************************************************************
 
-FireFlickerANIM:
+fireFlickerANIM:
                    dc.w          -10,-9,-6,-10,-6,-5,-5,-7,-5,-10,-9,-8,-7,-5,-5,-5,-5
                    dc.w          -5,-5,-5,-5,-6,-7,-8,-9,-5,-10,-9,-10,-6,-5,-5,-5,-5,-5
                    dc.w          -5,-5
@@ -286,9 +293,9 @@ ObjMoveAnim:
                    bsr           ObjectDataHandler
                    bsr           BrightAnimHandler
  
-                   subq.w        #1,animtimer
+                   subq.w        #1,animTimer
                    bgt.s         notzero
-                   move.w        #2,animtimer
+                   move.w        #2,animTimer
 
                    move.l        otherrip,d0
                    move.l        RipTear,otherrip
@@ -308,7 +315,7 @@ PLR2_stoodonlift:  dc.b          0
 liftattop:         dc.b          0
 liftatbot:         dc.b          0
 
-ZoneBrightTable:   ds.l          300
+zoneBrightTable:   ds.l          300
 
 *********************************************************************************************
 
@@ -357,7 +364,7 @@ okzone:
                    move.l        d1,d3
                    asr.l         #6,d3
                    move.w        d3,2(a1)
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d2.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        d1,ToZoneWater(a1)
@@ -423,7 +430,7 @@ notallliftsdone:
                    move.w        d3,d0
                    muls          #256,d3
                    move.w        (a0)+,d5
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d5.w*4),a1
                    add.l         LEVELDATA,a1
                    move.w        (a1),d5
@@ -621,13 +628,13 @@ rlift3:
 
 *********************************************************************************************
 
-animtimer:         dc.w          2
+animTimer:         dc.w          2
   
-doordir:           dc.w          -1
-doorpos:           dc.w          -9
+doorDir:           dc.w          -1
+doorPos:           dc.w          -9
 
-dooropen:          dc.b          0
-doorclosed:        dc.b          0 
+doorOpen:          dc.b          0
+doorClosed:        dc.b          0 
                    even 
 
 *********************************************************************************************
@@ -654,13 +661,14 @@ notalldoorsdone:
                    add.w         d2,d3
                    move.w        2(a0),d2
                    cmp.w         d3,d0
-                   sle           doorclosed
+                   sle           doorClosed
                    bgt.s         nolower
+
                    moveq         #0,d2
 
 nolower:
                    cmp.w         d3,d1
-                   sge           dooropen
+                   sge           doorOpen
                    blt.s         noraise
                    moveq         #0,d2
                    move.w        d1,d3
@@ -683,7 +691,7 @@ noraise:
                    move.w        d0,2(a1)
                    move.w        d3,d0
                    muls          #256,d3
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.w        (a0)+,d5
  
                    move.l        (a1,d5.w*4),a1
@@ -698,8 +706,9 @@ noraise:
 
                    cmp.w         PLR1_Zone,d5
                    bne.s         NotGoBackUp
-                   tst.b         dooropen
+                   tst.b         doorOpen
                    bne.s         NotGoBackUp
+
                    tst.w         d2
                    blt.s         NotGoBackUp
                    move.w        #-16,d7
@@ -740,10 +749,10 @@ satisfied:
                    move.b        (a0)+,d5
                    move.b        (a0)+,d4
 
-                   tst.b         dooropen
+                   tst.b         doorOpen
                    bne           tstdoortoclose
 
-                   tst.b         doorclosed
+                   tst.b         doorClosed
                    bne           tstdoortoopen
 
                    move.w        #$0,d1
@@ -1346,7 +1355,7 @@ ItsABarrel:
 
 notexploding:
                    move.w        objZone(a0),d0
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
@@ -1400,7 +1409,7 @@ nodamage:
                    move.l        PLR1_Roompt,ToRoom
  
                    move.w        objZone(a0),d0
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        a1,FromRoom
@@ -1449,7 +1458,7 @@ otherrip:          dc.l          256*18*65536
 
 *********************************************************************************************
 
-HealFactor EQU 18
+HealFactor  EQU 18
 
 ItsAMediKit:
 
@@ -1457,7 +1466,7 @@ ItsAMediKit:
                    move.w        objZone(a0),GraphicRoom(a0)
 
                    move.w        objZone(a0),d0
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
@@ -1471,7 +1480,7 @@ ItsAMediKit:
                    sub.w         #32,d0
                    move.w        d0,4(a0)
 
-                   cmp.w         #127,PLR1_energy
+                   cmp.w         #PlayerMaxEnergy,PLR1_energy
                    bge           .NotSameZone
 
                    move.b        PLR1_StoodInTop,d0
@@ -1508,13 +1517,19 @@ ItsAMediKit:
                    jsr           MakeSomeNoise
                    movem.l       (a7)+,a0/a1/d2/d6/d7
  
+                   IFNE          ENABLEFACES
+                   move.l        #cheeseFace,facesPtr
+                   move.w        #-1,facesCounter
+                   ENDC 
+
                    move.w        #-1,objZone(a0)
                    move.w        #-1,GraphicRoom(a0)
                    move.w        HealFactor(a0),d0
                    add.w         PLR1_energy,d0
-                   cmp.w         #127,d0
+                   cmp.w         #PlayerMaxEnergy,d0
                    ble.s         .okokokokokok
-                   move.w        #127,d0
+
+                   move.w        #PlayerMaxEnergy,d0
 
 .okokokokokok:
                    move.w        d0,PLR1_energy
@@ -1522,7 +1537,7 @@ ItsAMediKit:
 .NotPickedUp:
 .NotSameZone:
 MEDIPLR2:
-                   cmp.w         #127,PLR2_energy
+                   cmp.w         #PlayerMaxEnergy,PLR2_energy
                    bge           .NotSameZone
 
                    move.b        PLR2_StoodInTop,d0
@@ -1564,9 +1579,9 @@ MEDIPLR2:
                    move.w        #-1,GraphicRoom(a0)
                    move.w        HealFactor(a0),d0
                    add.w         PLR2_energy,d0
-                   cmp.w         #127,d0
+                   cmp.w         #PlayerMaxEnergy,d0
                    ble.s         .okokokokokok
-                   move.w        #127,d0
+                   move.w        #PlayerMaxEnergy,d0
 
 .okokokokokok:
                    move.w        d0,PLR2_energy
@@ -1581,7 +1596,7 @@ AMGR:              dc.w          3,4,5,0,29,0,0,28
 
 *********************************************************************************************
 
-AmmoType   EQU 18
+AmmoType    EQU 18
 
 ItsAnAmmoClip:
                    clr.b         objWorry(a0)
@@ -1598,7 +1613,7 @@ ItsAnAmmoClip:
                    move.w        PLR1_zoff,oldz
                    move.w        PLR1_Zone,d7
                    move.w        objZone(a0),d0
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
@@ -1666,7 +1681,7 @@ AMMOPLR2:
                    move.w        PLR2_zoff,oldz
                    move.w        PLR2_Zone,d7
                    move.w        objZone(a0),d0
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
@@ -1743,7 +1758,7 @@ ItsABigGun:
                    move.w        PLR1_zoff,oldz
                    move.w        PLR1_Zone,d7
                    move.w        objZone(a0),d0
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
@@ -1784,9 +1799,11 @@ ItsABigGun:
                    jsr           MakeSomeNoise
                    movem.l       (a7)+,a0/a1/d2/d6/d7
  
-                   move.l        #Cheese,FacesPtr
-                   move.w        #4,Cheese
-                   move.w        #-1,FacesCounter
+                   IFNE          ENABLEFACES
+                   move.l        #cheeseFace,facesPtr
+                   move.w        #-1,facesCounter
+                   ENDC 
+
                    moveq         #0,d0
                    move.b        17(a0),d0
                    move.l        #PLR1_GunData+32,a1
@@ -1814,7 +1831,7 @@ GUNPLR2:
                    move.w        PLR2_zoff,oldz
                    move.w        PLR2_Zone,d7
                    move.w        12(a0),d0
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        ToZoneFloor(a1),d0
@@ -1854,9 +1871,6 @@ GUNPLR2:
                    jsr           MakeSomeNoise
                    movem.l       (a7)+,a0/a1/d2/d6/d7
  
-                   move.l        #Cheese,FacesPtr
-                   move.w        #4,Cheese
-                   move.w        #-1,FacesCounter
                    moveq         #0,d0
                    move.b        17(a0),d0
                    move.l        #PLR2_GunData+32,a1
@@ -1912,7 +1926,7 @@ ItsAKey:
                    move.w        PLR1_zoff,oldz
                    move.w        PLR1_Zone,d7
                    move.w        12(a0),d0
-                   move.l        ZoneAdds,a1
+                   move.l        zoneAdds,a1
                    move.l        (a1,d0.w*4),a1
                    add.l         LEVELDATA,a1
                    move.l        2(a1),d0
@@ -2853,7 +2867,7 @@ notdoneanim:
                    asl.l         #7,d3
                    add.l         d3,accypos(a0)
 
-                   move.l        ZoneAdds,a2
+                   move.l        zoneAdds,a2
                    move.l        (a2,d0.w*4),d0
                    add.l         LEVELDATA,d0
                    move.l        d0,objroom
@@ -3418,7 +3432,7 @@ putinbackdrop:
 
                    SUPERVISOR    SetInstCacheOn
 
-                   move.l        frompt,a0                                                       ; Copper chunky
+                   move.l        fromPt,a0                                                       ; Copper chunky
                    adda.w        #widthOffset,a0
                    lea           EndBackPicture,a3
                    lea           BackPicture,a1
@@ -3478,7 +3492,7 @@ ComputeBlast:
                    move.w        12(a0),d0
                    jsr           Flash
 
-                   move.l        ZoneAdds,a2
+                   move.l        zoneAdds,a2
                    move.l        (a2,d0.w*4),a2
                    add.l         LEVELDATA,a2
                    move.l        a2,MiddleRoom
@@ -3503,7 +3517,7 @@ HitObjLoop:
                    beq.s         HitObjLoop
 
                    move.w        12(a2),d1
-                   move.l        ZoneAdds,a3
+                   move.l        zoneAdds,a3
                    move.l        (a3,d1.w*4),a3
                    add.l         LEVELDATA,a3
                    move.l        a3,ToRoom
@@ -3620,7 +3634,7 @@ CheckedEmAll:
                    clr.b         exitfirst
                    clr.b         wallbounce
                    move.w        12(a0),d0
-                   move.l        ZoneAdds,a3
+                   move.l        zoneAdds,a3
                    move.l        (a3,d0.w*4),a3
                    add.l         LEVELDATA,a3
                    move.l        a3,MiddleRoom

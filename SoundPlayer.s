@@ -395,10 +395,7 @@ notoffendsamp4:
                    GETREGS
 
                    IFNE       ENABLETIMER
-                   tst.b      counting
-                   beq.b      .nostartcounter2
-                   jsr        STARTCOUNT
-.nostartcounter2:
+                   jsr        StartCounting
                    ENDC
 
                    moveq      #0,d0
@@ -572,10 +569,7 @@ chan3still:
                    GETREGS
 
                    IFNE       ENABLETIMER
-                   tst.b      counting
-                   beq.b      .nostartcounter3
-                   jsr        STARTCOUNT
-.nostartcounter3:
+                   jsr        StartCounting
                    ENDC
 
                    moveq      #0,d0

@@ -175,8 +175,8 @@ ThreeBelow:
   and.w         d1,d5
   move.b        (a0,d5.w*4),d0
   blt.s         .BumpBeforeHigh
-  move.w        (a1,d0.w*2),widthOffset*3(a3)    ; 104*12
-  move.w        a2,widthOffset*2(a3)             ; 104*8
+  move.w        (a1,d0.w*2),widthOffset*3(a3)       ; 104*12
+  move.w        a2,widthOffset*2(a3)                ; 104*8
   move.w        a2,widthOffset(a3)
   moveq         #0,d0
 

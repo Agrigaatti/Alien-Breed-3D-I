@@ -298,14 +298,14 @@ notgotweap:
                      bne.s      .notswapscr2
                      st         lastscr
  
-                     not.b      BIGsmall
+                     not.b      bigSmall
                      beq.s      .dosmall
  
-                     jsr        putinlargescr
+                     jsr        PutInLargeScr
                      bra        .notswapscr2
  
 .dosmall:
-                     jsr        putinsmallscr
+                     jsr        PutInSmallScr
                      bra        .notswapscr2
  
 .notswapscr:
@@ -328,7 +328,7 @@ GUNVALS:
 ; rocket
                      dc.b       2
  
-BIGsmall:            dc.b       0
+bigSmall:            dc.b       0
 lastscr:             dc.b       0
                      even
 

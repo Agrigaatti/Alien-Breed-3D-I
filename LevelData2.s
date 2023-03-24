@@ -9,7 +9,7 @@ InitPlayer:
 
                     move.l    LEVELDATA,a1
                     move.w    4(a1),d0
-                    move.l    ZoneAdds,a0
+                    move.l    zoneAdds,a0
                     move.l    (a0,d0.w*4),d0
                     add.l     LEVELDATA,d0
                     move.l    d0,PLR1_Roompt
@@ -57,7 +57,7 @@ InitPlayer:
 skipLevelCoop:
                     move.l    LEVELDATA,a1
                     move.w    10(a1),d0
-                    move.l    ZoneAdds,a0
+                    move.l    zoneAdds,a0
                     move.l    (a0,d0.w*4),d0
                     add.l     LEVELDATA,d0
                     move.l    d0,PLR2_Roompt
@@ -107,7 +107,7 @@ Points:             dc.l      0
 PLR1_Obj:           dc.l      0
 PLR2_Obj:           dc.l      0
 ZoneGraphAdds:      dc.l      0
-ZoneAdds:           dc.l      0
+zoneAdds:           dc.l      0
 NumObjectPoints:    dc.w      0
 LiftData:           dc.l      0
 DoorData:           dc.l      0

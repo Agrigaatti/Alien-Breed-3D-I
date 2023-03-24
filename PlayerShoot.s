@@ -1,6 +1,6 @@
 *********************************************************************************************
 
-                          opt                 P=68020
+                   opt        P=68020
                           
 *********************************************************************************************
 
@@ -70,7 +70,7 @@ okcanfire:
                    move.l     #0,targetydiff
                    move.l     #$7fff,d1
 
-                   move.l     ZoneAdds,a3
+                   move.l     zoneAdds,a3
 
                    move.l     #PLR1_ObsInLine,a1
                    move.l     ObjectData,a0
@@ -385,7 +385,7 @@ okcanfire2:
                    move.l     #0,targetydiff
                    move.l     #$7fff,d1
 
-                   move.l     ZoneAdds,a3
+                   move.l     zoneAdds,a3
 
                    move.l     #PLR2_ObsInLine,a1
                    move.l     ObjectData,a0

@@ -22,8 +22,8 @@ defbotclip:       dc.w                   0
 leftclipandlast:  dc.w                   0
 
 *********************************************************************************************
-; The screendivide routine is simpler
-; using a0=left pixel
+; The screendivide routine is simpler using 
+; a0 = left pixel
 ; a2= right pixel
 ; d0= left dist
 ; d2= right dist
@@ -45,20 +45,22 @@ leftclipandlast:  dc.w                   0
 ; 16(a0)=leftbot
 ; 18(a0)=rightbot
 
-Doleftend:
+DoLeftEnd:
+; a0 = #store
+; d7 = #maxscrdiv
 
                   move.w                 leftclip,d0
                   sub.w                  #1,d0
                   move.w                 d0,leftclipandlast
 
 
-                  move.w                 (a0),d0
+                  move.w                 (a0),d0                            ; a0 = store
                   move.w                 2(a0),d1
                   sub.w                  d0,d1
-                  bge.s                  sometodraw
+                  bge.s                  someToDraw
                   rts
 
-sometodraw:
+someToDraw:
                   move.w                 itertab(pc,d1.w*4),d7
                   swap                   d0
                   move.w                 itertab+2(pc,d1.w*4),d6
@@ -145,7 +147,7 @@ screendividethru:
 
 .scrdrawlop:
                   move.w                 (a0)+,d0
-                  move.l                 frompt,a3                          ; Copper chunky
+                  move.l                 fromPt,a3                          ; Copper chunky
                   adda.w                 .scrintocop(pc,d0.w*2),a3
                   move.l                 (a0)+,d1
  
@@ -302,7 +304,7 @@ outofcalc:
 
 scrdrawlop:
                   move.w                 (a0)+,d0
-                  move.l                 frompt,a3                          ; Copper chunky
+                  move.l                 fromPt,a3                          ; Copper chunky
                   adda.w                 scrintocop(pc,d0.w*2),a3
                   move.l                 (a0)+,d1
  
@@ -690,7 +692,7 @@ curvecalc:
                   move.w                 d2,10(a0)
                   move.w                 d7,-(a7)
                   move.w                 #maxscrdiv,d7
-                  bsr                    Doleftend
+                  bsr                    DoLeftEnd
                   move.w                 (a7)+,d7
 
 .alloffleft:
@@ -975,7 +977,7 @@ CalcAndDraw:
  
                   movem.l                d7/a1,-(a7)
                   move.w                 #maxscrdiv,d7
-                  bsr                    Doleftend
+                  bsr                    DoLeftEnd
                   movem.l                (a7)+,d7/a1
 
 .alloffleft:
@@ -1903,7 +1905,7 @@ cant_tell:
                   move.l                 (a5,d2*8),a2
                   move.w                 6(a5,d2*8),d3
  
-                  move.l                 PointBrightsPtr,a5
+                  move.l                 pointBrightsPtr,a5
                   move.w                 (a5,d0.w*4),d0
                   add.w                  #300,d0
                   add.w                  wallbrightoff,d0
@@ -1923,7 +1925,7 @@ wallfacingaway:
 
 *********************************************************************************************
 
-PointBrightsPtr:  dc.l                   0
+pointBrightsPtr:  dc.l                   0
 midpt:            dc.l                   0
 dist1:            dc.l                   0
 dist2:            dc.l                   0

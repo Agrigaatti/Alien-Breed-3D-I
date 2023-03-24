@@ -241,14 +241,14 @@ PLR2_alwayskeys
                      bne.s      .notswapscr2
                      st         lastscr
  
-                     not.b      BIGsmall
+                     not.b      bigSmall
                      beq.s      .dosmall
  
-                     jsr        putinlargescr
+                     jsr        PutInLargeScr
                      bra        .notswapscr2
  
 .dosmall:
-                     jsr        putinsmallscr
+                     jsr        PutInSmallScr
                      bra        .notswapscr2
  
 .notswapscr:

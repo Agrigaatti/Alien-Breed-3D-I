@@ -1,6 +1,12 @@
 *********************************************************************************************
 
-                 opt                 P=68020
+  opt        P=68020
+
+*********************************************************************************************
+
+  ifnd       ENABLEFACES
+ENABLEFACES equ 0
+  endc
 
 *********************************************************************************************
 
@@ -46,7 +52,7 @@ ItsABigNasty:
   bra        .Attack_Player
  
 .cantseeplayer:
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      #LEVELDATA,d0
   move.l     d0,objroom
@@ -168,7 +174,7 @@ ItsABigNasty:
   rts
 
 .Attack_Player:
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      #LEVELDATA,d0
   move.l     d0,objroom
@@ -336,9 +342,11 @@ ItsABigNasty:
   jsr        MakeSomeNoise
   move.l     (a7)+,a0
  
-  move.l     #Cheese,FacesPtr
-  move.w     #3,Cheese
-  move.w     #-1,FacesCounter
+  IFNE       ENABLEFACES
+  move.l     #painFace,facesPtr
+  move.w     #-1,facesCounter
+  ENDC
+
   move.w     TempFrames,d0
   sub.w      d0,Energy
   bra        .carryonattack

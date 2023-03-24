@@ -38,11 +38,11 @@
 
 *********************************************************************************************
 
-                     incdir               "includes"
-                     include              "exec/memory.i"
-                     include              "AB3DI.i"
-                     include              "macros.i"
-                     include              "defs.i"
+                     incdir                 "includes"
+                     include                "exec/memory.i"
+                     include                "AB3DI.i"
+                     include                "macros.i"
+                     include                "defs.i"
 
 *********************************************************************************************
 
@@ -144,7 +144,7 @@ PlayGame:
 *********************************************************************************************
 ; TAKE OUT WHEN PLAYING MODULE AGAIN
 
-                     jsr                    CLEARTITLEPAL
+                     jsr                    ClearTitlePalette
 
                      move.w                 #$7201,titleplanes
                      move.w                 #$20,$dff1dc
@@ -153,17 +153,17 @@ PlayGame:
                      lea                    $dff000,a6
                      move.w                 #%1000000110100000,dmacon(a6)                 ; $87c0 5=SPREN,6=BTLEN,7=COPPER,8=BITPLANE,9=MASTER,10=NASTY
 
-                     bsr                    GETTITLEMEM
+                     bsr                    AllocTitleMemory
 
-                     bsr                    CLROPTSCRN
-                     bsr                    SETUPTITLESCRN
-                     bsr                    LOADTITLESCRN
+                     bsr                    ClrOptScrn
+                     bsr                    SetupTitleScrn
+                     bsr                    LoadTitleScrn
 
 *********************************************************************************************
 
                      move.w                 #0,FADEVAL
                      move.w                 #63,FADEAMOUNT
-                     bsr                    FADEUPTITLE
+                     bsr                    FadeUpTitle
 
 *********************************************************************************************
 ; Start music
@@ -184,18 +184,18 @@ PlayGame:
  
  *********************************************************************************************
 
-                     jsr                    LOADWALLS
-                     jsr                    LOADFLOOR
-                     jsr                    LOADOBS
+                     jsr                    LoadWalls
+                     jsr                    LoadFloor
+                     jsr                    LoadObjects
 
 *********************************************************************************************
 
                      move.w                 #31,FADEAMOUNT
-                     bsr                    FADEDOWNTITLE
+                     bsr                    FadeDownTitle
 
 *********************************************************************************************
 
-                     jsr                    LOAD_SFX
+                     jsr                    LoadSFX
 
 *********************************************************************************************
 
@@ -211,7 +211,7 @@ BACKTOMENU:
                      cmp.b                  #'m',mors
                      beq.s                  BACKTOMASTER
                      
-                     bsr                    READMAINMENU
+                     bsr                    ReadMainMenu
                      
 ***************************************************************
 
@@ -232,17 +232,17 @@ DoNotExitGame:
 
 ***************************************************************
 
-                     bra                    DONEMENU
+                     bra                    doneMenu
 
 BACKTOMASTER:
-                     bsr                    MASTERMENU
-                     bra                    DONEMENU
+                     bsr                    MasterMenu
+                     bra                    doneMenu
 
 BACKTOSLAVE:
-                     bsr                    SLAVEMENU
+                     bsr                    SlaveMenu
 
-DONEMENU:
-                     bsr                    WAITREL
+doneMenu:
+                     bsr                    WaitRelease
 
 *********************************************************************************************
 ; Stop music
@@ -263,19 +263,19 @@ DONEMENU:
 *********************************************************************************************
 
                      move.w                 #31,FADEAMOUNT
-                     bsr                    FADEUPTITLE
+                     bsr                    FadeUpTitle
                      move.w                 #63,FADEAMOUNT
-                     bsr                    FADEDOWNTITLE
+                     bsr                    FadeDownTitle
 
 *********************************************************************************************
 
                      move.w                 #$0201,titleplanes
-                     bsr                    RELEASETITLEMEM
+                     bsr                    ReleaseTitleMemory
   
 *********************************************************************************************
 ; Load key panel picture
 
-                     jsr                    LOADBOTPIC
+                     jsr                    LoadPanel
 
 *********************************************************************************************
 ; Return when dead or level ends
@@ -293,28 +293,28 @@ DONEMENU:
 *********************************************************************************************
 ; Free key panel picture
 
-                     bsr                    FREEBOTMEM      
+                     bsr                    ReleasePanelMemory      
 
 *********************************************************************************************
 ;
 
                      tst.b                  FINISHEDLEVEL
                      beq                    dontusestats
-                     bsr                    CALCPASSWORD
+                     bsr                    CalcPassword
 dontusestats:
 
 *********************************************************************************************
 
-                     bsr                    PASSLINETOGAME
-                     bsr                    GETSTATS
+                     bsr                    PassLineToGame
+                     bsr                    GetStats
  
 *********************************************************************************************
 ; Setup title screen
 
-                     bsr                    GETTITLEMEM
-                     bsr                    CLROPTSCRN
-                     bsr                    SETUPTITLESCRN
-                     bsr                    LOADTITLESCRN
+                     bsr                    AllocTitleMemory
+                     bsr                    ClrOptScrn
+                     bsr                    SetupTitleScrn
+                     bsr                    LoadTitleScrn
 
                      move.w                 #$7201,titleplanes
 
@@ -325,10 +325,10 @@ dontusestats:
                                              
                      move.w                 #0,FADEVAL
                      move.w                 #63,FADEAMOUNT
-                     bsr                    FADEUPTITLE
+                     bsr                    FadeUpTitle
 
                      move.w                 #31,FADEAMOUNT
-                     bsr                    FADEDOWNTITLE 
+                     bsr                    FadeDownTitle 
 
 *********************************************************************************************
 ; Start music
@@ -410,7 +410,7 @@ tempsrkey:           dc.b                   0
 
 GUNDATASIZE      EQU (PLR1_GunDataEnd-PLR1_GunData)                                       ; 32
 
-GETSTATS:
+GetStats:
 ; CHANGE PASSWORD INTO RAW DATA
 
                      move.b                 PASSBUFFER,d0
@@ -459,7 +459,7 @@ GETSTATS:
 
 *********************************************************************************************
 
-SETPLAYERS:
+SetPlayers:
                      move.w                 PLOPT,d0
                      add.b                  #'a',d0
                      move.b                 d0,LEVA
@@ -488,24 +488,24 @@ NASTY:               dc.w                   0
 MASTERSETUP:
                      SAVEREGS
 
-                     cmp.w                #1,MPMode
-                     bne.b                skipMasterCoop
+                     cmp.w                  #1,MPMode
+                     bne.b                  skipMasterCoop
 
                      bsr                    SetupDefaultGame
                      st.b                   NASTY                                         ; All enemies
 
-                     clr.l                d0
-                     move.w               MPMode,d0
-                     swap                 d0
-                     move.w               PLOPT,d0
+                     clr.l                  d0
+                     move.w                 MPMode,d0
+                     swap                   d0
+                     move.w                 PLOPT,d0
 
-                     bra                  continueMaster
+                     bra                    continueMaster
 
 skipMasterCoop:
                      bsr                    SetupTwoPlayerGame
                      clr.b                  NASTY                                         ; No enemies
 
-                     clr.l                d0
+                     clr.l                  d0
                      move.w                 PLOPT,d0
 
 continueMaster:
@@ -539,9 +539,9 @@ SLAVESETUP:
                      jsr                    RECFIRST
                      ENDC
 
-                     move.l               d0,d1
-                     swap                 d1
-                     move.w               d1,MPMode
+                     move.l                 d0,d1
+                     swap                   d1
+                     move.w                 d1,MPMode
 
                      move.w                 d0,PLOPT
                      add.b                  #'a',d0
@@ -551,17 +551,17 @@ SLAVESETUP:
 
                      move.w                 #$0000,TXTBGCOL
 
-                     cmp.w                #1,MPMode
-                     bne.b                skipSlaveCoop
+                     cmp.w                  #1,MPMode
+                     bne.b                  skipSlaveCoop
 
-                     bsr                  SetupDefaultGame
-                     st.b                 NASTY                                         ; All enemies
+                     bsr                    SetupDefaultGame
+                     st.b                   NASTY                                         ; All enemies
 
-                     bra.b                continueSlave
+                     bra.b                  continueSlave
 
 skipSlaveCoop:
-                     bsr                  SetupTwoPlayerGame
-                     clr.b                NASTY                                         ; No enemies
+                     bsr                    SetupTwoPlayerGame
+                     clr.b                  NASTY                                         ; No enemies
 
 continueSlave:
 
@@ -573,7 +573,7 @@ continueSlave:
 ASKFORDISK:
 
                      move.w                 #3,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
 
 .wtrel:
                      btst                   #7,$bfe001                                    ; LMB port 2
@@ -613,7 +613,7 @@ CLRSPRITES:
 
 *********************************************************************************************
 
-READMAINMENU:
+ReadMainMenu:
 ; Stay here until 'play game' is selected.
 
                      move.b                 #'n',mors
@@ -624,24 +624,24 @@ READMAINMENU:
                      muls                   #40,d0
                      move.l                 #LEVEL_OPTS,a0
                      add.l                  d0,a0
-                     bsr                    PUTINLINE
+                     bsr                    PutInLine
 
                      move.w                 #0,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
 
-                     move.w               #1,OPTNUM
-                     bsr                    HIGHLIGHT
+                     move.w                 #1,OPTNUM
+                     bsr                    HighLight
 
-                     bsr                    WAITREL
+                     bsr                    WaitRelease
 
 ************************************************************
 
 rdlop1:
-                     bsr                    CHECKMENU
+                     bsr                    CheckMenu
                      tst.w                  d0
-                     blt.s                rdlop1
-                     bne                  noOpt1
-                     bra                    MASTERMENU
+                     blt.s                  rdlop1
+                     bne                    noOpt1
+                     bra                    MasterMenu
 
 noOpt1:
 
@@ -706,24 +706,24 @@ noOpt1:
 ************************************************************
 
                      cmp.w                  #1,d0
-                     beq                  readyToPlay1
+                     beq                    readyToPlay1
 
 ************************************************************
 
                      cmp.w                  #2,d0
                      bne                    .nocontrol
 
-                     bsr                    CHANGECONTROLS
+                     bsr                    ChangeControls
 
                      move.w                 #0,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
 
-                     move.w               #1,OPTNUM
-                     bsr                    HIGHLIGHT
+                     move.w                 #1,OPTNUM
+                     bsr                    HighLight
 
-                     bsr                    WAITREL
+                     bsr                    WaitRelease
 
-                     bra                  rdlop1
+                     bra                    rdlop1
   
 .nocontrol:
 
@@ -735,21 +735,21 @@ noOpt1:
                      bsr                    SHOWCREDITS
 
                      move.w                 #0,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
 
-                     move.w               #1,OPTNUM
-                     bsr                    HIGHLIGHT
+                     move.w                 #1,OPTNUM
+                     bsr                    HighLight
 
-                     bsr                    WAITREL
-                     bra                  rdlop1
+                     bsr                    WaitRelease
+                     bra                    rdlop1
  
 .nocred:
 
 ************************************************************
  
                      cmp.w                  #4,d0
-                     bne                  readyToPlay1
-                     bsr                    WAITREL
+                     bne                    readyToPlay1
+                     bsr                    WaitRelease
 
 ************************************************************
 ; Password handling
@@ -762,7 +762,7 @@ noOpt1:
                      dbra                   d2,.clrline 
 
                      move.w                 #0,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
 
                      clr.b                  lastpressed
                      move.l                 #PASSWORDLINE+12,a0
@@ -785,7 +785,7 @@ noOpt1:
                      subq                   #1,d1
                      move.b                 #32,-(a0)
                      SAVEREGS
-                     bsr                    JUSTDRAWIT
+                     bsr                    JustDrawIt
                      GETREGS
                      bra                    .ENTERPASS
 
@@ -808,39 +808,39 @@ noOpt1:
 .drawPassWord:
                      move.w                 #0,OptScrn
                      SAVEREGS
-                     bsr                    JUSTDRAWIT
+                     bsr                    JustDrawIt
                      GETREGS
 
                      add.w                  #1,d1
                      cmp.w                  #16,d1
                      blt                    .ENTERPASS
 
-                     bsr                    PASSLINETOGAME
+                     bsr                    PassLineToGame
                      tst.w                  d0
                      bne                    .FORGETIT
  
-                     bsr                    GETSTATS
+                     bsr                    GetStats
                      move.w                 MAXLEVEL,d0
                      move.l                 #CURRENTLEVELLINE,a1
                      muls                   #40,d0
                      move.l                 #LEVEL_OPTS,a0
                      add.l                  d0,a0
-                     bsr                    PUTINLINE
+                     bsr                    PutInLine
 
 .FORGETIT:
 
 *********************************************************************************************
 
-                     bsr                    WAITREL
-                     bsr                    CALCPASSWORD
+                     bsr                    WaitRelease
+                     bsr                    CalcPassword
 
                      move.w                 #0,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
 
                      move.w                 #1,OPTNUM
-                     bsr                    HIGHLIGHT
+                     bsr                    HighLight
 
-                     bra                  rdlop1
+                     bra                    rdlop1
  
 readyToPlay1:
                      move.w                 MAXLEVEL,PLOPT
@@ -853,56 +853,56 @@ LEVELSELECTED:       dc.w                   0
 *********************************************************************************************
 *********************************************************************************************
 
-MASTERMENU:
+MasterMenu:
 
                      move.b                 #'m',mors
 
-                     move.w               MAXLEVEL,d0
-                     move.w               d0,LEVELSELECTED
+                     move.w                 MAXLEVEL,d0
+                     move.w                 d0,LEVELSELECTED
 
 ************************************************************
 ; Reset level line
 
-                     lea                  CURRENTLEVELLINEM,a1
+                     lea                    CURRENTLEVELLINEM,a1
                      muls                   #40,d0
-                     lea                  LEVEL_OPTS,a0
-                     add.l                d0,a0
-                     bsr                  PUTINLINE
+                     lea                    LEVEL_OPTS,a0
+                     add.l                  d0,a0
+                     bsr                    PutInLine
 
 ************************************************************
 ; Update mode line
 
-                     lea                  CURRENTMPMODELINE,a1
-                     clr.l                d0
-                     move.w               MPMode,d0
-                     muls.l               #40,d0
-                     lea                  MPMODE_OPTS,a0
+                     lea                    CURRENTMPMODELINE,a1
+                     clr.l                  d0
+                     move.w                 MPMode,d0
+                     muls.l                 #40,d0
+                     lea                    MPMODE_OPTS,a0
                      add.l                  d0,a0
-                     bsr                    PUTINLINE
+                     bsr                    PutInLine
 
-                     move.w               MPMode,d0
-                     lea                  MPMODE_HIGHLIGHT_OPTS,a0
-                     lea                  MASTERPLAYERMENU_OPTS,a1
-                     bsr                  UpdateHLSettings
+                     move.w                 MPMode,d0
+                     lea                    MPMODE_HIGHLIGHT_OPTS,a0
+                     lea                    MASTERPLAYERMENU_OPTS,a1
+                     bsr                    UpdateHLSettings
 
 ************************************************************
 ; Stay here until 'play game' is selected.
 
                      move.w                 #4,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
 
-                     move.w               #1,OPTNUM
-                     bsr                    HIGHLIGHT
+                     move.w                 #1,OPTNUM
+                     bsr                    HighLight
 
-                     bsr                    WAITREL
+                     bsr                    WaitRelease
 
 ************************************************************
 
 rdlop2:
-                     bsr                    CHECKMENU
+                     bsr                    CheckMenu
                      tst.w                  d0
-                     blt.s                rdlop2
-                     bsr                    WAITREL
+                     blt.s                  rdlop2
+                     bsr                    WaitRelease
 
 ************************************************************
 ; Master level change
@@ -939,21 +939,21 @@ rdlop2:
 
                      movem.l                (a7)+,d1-d7/a0-a6
 
-                     lea                  CURRENTLEVELLINEM,a1
+                     lea                    CURRENTLEVELLINEM,a1
                      muls                   #40,d0
-                     lea                  LEVEL_OPTS,a0
+                     lea                    LEVEL_OPTS,a0
                      add.l                  d0,a0
-                     bsr                    PUTINLINE
+                     bsr                    PutInLine
 
-                     bsr                    JUSTDRAWIT
-                     bra                  rdlop2
+                     bsr                    JustDrawIt
+                     bra                    rdlop2
 
 .nonextlev:
 
 ************************************************************
 
                      cmp.w                  #2,d0
-                     beq                  readyToPlay2
+                     beq                    readyToPlay2
  
  ************************************************************
 
@@ -961,43 +961,43 @@ rdlop2:
                      beq.b                  .masterToSlaveMenu
 
                      cmp.w                  #0,d0
-                     bne                  noOpt2
+                     bne                    noOpt2
  
-                     cmp.w                #1,MPMode
-                     bne                  changeMPMode
+                     cmp.w                  #1,MPMode
+                     bne                    changeMPMode
                      
-                     move.w               #0,MPMode
+                     move.w                 #0,MPMode
  
                      .masterToSlaveMenu:
-                     bra                    SLAVEMENU
+                     bra                    SlaveMenu
  
 ************************************************************
 
 changeMPMode:
-                     lea                  CURRENTMPMODELINE,a1
-                     clr.l                d0
-                     move.w               MPMode,d0
-                     add.w                #1,d0
-                     move.w               d0,MPMode
-                     mulu.l               #40,d0
-                     lea                  MPMODE_OPTS,a0
-                     add.l                d0,a0
-                     bsr                  PUTINLINE
+                     lea                    CURRENTMPMODELINE,a1
+                     clr.l                  d0
+                     move.w                 MPMode,d0
+                     add.w                  #1,d0
+                     move.w                 d0,MPMode
+                     mulu.l                 #40,d0
+                     lea                    MPMODE_OPTS,a0
+                     add.l                  d0,a0
+                     bsr                    PutInLine
 
-                     move.w               MPMode,d0
-                     lea                  MPMODE_HIGHLIGHT_OPTS,a0
-                     lea                  MASTERPLAYERMENU_OPTS,a1
-                     bsr                  UpdateHLSettings
+                     move.w                 MPMode,d0
+                     lea                    MPMODE_HIGHLIGHT_OPTS,a0
+                     lea                    MASTERPLAYERMENU_OPTS,a1
+                     bsr                    UpdateHLSettings
 
-                     move.w               #4,OptScrn
-                     bsr                  DRAWOPTSCRN
+                     move.w                 #4,OptScrn
+                     bsr                    DrawOptScrn
 
-                     move.w               #2,OPTNUM
-                     bsr                  HIGHLIGHT
+                     move.w                 #2,OPTNUM
+                     bsr                    HighLight
 
-                     bsr                  WAITREL
+                     bsr                    WaitRelease
                      
-                     bra                  rdlop2
+                     bra                    rdlop2
 
 ************************************************************
 
@@ -1005,16 +1005,16 @@ noOpt2:
                      cmp.w                  #3,d0
                      bne                    .nocontrol
  
-                     bsr                    CHANGECONTROLS
+                     bsr                    ChangeControls
 
                      move.w                 #4,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
                      move.w                 #0,OPTNUM
 
-                     bsr                    HIGHLIGHT
+                     bsr                    HighLight
 
-                     bsr                    WAITREL
-                     bra                  rdlop2
+                     bsr                    WaitRelease
+                     bra                    rdlop2
  
 .nocontrol:
 
@@ -1027,70 +1027,71 @@ readyToPlay2:
 *********************************************************************************************
 *********************************************************************************************
 
-SLAVEMENU:
+SlaveMenu:
 
                      move.b                 #'s',mors
 
 ; Stay here until 'play game' is selected.
 
                      move.w                 #5,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
                      move.w                 #1,OPTNUM
 
-                     bsr                    HIGHLIGHT
-                     bsr                    WAITREL
+                     bsr                    HighLight
+                     bsr                    WaitRelease
 
 ************************************************************
 
 rdlop3:
-                     bsr                    CHECKMENU
+                     bsr                    CheckMenu
                      tst.w                  d0
-                     blt.s                rdlop3
-                     bsr                    WAITREL
+                     blt.s                  rdlop3
+                     bsr                    WaitRelease
 
 ************************************************************
 
                      cmp.w                  #$fe,d0                                       ; TAB
-                     beq.b                rdlop3
+                     beq.b                  rdlop3
 
                      cmp.w                  #1,d0
-                     beq                  readyToPlay3
+                     beq                    readyToPlay3
 
 
                      cmp.w                  #$ff,d0                                       ; ESC
                      beq.b                  .slaveToMainMenu
 
                      cmp.w                  #0,d0
-                     bne                  noOpt3
+                     bne                    noOpt3
  
                      .slaveToMainMenu:
-                     bra                    READMAINMENU
+                     bra                    ReadMainMenu
  
 noOpt3:
                      cmp.w                  #2,d0
                      bne                    .nocontrol
  
-                     bsr                    CHANGECONTROLS
+                     bsr                    ChangeControls
 
                      move.w                 #0,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
                      move.w                 #0,OPTNUM
 
-                     bsr                    HIGHLIGHT
+                     bsr                    HighLight
 
-                     bsr                    WAITREL
-                     bra                  rdlop3
+                     bsr                    WaitRelease
+                     bra                    rdlop3
  
 .nocontrol:
 readyToPlay3:
                      rts
 
 *********************************************************************************************
+*********************************************************************************************
 
 SetupTwoPlayerGame:
 
                      move.w                 #0,OldEnergy
-                     move.w                 #127,Energy
+                     move.w                 #PlayerMaxEnergy,Energy
                      jsr                    EnergyBar
  
                      move.w                 #63,OldAmmo
@@ -1098,8 +1099,8 @@ SetupTwoPlayerGame:
                      jsr                    AmmoBar
                      move.w                 #0,OldAmmo
  
-                     move.w                 #127,PLR1_energy
-                     move.w                 #127,PLR2_energy 
+                     move.w                 #PlayerMaxEnergy,PLR1_energy
+                     move.w                 #PlayerMaxEnergy,PLR2_energy 
 
 
                      st                     PLR1_GunData+7                                ; 7: Visible/Instant (0/$ff)
@@ -1152,7 +1153,7 @@ SetupDefaultGame:
                      move.w                 #STARTLEVEL,MAXLEVEL
  
                      move.w                 #0,OldEnergy
-                     move.w                 #127,Energy
+                     move.w                 #PlayerMaxEnergy,Energy
                      jsr                    EnergyBar
  
                      move.w                 #63,OldAmmo
@@ -1160,8 +1161,8 @@ SetupDefaultGame:
                      jsr                    AmmoBar
                      move.w                 #0,OldAmmo
  
-                     move.w                 #127,PLR1_energy
-                     move.w                 #127,PLR2_energy 
+                     move.w                 #PlayerMaxEnergy,PLR1_energy
+                     move.w                 #PlayerMaxEnergy,PLR2_energy 
 
 
                      move.w                 #160,PLR1_GunData                             ; 10 shots pistol
@@ -1208,13 +1209,14 @@ SetupDefaultGame:
                      move.b                 #0,PLR2_GunSelected
  
 
-                     bsr                    CALCPASSWORD
+                     bsr                    CalcPassword
  
                      rts
 
 *********************************************************************************************
+*********************************************************************************************
 
-GETPARITY:
+GetParity:
 
                      move.w                 #6,d3
 
@@ -1229,7 +1231,7 @@ GETPARITY:
 
 *********************************************************************************************
 
-CHECKPARITY:
+CheckParity:
 
                      move.w                 #6,d3
                      move.b                 #$0,d2
@@ -1250,10 +1252,10 @@ CHECKPARITY:
 *********************************************************************************************
 ; Create level password
 
-CALCPASSWORD:
+CalcPassword:
 
                      move.b                 PLR1_energy+1,d0
-                     bsr                    GETPARITY
+                     bsr                    GetParity
                      move.b                 d0,PASSBUFFER
 
                      moveq                  #0,d0
@@ -1280,27 +1282,27 @@ CALCPASSWORD:
  
                      move.w                 PLR1_GunData,d0
                      lsr.w                  #3,d0
-                     bsr                    GETPARITY
+                     bsr                    GetParity
                      move.b                 d0,PASSBUFFER+2
 
                      move.w                 PLR1_GunData+GUNDATASIZE,d0
                      lsr.w                  #3,d0
-                     bsr                    GETPARITY
+                     bsr                    GetParity
                      move.b                 d0,PASSBUFFER+3
 
                      move.w                 PLR1_GunData+GUNDATASIZE*2,d0
                      lsr.w                  #3,d0
-                     bsr                    GETPARITY
+                     bsr                    GetParity
                      move.b                 d0,PASSBUFFER+4
 
                      move.w                 PLR1_GunData+GUNDATASIZE*4,d0
                      lsr.w                  #3,d0
-                     bsr                    GETPARITY
+                     bsr                    GetParity
                      move.b                 d0,PASSBUFFER+5
 
                      move.w                 PLR1_GunData+GUNDATASIZE*7,d0
                      lsr.w                  #3,d0
-                     bsr                    GETPARITY
+                     bsr                    GetParity
                      move.b                 d0,PASSBUFFER+6
 
                      move.w                 #3,d0
@@ -1386,7 +1388,7 @@ putinpassline:
 
 *********************************************************************************************
 
-PASSLINETOGAME:
+PassLineToGame:
 
                      move.l                 #PASSWORDLINE+12,a0
                      move.l                 #PASS,a1
@@ -1452,27 +1454,27 @@ unmix:
                      dbra                   d0,unmix
  
                      move.b                 PASSBUFFER,d0
-                     bsr                    CHECKPARITY
+                     bsr                    CheckParity
                      tst.b                  d5
                      bne                    illega
                      move.b                 PASSBUFFER+2,d0
-                     bsr                    CHECKPARITY
+                     bsr                    CheckParity
                      tst.b                  d5
                      bne                    illega
                      move.b                 PASSBUFFER+3,d0
-                     bsr                    CHECKPARITY
+                     bsr                    CheckParity
                      tst.b                  d5
                      bne                    illega
                      move.b                 PASSBUFFER+4,d0
-                     bsr                    CHECKPARITY
+                     bsr                    CheckParity
                      tst.b                  d5
                      bne                    illega
                      move.b                 PASSBUFFER+5,d0
-                     bsr                    CHECKPARITY
+                     bsr                    CheckParity
                      tst.b                  d5
                      bne                    illega
                      move.b                 PASSBUFFER+6,d0
-                     bsr                    CHECKPARITY
+                     bsr                    CheckParity
                      tst.b                  d5
                      bne                    illega
  
@@ -1498,18 +1500,18 @@ PASS:                ds.b                   16
 
 *********************************************************************************************
 
-CHANGECONTROLS:
+ChangeControls:
 
                      move.w                 #6,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
                      move.w                 #0,OPTNUM
-                     bsr                    HIGHLIGHT
-                     bsr                    WAITREL
+                     bsr                    HighLight
+                     bsr                    WaitRelease
  
 .rdlop4:
-                     bsr                    CHECKMENU
+                     bsr                    CheckMenu
                      tst.w                  d0
-                     blt.s                .rdlop4
+                     blt.s                  .rdlop4
 
                      cmp.w                  #12,d0
                      beq                    .backtomain
@@ -1521,7 +1523,7 @@ CHANGECONTROLS:
                      add.w                  #32,a0
                      move.l                 #$20202020,(a0)
                      movem.l                d0/a0,-(a7)
-                     bsr                    JUSTDRAWIT
+                     bsr                    JustDrawIt
                      movem.l                (a7)+,d0/a0 
 
                      clr.b                  lastpressed
@@ -1536,9 +1538,9 @@ CHANGECONTROLS:
                      move.b                 d1,(a1,d0.w)
                      move.l                 #KVALTOASC,a1
                      move.l                 (a1,d1.w*4),(a0)
-                     bsr                    JUSTDRAWIT
-                     bsr                    WAITREL
-                     bra                  .rdlop4
+                     bsr                    JustDrawIt
+                     bsr                    WaitRelease
+                     bra                    .rdlop4
 
 .backtomain:
                      rts
@@ -1552,24 +1554,24 @@ MAXLEVEL:            dc.w                   STARTLEVEL
 SHOWCREDITS:
 
                      move.w                 #2,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
 
-                     bsr                    WAITREL
+                     bsr                    WaitRelease
 
 .rdlop5:
-                     bsr                    CHECKMENU
+                     bsr                    CheckMenu
                      tst.w                  d0
-                     blt.s                .rdlop5
+                     blt.s                  .rdlop5
 
                      move.w                 #8,OptScrn
-                     bsr                    DRAWOPTSCRN
+                     bsr                    DrawOptScrn
 
-                     bsr                    WAITREL                     
+                     bsr                    WaitRelease                     
 
 .rdlop6:
-                     bsr                    CHECKMENU
+                     bsr                    CheckMenu
                      tst.w                  d0
-                     blt.s                .rdlop6
+                     blt.s                  .rdlop6
 
                      rts
  
@@ -1579,27 +1581,26 @@ HELDDOWN:            dc.w                   0
 
 *********************************************************************************************
 
-WAITREL:
+WaitRelease:
 
                      movem.l                d0/d1/d2/d3,-(a7)
-
                      move.l                 #KeyMap,a5
 
-WAITREL2:
+waitRelLoop:
                      btst                   #7,$bfe001                                    ; LMB port 2
-                     beq.s                  WAITREL2
+                     beq.s                  waitRelLoop
                      tst.b                  $40(a5)                                       ; Space bar
-                     bne.s                  WAITREL2
+                     bne.s                  waitRelLoop
                      tst.b                  $44(a5)                                       ; Return
-                     bne.s                  WAITREL2
+                     bne.s                  waitRelLoop
                      tst.b                  $4c(a5)                                       ; Up arrow
-                     bne.s                  WAITREL2
+                     bne.s                  waitRelLoop
                      tst.b                  $4d(a5)                                       ; Down arrow
-                     bne.s                  WAITREL2
+                     bne.s                  waitRelLoop
                      tst.b                  $45(a5)                                       ; Esc
-                     bne.s                  WAITREL2
+                     bne.s                  waitRelLoop
                      tst.b                  $42(a5)                                       ; Tab
-                     bne.s                  WAITREL2
+                     bne.s                  waitRelLoop
 
                      btst                   #1,$dff00c
                      sne                    d0
@@ -1613,30 +1614,30 @@ WAITREL2:
                      eor.b                  d0,d2
                      eor.b                  d1,d3
                      tst.b                  d2
-                     bne.s                  WAITREL2
+                     bne.s                  waitRelLoop
                      tst.b                  d3
-                     bne.s                  WAITREL2
+                     bne.s                  waitRelLoop
 
                      movem.l                (a7)+,d0/d1/d2/d3
                      rts
 
 *********************************************************************************************
 
-PUTINLINE:
+PutInLine:
 ; line = 40 chars
 ; a0 = source line
 ; a1 = destination line
 
                      moveq                  #39,d0
 
-pill:
+loopChars:
                      move.b                 (a0)+,(a1)+
-                     dbra                   d0,pill
+                     dbra                   d0,loopChars
                      rts
 
 *********************************************************************************************
 
-CHECKMENU:
+CheckMenu:
 
                      btst                   #1,$dff00c
                      sne                    d0
@@ -1654,14 +1655,14 @@ CHECKMENU:
 
                      tst.b                  $45(a5)                                       ; ESC
                      beq                    NotESCKey 
-                     bsr                    WAITREL
+                     bsr                    WaitRelease
                      move.w                 #$ff,d0
                      bra                    noselect
 
 NotESCKey:
                      tst.b                  $42(a5)                                       ; TAB
                      beq                    NotTABKey
-                     bsr                    WAITREL
+                     bsr                    WaitRelease
                      move.w                 #$fe,d0
                      bra                    noselect
 
@@ -1690,7 +1691,7 @@ NOPREV:
                      tst.b                  d3
                      beq.s                  NONEXT
  
-                     bsr                    WAITREL
+                     bsr                    WaitRelease
  
                      add.w                  #1,d0
                      tst.w                  (a0,d0.w*8)
@@ -1702,10 +1703,10 @@ NONEXT:
                      cmp.w                  OPTNUM,d0
                      beq.s                  .nochange
 
-                     bsr                    HIGHLIGHT
+                     bsr                    HighLight
                      move.w                 d0,OPTNUM
-                     bsr                    HIGHLIGHT
-                     bsr                    WAITREL
+                     bsr                    HighLight
+                     bsr                    WaitRelease
  
 .nochange:
                      move.w                 #-1,d0
@@ -1718,7 +1719,7 @@ NONEXT:
                      beq.s                  noselect
  
 select:
-                     bsr                    WAITREL
+                     bsr                    WaitRelease
                      move.w                 OPTNUM,d0
 
 noselect:
@@ -1731,24 +1732,24 @@ UpdateHLSettings:
 ; a0=from
 ; a1=to
 
-                     mulu.l               #8,d0
-                     add.l                d0,a0
-                     move.l               #3,d0
+                     mulu.l                 #8,d0
+                     add.l                  d0,a0
+                     move.l                 #3,d0
 
 cpyHLSettings:
-                     move.w               (a0)+,(a1)+
-                     dbeq                 d0,cpyHLSettings
+                     move.w                 (a0)+,(a1)+
+                     dbeq                   d0,cpyHLSettings
 
                      rts
 
 *********************************************************************************************
 
-HIGHLIGHT:
+HighLight:
 
                      SAVEREGS
  
                      move.w                 OptScrn,d0
-                     lea                  MENUDATA,a0
+                     lea                    MENUDATA,a0
                      move.l                 4(a0,d0.w*8),a0
                      move.w                 OPTNUM,d0
                      lea                    (a0,d0.w*8),a0
@@ -1800,7 +1801,7 @@ val                  SET                    val+258*16
 
 *********************************************************************************************
 
-CLROPTSCRN:
+ClrOptScrn:
 
                      move.l                 OPTSPRADDR,a0
                      lea                    16(a0),a1
@@ -1859,13 +1860,13 @@ CLRLOP:
 
 *********************************************************************************************
 
-DRAWOPTSCRN:
+DrawOptScrn:
 
-                     bsr                    CLROPTSCRN
+                     bsr                    ClrOptScrn
 
 *********************************************************************************************
 
-JUSTDRAWIT:
+JustDrawIt:
 
                      lea                    font,a0
                      lea                    MENUDATA,a1
@@ -1917,9 +1918,9 @@ OptScrn::            dc.w                   0
 *********************************************************************************************
 
 ; Selected level
-PLOPT:               dc.w                 0
+PLOPT:               dc.w                   0
 ; Note: Mode 1 = CO-OP - Only the master (plr1) can pickup a key (etc) in the coop mode 
-MPMode:              dc.w                 0 
+MPMode:              dc.w                   0 
 
 *********************************************************************************************
 
@@ -1934,8 +1935,8 @@ MENUDATA:
                      dc.l                   CREDITMENU_TXT
                      dc.l                   CREDITMENU_OPTS
 ;3
-                     dc.l                 INSTRUCTIONS_TXT                              ; ASKFORDISK_TXT
-                     dc.l                 INSTRUCTIONS_OPTS                             ; ASKFORDISK_OPTS
+                     dc.l                   INSTRUCTIONS_TXT                              ; ASKFORDISK_TXT
+                     dc.l                   INSTRUCTIONS_OPTS                             ; ASKFORDISK_OPTS
 ;4
                      dc.l                   MASTERPLAYERMENU_TXT
                      dc.l                   MASTERPLAYERMENU_OPTS
@@ -2015,9 +2016,9 @@ MASTERPLAYERMENU_TXT:
                      dc.b                   '                                        '    ;9
                      dc.b                   '                                        '    ;0
                      dc.b                   '                                        '    ;1
-CURRENTMPMODELINE:   dc.b                 '            2 PLAYER  MASTER            '    ;2
+CURRENTMPMODELINE:   dc.b                   '            2 PLAYER  MASTER            '    ;2
                      dc.b                   '                                        '    ;3
-CURRENTLEVELLINEM:   dc.b                 '           LEVEL 1 : THE GATE           '    ;4 
+CURRENTLEVELLINEM:   dc.b                   '           LEVEL 1 : THE GATE           '    ;4 
                      dc.b                   '                                        '    ;5
                      dc.b                   '               PLAY  GAME               '    ;6
                      dc.b                   '                                        '    ;7
@@ -2039,13 +2040,13 @@ CURRENTLEVELLINEM:   dc.b                 '           LEVEL 1 : THE GATE        
                      
 MPMODE_OPTS:            
 ;                                          0123456789012345678901234567890123456789
-                     dc.b                 '            2 PLAYER  MASTER            '    ;2
-                     dc.b                 '        2 PLAYER  MASTER (CO-OP)        '    ;2
+                     dc.b                   '            2 PLAYER  MASTER            '    ;2
+                     dc.b                   '        2 PLAYER  MASTER (CO-OP)        '    ;2
                      even
 
 MPMODE_HIGHLIGHT_OPTS:
-                     dc.w                 12,12,16,1
-                     dc.w                 8,12,24,1
+                     dc.w                   12,12,16,1
+                     dc.w                   8,12,24,1
 
 MASTERPLAYERMENU_OPTS:
                      dc.w                   12,12,16,1
@@ -2094,7 +2095,7 @@ SLAVEPLAYERMENU_TXT:
 *********************************************************************************************
 
 SLAVEPLAYERMENU_OPTS:
-                     dc.w                 13,12,14,1
+                     dc.w                   13,12,14,1
                      dc.w                   15,14,10,1
                      dc.w                   12,16,16,1
                      dc.w                   -1
@@ -2390,7 +2391,7 @@ FADEVAL:             dc.w                   0
 
 *********************************************************************************************
 
-FADEUPTITLE:
+FadeUpTitle:
 
                      move.w                 FADEVAL,d0
                      move.w                 FADEAMOUNT,d1
@@ -2420,7 +2421,7 @@ fadeuploop:
 
 *********************************************************************************************
 
-CLEARTITLEPAL:
+ClearTitlePalette:
 
                      lea                    TITLEPALCOP,a0
                      move.w                 #7,d1
@@ -2437,7 +2438,7 @@ clr32
 
 *********************************************************************************************
 
-FADEDOWNTITLE:
+FadeDownTitle:
 
                      move.w                 FADEVAL,d0
                      move.w                 FADEAMOUNT,d1
@@ -2467,19 +2468,63 @@ fadedownloop:
 
 *********************************************************************************************
 
-LOADTITLESCRN2:
+AllocTitleMemory:
+
+                     move.l                 #MEMF_CHIP|MEMF_CLEAR,d1
+                     move.l                 #TitleScrAddrSize,d0
+                     move.l                 4.w,a6
+                     jsr                    _LVOAllocMem(a6)
+                     move.l                 d0,TITLESCRNADDR
+ 
+                     move.l                 #MEMF_CHIP|MEMF_CLEAR,d1
+                     move.l                 #OptSprAddrSize,d0
+                     move.l                 4.w,a6
+                     jsr                    _LVOAllocMem(a6)
+                     move.l                 d0,OPTSPRADDR
+ 
+                     rts
+ 
+*********************************************************************************************
+
+ReleaseTitleMemory:
+
+                     move.l                 TITLESCRNADDR,d1
+                     beq                    SkipTitleScr
+
+                     move.l                 d1,a1
+                     move.l                 #TitleScrAddrSize,d0
+                     move.l                 4.w,a6
+                     jsr                    _LVOFreeMem(a6)
+                     move.l                 #0,TITLESCRNADDR
+
+SkipTitleScr:
+                     move.l                 OPTSPRADDR,d1
+                     beq                    SkipOptScr
+
+                     move.l                 d1,a1
+                     move.l                 #OptSprAddrSize,d0
+                     move.l                 4.w,a6
+                     jsr                    _LVOFreeMem(a6)
+                     move.l                 #0,OPTSPRADDR
+
+SkipOptScr:
+                     rts
+ 
+*********************************************************************************************
+ 
+LoadTitleScrn2:
  
                      move.l                 #TITLESCRNNAME2,d1
                      move.l                 #1005,d2
                      move.l                 doslib,a6
                      jsr                    _LVOOpen(a6)
                      move.l                 d0,handle
-                     beq                  ScrName2FileNotFound
+                     beq                    ScrName2FileNotFound
 
                      move.l                 d0,d1
                      move.l                 doslib,a6
                      move.l                 TITLESCRNADDR,d2
-                     move.l               #TitleScrAddrSize,d3
+                     move.l                 #TitleScrAddrSize,d3
                      jsr                    _LVORead(a6)
 
                      move.l                 doslib,a6
@@ -2491,63 +2536,19 @@ ScrName2FileNotFound:
 
 *********************************************************************************************
 
-GETTITLEMEM:
-
-                     move.l               #MEMF_CHIP|MEMF_CLEAR,d1
-                     move.l               #TitleScrAddrSize,d0
-                     move.l                 4.w,a6
-                     jsr                    _LVOAllocMem(a6)
-                     move.l                 d0,TITLESCRNADDR
- 
-                     move.l               #MEMF_CHIP|MEMF_CLEAR,d1
-                     move.l               #OptSprAddrSize,d0
-                     move.l                 4.w,a6
-                     jsr                    _LVOAllocMem(a6)
-                     move.l                 d0,OPTSPRADDR
- 
-                     rts
- 
-*********************************************************************************************
-
-RELEASETITLEMEM:
-
-                     move.l                 TITLESCRNADDR,d1
-                     beq                    SkipTitleScr
-
-                     move.l                 d1,a1
-                     move.l               #TitleScrAddrSize,d0
-                     move.l                 4.w,a6
-                     jsr                    _LVOFreeMem(a6)
-                     move.l                 #0,TITLESCRNADDR
-
-SkipTitleScr:
-                     move.l                 OPTSPRADDR,d1
-                     beq                    SkipOptScr
-
-                     move.l                 d1,a1
-                     move.l               #OptSprAddrSize,d0
-                     move.l                 4.w,a6
-                     jsr                    _LVOFreeMem(a6)
-                     move.l                 #0,OPTSPRADDR
-
-SkipOptScr:
-                     rts
- 
-*********************************************************************************************
- 
-LOADTITLESCRN:
+LoadTitleScrn:
  
                      move.l                 #TITLESCRNNAME,d1
                      move.l                 #1005,d2
                      move.l                 doslib,a6
                      jsr                    _LVOOpen(a6)
                      move.l                 d0,handle
-                     beq                  ScrNamefileNotFound
+                     beq                    ScrNamefileNotFound
 
                      move.l                 d0,d1
                      move.l                 doslib,a6
                      move.l                 TITLESCRNADDR,d2
-                     move.l               #TitleScrAddrSize,d3
+                     move.l                 #TitleScrAddrSize,d3
                      jsr                    _LVORead(a6)
 
                      move.l                 doslib,a6
@@ -2559,7 +2560,7 @@ ScrNamefileNotFound:
 
 *********************************************************************************************
 
-SETUPTITLESCRN:
+SetupTitleScrn:
 
                      move.l                 #OPTCOP,a0
                      move.l                 #rain,a1
@@ -2652,10 +2653,10 @@ putinrain:
 
 *********************************************************************************************
 
-font:                incbin               "data/fonts/OptFont"
+font:                incbin                 "data/fonts/OptFont"
                      even
 
-rain:                incbin               "data/copper/optcop"
+rain:                incbin                 "data/copper/optcop"
                      even
 
 *********************************************************************************************

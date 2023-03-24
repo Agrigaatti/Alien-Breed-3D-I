@@ -50,7 +50,7 @@ ItsABigClaws:
   bgt.s      .notdying
   
   move.b     #0,numlives(a0)
-  move.l     ZoneAdds,a1
+  move.l     zoneAdds,a1
   move.l     (a1,d2.w*4),a1
   add.l      LEVELDATA,a1
   move.l     2(a1),d0
@@ -90,7 +90,7 @@ ItsABigClaws:
   move.w     #70,FourthTimer(a0)
 
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -155,7 +155,7 @@ ItsABigClaws:
   move.w     newz,4(a1)
 
   move.w     (a2),d0
-  move.l     #ZoneBrightTable,a5
+  move.l     #zoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
   tst.b      objInTop(a0)
   bne.s      .okbit
@@ -331,7 +331,7 @@ ItsABigClaws:
  
 BigClawsAttack:
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -371,7 +371,7 @@ BigClawsAttackPLR1:
 
 .oktoshoot:
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -425,7 +425,7 @@ BigClawsAttackPLR1:
   move.w     oldz,4(a1)
 
   move.w     (a2),d0
-  move.l     #ZoneBrightTable,a5
+  move.l     #zoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
   tst.b      objInTop(a0)
   bne.s      .okbit
@@ -629,7 +629,7 @@ BigClawsAttackPLR2:
 
 .oktoshoot:
   move.w     12(a0),d2
-  move.l     ZoneAdds,a5
+  move.l     zoneAdds,a5
   move.l     (a5,d2.w*4),d0
   add.l      LEVELDATA,d0
   move.l     d0,objroom
@@ -683,7 +683,7 @@ BigClawsAttackPLR2:
   move.w     oldz,4(a1)
 
   move.w     (a2),d0
-  move.l     #ZoneBrightTable,a5
+  move.l     #zoneBrightTable,a5
   move.l     (a5,d0.w*4),d0
   tst.b      objInTop(a0)
   bne.s      .okbit

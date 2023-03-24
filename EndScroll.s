@@ -51,7 +51,7 @@ EndGameScroll:
 
                     lea                $dff000,a6                    ; a6 points at the first custom chip register.
 
-                    move.l             #TEXTCOP,cop1lch(a6)          ; Point the copper at our copperlist.
+                    move.l             #TextCop,cop1lch(a6)          ; Point the copper at our copperlist.
                     move.w             #$a201,TSCP                   ; Bitplane control register 0
                     move.w             #$20,beamcon0(a6)             ; 5 = PAL
 
@@ -69,7 +69,7 @@ EndGameScroll:
 
 PUTONS:
                     move.l             TEXTSCRN,a1
-                    bsr                DRAWLINEOFTEXT 
+                    bsr                DrawLineOfText 
                     add.w              #82,a0
                     addq               #1,d0
                     dbra               d7,PUTONS
@@ -115,7 +115,7 @@ fdupwt:
 *********************************************************
 ; Init BG music
 
-                    move.l             #endgame,mt_data                         
+                    move.l             #endGame,mt_data                         
                     st                 UseAllChannels
                     clr.b              reachedend
                     jsr                mt_init
@@ -177,7 +177,7 @@ DoTheScroll:
                     beq.b              .NONOTHERLINE
 
                     move.w             #0,d0                  
-                    bsr                CLEARLINEOFTEXT
+                    bsr                ClearLineOfText
                     move.b             d0,LazyAssHack 
 
 .NONOTHERLINE:
@@ -323,10 +323,10 @@ NewUpperLine:
                     move.w             LASTLINE,d0
                     move.l             TEXTSCRN,a1
 
-                    bsr                CLEARLINEOFTEXT
+                    bsr                ClearLineOfText
                     tst.b              (a0)
                     blt.s              okitsatwo
-                    bsr                DRAWLINEOFTEXT
+                    bsr                DrawLineOfText
 
 okitsatwo:
                     rts
@@ -339,10 +339,10 @@ NewLowerLine:
                     move.w             NEXTLINE,d0
                     move.l             TEXTSCRN,a1
 
-                    bsr                CLEARLINEOFTEXT
+                    bsr                ClearLineOfText
                     tst.b              (a0)
                     blt.s              okEmptyLine
-                    bsr                DRAWLINEOFTEXT
+                    bsr                DrawLineOfText
 
 okEmptyLine:
                     rts
@@ -355,10 +355,10 @@ NewDelaydLowerLine:
                     move.w             DELAYDNEXTLINE,d0             
                     move.l             TEXTSCRN,a1
 
-                    bsr                CLEARLINEOFTEXT
+                    bsr                ClearLineOfText
                     tst.b              (a0)
                     blt.s              okitsaline
-                    bsr                DRAWLINEOFTEXT
+                    bsr                DrawLineOfText
 
 okitsaline:
                     rts
@@ -389,7 +389,7 @@ ExitEndScroll:
 
 *********************************************************************************************
 
-CLEARLINEOFTEXT:
+ClearLineOfText:
 ; d0 = row
                     move.l             d0,-(a7)
  
@@ -417,16 +417,16 @@ CLRIT:
 
 ClearScreen:
 
-                    bsr                CLRTWEENSCRN                  ; 10240
+                    bsr                ClrWeenScrn                   ; 10240
 
                     add.l              #10240,TEXTSCRN               ; *4
-                    bsr                CLRTWEENSCRN                   
+                    bsr                ClrWeenScrn                   
 
                     add.l              #10240,TEXTSCRN
-                    bsr                CLRTWEENSCRN                   
+                    bsr                ClrWeenScrn                   
 
                     add.l              #10240,TEXTSCRN
-                    bsr                CLRTWEENSCRN                   
+                    bsr                ClrWeenScrn                   
 
                     sub.l              #3*10240,TEXTSCRN
                     rts

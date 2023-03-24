@@ -23,7 +23,7 @@
 ;Length= (widthOffset*scrheight)+16
 *********************************************************************************************
 
-INITCOPPERSCRN:
+InitCopperScrn:
 ; Get copper screen memory
 
               move.l     #MEMF_CHIP|MEMF_CLEAR,d1
@@ -42,7 +42,7 @@ INITCOPPERSCRN:
               move.l     #(widthOffset*scrheight)+16,d0
               move.l     4.w,a6
               jsr        _LVOAllocMem(a6)
-              move.l     d0,COPSCRNBUFF
+              move.l     d0,copScrnBuff
 
 
  *********************************************************************
@@ -50,7 +50,7 @@ INITCOPPERSCRN:
 
               move.l     COPSCRN1,a1
               move.l     COPSCRN2,a2
-              move.l     COPSCRNBUFF,a3
+              move.l     copScrnBuff,a3
 
               move.l     #(scrwidth*scrheight)-1,d0        ; Copper view size 104*4*80
               move.l     #copperNOP,d1                     ; Copper NOP
@@ -86,13 +86,13 @@ clrcop:
               move.l     #$00880000,(a1)+                  ; copjmp1
               move.l     #$00880000,(a2)+                  ; copjmp1
   
-              clr.b      BIGsmall
-              jsr        putinsmallscr
+              clr.b      bigSmall
+              jsr        PutInSmallScr
   
               rts
 
 *********************************************************************
 
-COPSCRNBUFF:  dc.l       0
+copScrnBuff:  dc.l       0
 
 *********************************************************************

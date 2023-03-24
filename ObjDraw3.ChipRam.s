@@ -325,13 +325,13 @@ glassobj:
                       subq          #1,d4
                       blt           objbehind
 
-                      move.l        #ontoscr,a6
+                      move.l        #onToScr,a6
                       move.l        (a6,d2.w*4),d2
-                      add.l         frompt,d2                                                                     ; Copper chunky
-                      move.l        d2,toppt
+                      add.l         fromPt,d2                                                                     ; Copper chunky
+                      move.l        d2,topPt
 
                       move.l        #WorkSpace,a5
-                      move.l        #glassball,a4
+                      move.l        #glassballData,a4
                       cmp.w         leftclipb,d0
                       bge.s         .okonleft
 
@@ -407,7 +407,7 @@ glassobj:
 .readinto:
                       swap          d0
                       move.w        #63,d0
-                      move.l        toppt(pc),a6
+                      move.l        topPt(pc),a6
                       adda.w        (a1),a6
                       add.w         d1,a1
                       add.w         d5,d7
@@ -434,7 +434,7 @@ glassobj:
   
                      ; Want to zoom an area d3*d4 in size up to 64*64 in size.
                      ; move.l #WorkSpace,a0
-                     ; move.l frompt,a2                             ; Copper chunky
+                     ; move.l fromPt,a2                             ; Copper chunky
                      ; move.w #widthOffset,d3
                      ; move.w #1,d6
                      ;.ribl
@@ -467,7 +467,7 @@ glassobj:
                       adda.w        (a0,d7.w*2),a4
                       swap          d7
                       add.l         d6,d7
-                      move.l        toppt(pc),a6
+                      move.l        topPt(pc),a6
                       adda.w        (a1)+,a6
 
                       move.l        d5,d1
@@ -686,10 +686,10 @@ objfitsonbot:
                       subq          #1,d4
                       blt           objbehind
 
-                      move.l        #ontoscr,a6
+                      move.l        #onToScr,a6
                       move.l        (a6,d2.w*4),d2
-                      add.l         frompt,d2                                                                     ; Copper chunky
-                      move.l        d2,toppt
+                      add.l         fromPt,d2                                                                     ; Copper chunky
+                      move.l        d2,topPt
 
                       cmp.w         leftclipb,d0
                       bge.s         okonleft
@@ -745,7 +745,7 @@ drawrightside:
                       add.l         a2,d7
                       move.l        WAD_PTR(PC),a0
  
-                      move.l        toppt(pc),a6
+                      move.l        topPt(pc),a6
                       adda.w        (a1)+,a6
                       move.l        (a5),d1
                       beq           blankstrip
@@ -828,7 +828,7 @@ objbehind:
 midx:                 dc.w          0
 objpixwidth:          dc.w          0
 tmptst:               dc.l          0
-toppt:                dc.l          0
+topPt:                dc.l          0
 doneit:               dc.w          0
 replaceend:           dc.w          0
 saveend:              dc.w          0
@@ -1191,7 +1191,7 @@ usegour:
 
 dontusegour:
                       move.w        #widthOffset,linedir
-                      move.l        frompt,a6                                                                     ; Copper chunky
+                      move.l        fromPt,a6                                                                     ; Copper chunky
 
                       tst.b         drawit(pc)
                       beq           polybehind
@@ -1356,7 +1356,7 @@ nocr:
  
                       move.w        tstdca,d3
  
-                      add.l         ontoscr(pc,d1.w*4),a3
+                      add.l         onToScr(pc,d1.w*4),a3
                       move.w        #63*256+63,d1
                       and.w         d1,d4
                       and.w         d1,d6
@@ -1393,7 +1393,7 @@ nodl:
 
 *********************************************************************************************
 
-ontoscr:
+onToScr:
 val                   SET           widthOffset
                       REPT          90
                       dc.l          val
@@ -1513,7 +1513,7 @@ nocrg:
                       asl.l         #8,d3
                       asl.l         #8,d4
 
-                      add.l         ontoscrg(pc,d1.w*4),a3
+                      add.l         onToScrG(pc,d1.w*4),a3
                       move.w        6+PolyBotTab-PolyTopTab(a4),d1
                       move.w        6(a4),d6
                       sub.w         d6,d1
@@ -1550,7 +1550,7 @@ nocrg:
 
 *********************************************************************************************
 
-ontoscrg:
+onToScrG:
 val                   SET           widthOffset
                       REPT          90
                       dc.l          val
@@ -1681,7 +1681,7 @@ nocrh:
                       moveq         #-1,d3
                       lsr.w         #1,d3
  
-                      add.l         ontoscrh(pc,d1.w*4),a3
+                      add.l         onToScrH(pc,d1.w*4),a3
                       move.w        #63*256+63,d1
                       and.w         d1,d4
                       and.w         d1,d6
@@ -1724,7 +1724,7 @@ nodlh:
 
 *********************************************************************************************
 
-ontoscrh:
+onToScrH:
 val                   SET           0
                       REPT          90
                       dc.l          val
