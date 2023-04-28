@@ -1,13 +1,12 @@
 	IFND UTILITY_UTILITY_I
 UTILITY_UTILITY_I SET 1
 **
-**	$VER: utility.i 39.6 (12.8.1993)
-**	Includes Release 45.1
+**	$VER: utility.i 47.1 (3.8.2019)
 **
 **	utility.library include file
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

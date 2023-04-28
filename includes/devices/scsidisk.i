@@ -1,13 +1,12 @@
 	IFND	DEVICES_SCSIDISK_I
 DEVICES_SCSIDISK_I	EQU	1
 **
-**	$VER: scsidisk.i 36.2 (7.11.1990)
-**	Includes Release 45.1
+**	$VER: scsidisk.i 47.1 (28.6.2019)
 **
 **	SCSI exec-level device command
 **
-**	(C) Copyright 1988-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 

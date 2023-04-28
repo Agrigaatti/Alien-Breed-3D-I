@@ -1,18 +1,17 @@
 	IFND	RESOURCES_BATTMEMBITSAMIGA_I
 RESOURCES_BATTMEMBITSAMIGA_I	SET	1
 **
-**	$VER: battmembitsamiga.i 39.3 (14.9.1992)
-**	Includes Release 45.1
+**	$VER: battmembitsamiga.i 47.1 (3.8.2019)
 **
 **	BattMem Amiga specific bit definitions.
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**		All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 
 *
-* Amiga specific bits in the battery-backed-up ram.
+* Amiga specific bits in the battery-backedup ram.
 *
 *	Bits 0 to 31, inclusive
 *
@@ -37,7 +36,7 @@ BATTMEM_AMIGA_AMNESIA_LEN	EQU	1
 *		adjusts the timeout value for SCSI device selection.  A
 *		value of 0 will produce short timeouts (128 ms) while a
 *		value of 1 produces long timeouts (2 sec).  This is used
-*		for Seagate drives (and some Maxtors apparently) that
+*		for SeaCrate drives (and some Maxtors apparently) that
 *		don`t respond to selection until they are fully spun up
 *		and intialised.
 *

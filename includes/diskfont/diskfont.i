@@ -1,15 +1,12 @@
 	IFND	DISKFONT_DISKFONT_I
 DISKFONT_DISKFONT_I	SET	1
 **
-**	$VER: diskfont.i 38.0 (18.6.1992)
-**	Includes Release 45.1
+**	$VER: diskfont.i 47.1 (29.7.2019)
 **
 **	diskfont library definitions
 **
-**	(C) Copyright 1990 Robert R. Burns
-**	    All Rights Reserved
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_NODES_I
@@ -22,6 +19,7 @@ DISKFONT_DISKFONT_I	SET	1
 	INCLUDE	"graphics/text.i"
 	ENDC
 
+TA_CharSet      EQU     3+TAG_USER
 MAXFONTPATH	EQU	256	; including null terminator
 
  STRUCTURE  FC,0		; FontContents
@@ -35,8 +33,8 @@ MAXFONTPATH	EQU	256	; including null terminator
     STRUCT  tfc_FileName,MAXFONTPATH-2
     UWORD   tfc_TagCount	; including the TAG_DONE tag
     ;
-    ;	if tfc_TagCount is non-zero, tfc_FileName is overlayed with
-    ;	Text Tags starting at:	(struct TagItem *)
+    ;   if tfc_TagCount is non-zero, tfc_FileName is overlayed with
+    ;	Text Tags starting at:  (struct TagItem *)
     ;	    &tfc_FileName[MAXFONTPATH-(tfc_TagCount*sizeof(struct TagItem))]
     ;
     UWORD   tfc_YSize
@@ -83,8 +81,13 @@ dfh_TagList	EQU	dfh_Segment	; destroyed during loading
     BITDEF  AF,DISK,1
     BITDEF  AF,SCALED,2
     BITDEF  AF,BITMAP,3
+    BITDEF  AF,OTAG,4
+    BITDEF  AF,CHARSET,5	;reserved
+    BITDEF  AF,TYPE,6
+
 
     BITDEF  AF,TTATTR,16	; return TAvailFonts
+    BITDEF  AF,TAGGED,16	; return TAvailFonts
 
  STRUCTURE  AF,0		; AvailFonts
     UWORD   af_Type		; MEMORY, DISK, or SCALED
@@ -99,5 +102,26 @@ dfh_TagList	EQU	dfh_Segment	; destroyed during loading
  STRUCTURE  AFH,0		; AvailFontsHeader
     UWORD   afh_NumEntries	; number of AvailFonts elements
     LABEL   afh_AF		; the [T]AvailFonts elements follow here
+
+; structure used by EOpenEngine() ESetInfo() etc (V47)
+ STRUCTURE  EGE,0		; EGlyphEngine
+    APTR    ege_Reserved	; System reserved, don't touch
+    APTR    ege_BulletBase
+    APTR    ege_GlyphEngine
+    LABEL   ege_SIZEOF
+
+; flags for OpenOutlineFont() (V47)
+    BITDEF  OF,OPEN,0
+
+; structure returned by OpenOutlineFont() (V47)
+ STRUCTURE  OLF,0			; OutlineFont
+    APTR    olf_OTagPath		; full path & name of the .otag file
+    APTR    olf_OTagList		; relocated .otag file in memory
+    APTR    olf_EngineName		; OT_Engine name
+    APTR    olf_LibraryName		; OT_Engine name + ".library"
+    STRUCT  olf_EEngine,ege_SIZEOF	; All NULL if OFF_OPEN not specified
+    APTR    olf_Reserved		; for future expansion
+    APTR    olf_UserData		; for private use
+    LABEL   olf_SIZEOF
 
 	ENDC	; DISKFONT_DISKFONT_I

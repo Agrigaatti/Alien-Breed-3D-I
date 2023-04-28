@@ -1,13 +1,12 @@
 	IFND LIBRARIES_AMIGAGUIDE_I
 LIBRARIES_AMIGAGUIDE_I	SET	1
 **
-**	$VER: amigaguide.i 44.1 (14.3.99)
-**	Includes Release 45.1
+**	$VER: amigaguide.i 47.1 (28.7.2019)
 **
 **	Interface definitions for AmigaGuide(tm) hypertext system
 **
-**	Copyright © 1990-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;------------------------------------------------------------------------------

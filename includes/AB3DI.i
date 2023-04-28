@@ -1,73 +1,45 @@
 *********************************************************************************************
 
-  IFND       AB3DI_i
+                          IFND       AB3DI_i
 AB3DI_i                  EQU 1
 
 *********************************************************************************************
 
-  incdir     "includes"
+                          incdir     "includes"
 
 *********************************************************************************************
 ; Exec
 
-  include    "exec/FUNCDEF.i"
-  include    "exec/exec_lib.i"
+                          include    "funcdef.i"
+                          include    "exec/exec_lib.i"
 
 *********************************************************************************************
 ; Dos
 
-  include    "dos/dos_lib.i"
+                          include    "lvo/dos_lib.i"
 
 ;  >= v36 
-_LVOAllocDosObject       equ -228           
-_LVOExamineFH            equ -390
-_LVOReadArgs             equ -798
-_LVOFindArg              equ -804
-_LVOReadItem             equ -810
-_LVOStrToLong            equ -816
-_LVOMatchFirst           equ -822
-_LVOMatchNext            equ -828
-_LVOMatchEnd             equ -834
-_LVOParsePattern         equ -840
-_LVOMatchPattern         equ -846
 _LVODosNameFromAnchor    equ -852
-_LVOFreeArgs             equ -858
 
 *********************************************************************************************
 ; Graphics
   
-  include    "graphics/graphics_lib.i"
+                          include    "lvo/graphics_lib.i"
 
 *********************************************************************************************
 ; Intuition
 
-  include    "intuition/intuition_lib.i"
+                          include    "lvo/intuition_lib.i"
 
 *********************************************************************************************
  ; lowlevel.library
 
-  include    "libraries/lowlevel.i"
-
-_LVOReadJoyPort          EQU -30
-_LVOGetLanguageSelection EQU -36
-_LVOGetKey               EQU -48
-_LVOQueryKeys            EQU -54
-_LVOAddKBInt             EQU -60
-_LVORemKBInt             EQU -66
-_LVOSystemControlA       EQU -72
-_LVOAddTimerInt          EQU -78
-_LVORemTimerInt          EQU -84
-_LVOStopTimerInt         EQU -90
-_LVOStartTimerInt        EQU -96
-_LVOElapsedTime          EQU -102
-_LVOSetJoyPortAttrsA     EQU -132
-_LVOAddVBlankInt         EQU -108
-_LVORemVBlankInt         EQU -114
+                          include    "lvo/lowlevel_lib.i"
 
 *********************************************************************************************
 ; Custom chips 
 
-  include    "hardware/custom.i"
+                          include    "hardware/custom.i"
 
 vhposrl                  EQU $007
 
@@ -212,4 +184,4 @@ PlayerMaxEnergy          EQU 127
 
 *********************************************************************************************
 
-  endc  
+                          endc  

@@ -1,13 +1,12 @@
 	IFND	DEVICES_HARDBLOCKS_I
 DEVICES_HARDBLOCKS_I	SET	1
 **
-**	$VER: hardblocks.i 36.3 (23.8.1991)
-**	Includes Release 45.1
+**	$VER: hardblocks.i 47.1 (28.6.2019)
 **
 **	File System identifier blocks for hard disks
 **
-**	(C) Copyright 1988-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I

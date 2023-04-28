@@ -1,13 +1,12 @@
 	IFND	EXEC_EXECBASE_I
 EXEC_EXECBASE_I SET	1
 **
-**	$VER: execbase.i 39.4 (18.1.1993)
-**	Includes Release 45.1
+**	$VER: execbase.i 47.2 (24.8.2019)
 **
 **	Definition of the exec.library base structure.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND EXEC_TYPES_I
@@ -36,9 +35,9 @@ EXEC_EXECBASE_I SET	1
 
 ******* Static System Variables *********************************************
 
-	UWORD	SoftVer	; kickstart release number (obs.)
+	UWORD	SoftVer 	; kickstart release number (obs.)
 	WORD	LowMemChkSum	; checksum of 68000 trap vectors
-	ULONG	ChkBase	; system base pointer complement
+	ULONG	ChkBase 	; system base pointer complement
 	APTR	ColdCapture	; coldstart soft capture vector
 	APTR	CoolCapture	; coolstart soft capture vector
 	APTR	WarmCapture	; warmstart soft capture vector
@@ -80,8 +79,8 @@ EXEC_EXECBASE_I SET	1
 
 	ULONG	IdleCount	; idle counter
 	ULONG	DispCount	; dispatch counter
-	UWORD	Quantum	; time slice quantum
-	UWORD	Elapsed	; current quantum ticks
+	UWORD	Quantum 	; time slice quantum
+	UWORD	Elapsed 	; current quantum ticks
 	UWORD	SysFlags	; misc internal system flags
 	BYTE	IDNestCnt	; interrupt disable nesting count
 	BYTE	TDNestCnt	; task disable nesting count
@@ -145,7 +144,7 @@ EXEC_EXECBASE_I SET	1
 	ULONG	ex_LaunchPoint	; Private to Launch/Switch
 	APTR	ex_RamLibPrivate
 	;* The next ULONG contains the system "E" clock frequency,
-	;* expressed in Hertz.	The E clock is used as a timebase for
+	;* expressed in Hertz.  The E clock is used as a timebase for
 	;* the Amiga's 8520 I/O chips. (E is connected to "02").
 	;* Typical values are 715909 for NTSC, or 709379 for PAL.
 	;*
@@ -163,7 +162,7 @@ EXEC_EXECBASE_I SET	1
 
 	;* The following list and data element are used for
 	;* V39 exec's low memory handler.
-	STRUCT	ex_MemHandlers,MLH_SIZE		;* List of handlers
+        STRUCT	ex_MemHandlers,MLH_SIZE		;* List of handlers
 	APTR	ex_MemHandler			;* Handler pointer (PRIVATE!)
 
 	LABEL	SYSBASESIZE
@@ -175,10 +174,12 @@ EXEC_EXECBASE_I SET	1
 	BITDEF	AF,68010,0	; also set for 68020
 	BITDEF	AF,68020,1	; also set for 68030
 	BITDEF	AF,68030,2	; also set for 68040
-	BITDEF	AF,68040,3
+	BITDEF	AF,68040,3	; also set for 68060
 	BITDEF	AF,68881,4	; also set for 68882
 	BITDEF	AF,68882,5
 	BITDEF	AF,FPU40,6	; Set if 68040 FPU
+	BITDEF	AF,68060,7	; set for 68060 CPU
+	BITDEF	AF,FPGA,10	; set for FPGA implementations of the CPU
 ;
 ; The AFB_FPU40 bit is set when a working 68040 FPU
 ; is in the system.  If this bit is set and both the
@@ -204,7 +205,7 @@ EXEC_EXECBASE_I SET	1
 	BITDEF	CACR,DBE,12		;68030 Data burst enable
 	BITDEF	CACR,WriteAllocate,13	;68030 Write-Allocate mode (must
 					;always be set)
-	BITDEF	CACR,EnableE,30		;Master enable for external caches
+	BITDEF  CACR,EnableE,30		;Master enable for external caches
 					;External caches should track the
 					;state of the internal caches
 					;such that they do not cache anything

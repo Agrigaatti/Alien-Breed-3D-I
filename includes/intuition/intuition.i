@@ -1,13 +1,12 @@
 	IFND	INTUITION_INTUITION_I
 INTUITION_INTUITION_I	SET	1
 **
-**	$VER: intuition.i 38.26 (11.8.1993)
-**	Includes Release 45.1
+**	$VER: intuition.i 47.6 (21.3.2021)
 **
-**	Interface definitions for Intuition applications
+**	Interface definitions for Intuition applications.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019-2022 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND EXEC_TYPES_I
@@ -65,7 +64,7 @@ INTUITION_INTUITION_I	SET	1
  STRUCTURE Menu,0
 
     APTR  mu_NextMenu	; menu pointer, same level
-    WORD mu_LeftEdge	; position of the select box
+    WORD mu_LeftEdge 	; position of the select box
     WORD mu_TopEdge	; position of the select box
     WORD mu_Width	; dimensions of the select box
     WORD mu_Height	; dimensions of the select box
@@ -113,7 +112,7 @@ MIDRAWN EQU $0100	; this menu's items are currently drawn
 
     APTR mi_SubItem	; if non-zero, points to MenuItem for submenu
 
-   ; The NextSelect field represents the menu number of next selected 
+   ; The NextSelect field represents the menu number of next selected
    ; item (when user has drag-selected several items)
     WORD mi_NextSelect
 
@@ -127,20 +126,20 @@ MENUTOGGLE	EQU $0008	; set for toggling checks (else mut. exclude)
 ITEMENABLED	EQU $0010	; set if this item is enabled
 
 ; these are the SPECIAL HIGHLIGHT FLAG state meanings
-HIGHFLAGS	EQU $00C0	; see definitions below for these bits
+HIGHFLAGS 	EQU $00C0	; see definitions below for these bits
 HIGHIMAGE	EQU $0000	; use the user's "select image"
 HIGHCOMP	EQU $0040	; highlight by complementing the select box
 HIGHBOX		EQU $0080	; highlight by drawing a box around the image
 HIGHNONE	EQU $00C0	; don't highlight
 
 ; --- FLAGS SET BY BOTH APPLIPROG AND INTUITION -----------------------------
-CHECKED	EQU $0100	; state of the checkmark
+CHECKED 	EQU $0100	; state of the checkmark
 
 
 ; --- FLAGS SET BY INTUITION ------------------------------------------------
 ISDRAWN		EQU $1000	; this item's subs are currently drawn
 HIGHITEM	EQU $2000	; this item is currently highlighted
-MENUTOGGLED	EQU $4000	; this item was already toggled 
+MENUTOGGLED	EQU $4000	; this item was already toggled
 
 
 
@@ -174,9 +173,9 @@ MENUTOGGLED	EQU $4000	; this item was already toggled
     APTR rq_ReqLayer		; layer in which requester rendered
     STRUCT rq_ReqPad1,32	; for backwards compatibility (reserved)
 
-    ; If the BitMap plane pointers are non-zero, this tells the system 
-    ; that the image comes pre-drawn (if the appliprog wants to define 
-    ; its own box, in any shape or size it wants!); this is OK by 
+    ; If the BitMap plane pointers are non-zero, this tells the system
+    ; that the image comes pre-drawn (if the appliprog wants to define
+    ; its own box, in any shape or size it wants!); this is OK by
     ; Intuition as long as there's a good correspondence between the image
     ; and the specified Gadgets
     APTR  rq_ImageBMap		; points to the BitMap of PREDRAWN imagery
@@ -252,7 +251,7 @@ DEFERREFRESH	EQU $8000	; this Requester stops a Refresh broadcast
     ; trick with custom gadgets
     LONG gg_MutualExclude 	; obsolete
 
-    ; pointer to a structure of special data required by Proportional, String 
+    ; pointer to a structure of special data required by Proportional, String
     ; and Integer Gadgets
     APTR gg_SpecialInfo
 
@@ -298,11 +297,11 @@ GFLG_GADGHIMAGE		EQU $0002	; Blast in this alternate image
 GFLG_GADGHNONE		EQU $0003	; don't highlight
 
 ; set this flag if the GadgetRender and SelectRender point to Image imagery,
-; clear if it's a Border 
+; clear if it's a Border
 GFLG_GADGIMAGE		EQU $0004
 
 ; combinations in these next two bits specify to which corner the gadget's
-; Left & Top coordinates are relative.	If relative to Top/Left,
+; Left & Top coordinates are relative.  If relative to Top/Left,
 ; these are "normal" coordinates (everything is relative to something in
 ; this universe)
 GFLG_RELBOTTOM		EQU $0008	; set if rel to bottom, clear if to top
@@ -343,7 +342,7 @@ GFLG_LABELITEXT		EQU	$0000	; GadgetText points to IntuiText
 GFLG_LABELSTRING	EQU	$1000	; GadgetText points to (UBYTE *)
 GFLG_LABELIMAGE		EQU	$2000	; GadgetText points to Image (object)
 ; New for V37: GFLG_TABCYCLE
-GFLG_TABCYCLE		EQU	$0200	; (string or custom) gadget
+GFLG_TABCYCLE   	EQU	$0200	; (string or custom) gadget
 				; participates in cycling activation with
 				; Tab or Shift-Tab
 
@@ -365,7 +364,7 @@ GFLG_STRINGEXTEND	EQU	$0400  ; this String Gadget has StringExtend
 GFLG_IMAGEDISABLE 	EQU	$0800  ; Gadget's image knows how to do disabled
 				       ; rendering
 
-; New for V39:	If set, this bit means that the Gadget is actually
+; New for V39:  If set, this bit means that the Gadget is actually
 ; a struct ExtGadget, with new fields and flags.  All V39 boopsi
 ; gadgets are ExtGadgets.  Never ever attempt to read the extended
 ; fields of a gadget if this flag is not set.
@@ -381,7 +380,7 @@ GFLG_EXTENDED		EQU	$8000  ; Gadget is extended
 GACT_RELVERIFY		EQU $0001
 
 ; the flag GACT_IMMEDIATE, when set, informs the caller that the gadget
-; was activated when it was activated.	this flag works in conjunction with
+; was activated when it was activated.  this flag works in conjunction with
 ; the GACT_RELVERIFY flag
 GACT_IMMEDIATE		EQU $0002
 
@@ -450,7 +449,7 @@ GTYP_REQGADGET		EQU $1000	; 1 = this is a Requester Gadget
 
 ; GTYP_SYSGADGET means that Intuition ALLOCATED the gadget.
 ; GTYP_SYSTYPEMASK is the mask you can apply to tell what type of
-; system-gadget it is.	The possible types follow.
+; system-gadget it is.  The possible types follow.
 GTYP_SYSGADGET		EQU $8000
 GTYP_SYSTYPEMASK	EQU $00F0
 
@@ -463,6 +462,8 @@ GTYP_SDEPTH		EQU $0050		; Screen depth gadget
 GTYP_WZOOM		EQU $0060		; Window zoom gadget
 GTYP_SUNUSED		EQU $0070		; Unused screen gadget
 GTYP_CLOSE		EQU $0080		; Window close gadget
+GTYP_ICONIFY		EQU $0090		; Window iconify gadget (V46)
+
 
 ; These definitions describe system gadgets prior to V36:
 GTYP_WUPFRONT		EQU GTYP_WDEPTH		; Window to-front gadget
@@ -480,7 +481,7 @@ GTYP_PROPGADGET		EQU $0003
 GTYP_STRGADGET		EQU $0004
 GTYP_CUSTOMGADGET	EQU $0005
 
-; New for V39.	Gadgets which have the GFLG_EXTENDED flag set are
+; New for V39.  Gadgets which have the GFLG_EXTENDED flag set are
 ; actually ExtGadgets, which have more flags.  The GMORE_xxx
 ; identifiers describe those flags.  For GMORE_SCROLLRASTER, see
 ; important information in the ScrollWindowRaster() autodoc.
@@ -490,7 +491,10 @@ GTYP_CUSTOMGADGET	EQU $0005
 GMORE_BOUNDS		EQU $00000001 ; ExtGadget has valid Bounds
 GMORE_GADGETHELP	EQU $00000002 ; This gadget responds to gadget help
 GMORE_SCROLLRASTER	EQU $00000004 ; This (custom) gadget uses ScrollRaster
-
+GMORE_HIDDEN		EQU $00000010 ; This gadget is explicitly hidden/can't be drawn. V47 and V50.
+GMORE_BOOPSIGADGET	EQU $00000400 ; This gadget was (sub-)instantiated from gadgetclass. V47.
+GMORE_FREEIMAGE		EQU $00000800 ; This (BOOPSI) gadget automatically frees its GA_Image. V47.
+GMORE_PARENTHIDDEN	EQU $01000000 ; Parent is hidden, so this gadget is implicitly hidden too. V47.
 
 
 ; ========================================================================
@@ -505,7 +509,7 @@ GMORE_SCROLLRASTER	EQU $00000004 ; This (custom) gadget uses ScrollRaster
     APTR    bi_Mask	; bit mask for highlighting and selecting
 			; mask must follow the same rules as an Image
 			; plane.  Its width and height are determined
-			; by the width and height of the gadget's 
+			; by the width and height of the gadget's
 			; select box. (i.e. Gadget.Width and .Height).
     LONG    bi_Reserved	; set to 0
 
@@ -526,28 +530,28 @@ BOOLMASK	EQU	$0001	; extension is for masked gadget
 
     WORD pi_Flags	; general purpose flag bits (see defines below)
 
-    ; You initialize the Pot variables before the Gadget is added to 
-    ; the system.  Then you can look here for the current settings 
-    ; any time, even while User is playing with this Gadget.  To 
-    ; adjust these after the Gadget is added to the System, use 
-    ; ModifyProp(); The Pots are the actual proportional settings, 
-    ; where a value of zero means zero and a value of MAXPOT means 
+    ; You initialize the Pot variables before the Gadget is added to
+    ; the system.  Then you can look here for the current settings
+    ; any time, even while User is playing with this Gadget.  To
+    ; adjust these after the Gadget is added to the System, use
+    ; ModifyProp(); The Pots are the actual proportional settings,
+    ; where a value of zero means zero and a value of MAXPOT means
     ; that the Gadget is set to its maximum setting.
     WORD pi_HorizPot	; 16-bit FixedPoint horizontal quantity percentage;
     WORD pi_VertPot	; 16-bit FixedPoint vertical quantity percentage;
 
-    ; the 16-bit FixedPoint Body variables describe what percentage 
-    ; of the entire body of stuff referred to by this Gadget is 
-    ; actually shown at one time.  This is used with the AUTOKNOB 
-    ; routines, to adjust the size of the AUTOKNOB according to how 
-    ; much of the data can be seen.  This is also used to decide how 
-    ; far to advance the Pots when User hits the Container of the Gadget.  
-    ; For instance, if you were controlling the display of a 5-line 
-    ; Window of text with this Gadget, and there was a total of 15 
-    ; lines that could be displayed, you would set the VertBody value to 
+    ; the 16-bit FixedPoint Body variables describe what percentage
+    ; of the entire body of stuff referred to by this Gadget is
+    ; actually shown at one time.  This is used with the AUTOKNOB
+    ; routines, to adjust the size of the AUTOKNOB according to how
+    ; much of the data can be seen.  This is also used to decide how
+    ; far to advance the Pots when User hits the Container of the Gadget.
+    ; For instance, if you were controlling the display of a 5-line
+    ; Window of text with this Gadget, and there was a total of 15
+    ; lines that could be displayed, you would set the VertBody value to
     ;    (MAXBODY / (TotalLines / DisplayLines)) = MAXBODY / 3.
-    ; Therefore, the AUTOKNOB would fill 1/3 of the container, and if 
-    ; User hits the Cotainer outside of the knob, the pot would advance 
+    ; Therefore, the AUTOKNOB would fill 1/3 of the container, and if
+    ; User hits the Cotainer outside of the knob, the pot would advance
     ; 1/3 (plus or minus) If there's no body to show, or the total
     ; amount of displayable info is less than the display area, set the
     ; Body variables to the MAX.  To adjust these after the Gadget is
@@ -572,11 +576,13 @@ PROPBORDERLESS	EQU $0008	; if set, no border will be rendered
 KNOBHIT		EQU $0100	; set when this Knob is hit
 PROPNEWLOOK	EQU $0010	; set this if you want to get the new
 				; V36 look
+SMARTKNOBIMAGE	EQU $0020	; set this if your custom knob image is
+				; BOOPSI and supports IM_DRAWFRAME (V47)
 
 KNOBHMIN	EQU 6		; minimum horizontal size of the knob
-KNOBVMIN	EQU 4		; minimum vertical size of the knob
+KNOBVMIN 	EQU 4		; minimum vertical size of the knob
 MAXBODY		EQU $FFFF	; maximum body value
-MAXPOT			EQU $FFFF	; maximum pot value
+MAXPOT 		EQU $FFFF	; maximum pot value
 
 
 ; ========================================================================
@@ -609,8 +615,8 @@ MAXPOT			EQU $FFFF	; maximum pot value
     APTR  si_Extension
 
     ; you can initialize this variable before the gadget is submitted to
-    ; Intuition, and then examine it later to discover what integer 
-    ; the user has entered (if the user never plays with the gadget, 
+    ; Intuition, and then examine it later to discover what integer
+    ; the user has entered (if the user never plays with the gadget,
     ; the value will be unchanged from your initial setting)
     LONG  si_LongInt	; the LONG return value of a GACT_LONGINT String Gad.
 
@@ -638,7 +644,7 @@ MAXPOT			EQU $FFFF	; maximum pot value
 
     BYTE it_DrawMode		; the mode for rendering the text
 
-    BYTE it_KludgeFill00 	; This is strictly for word-alignment 
+    BYTE it_KludgeFill00 	; This is strictly for word-alignment
 
     WORD it_LeftEdge		; relative start location for the text
     WORD it_TopEdge		; relative start location for the text
@@ -670,9 +676,9 @@ MAXPOT			EQU $FFFF	; maximum pot value
 
     WORD  bd_LeftEdge		; initial offsets from the origin
     WORD  bd_TopEdge		; initial offsets from the origin
-    BYTE  bd_FrontPen		; pen number for rendering 
-    BYTE  bd_BackPen		; pen number for rendering 
-    BYTE  bd_DrawMode		; mode for rendering 
+    BYTE  bd_FrontPen		; pen number for rendering
+    BYTE  bd_BackPen		; pen number for rendering
+    BYTE  bd_DrawMode		; mode for rendering
     BYTE  bd_Count		; number of XY pairs
     APTR  bd_XY			; vector coordinate pairs rel to LeftTop
     APTR  bd_NextBorder		; pointer to any other Border too
@@ -680,18 +686,18 @@ MAXPOT			EQU $FFFF	; maximum pot value
     LABEL bd_SIZEOF
 
 
-; ======================================================================== 
-; === Image ============================================================== 
-; ======================================================================== 
-; This is a brief image structure for very simple transfers of 
+; ========================================================================
+; === Image ==============================================================
+; ========================================================================
+; This is a brief image structure for very simple transfers of
 ; image data to a RastPort
  STRUCTURE Image,0
 
-    WORD ig_LeftEdge		; starting offset relative to something 
-    WORD ig_TopEdge		; starting offset relative to something 
+    WORD ig_LeftEdge		; starting offset relative to something
+    WORD ig_TopEdge		; starting offset relative to something
     WORD ig_Width		; pixel size (though data is word-aligned)
-    WORD ig_Height		; pixel size 
-    WORD ig_Depth		; pixel size 
+    WORD ig_Height		; pixel size
+    WORD ig_Depth		; pixel size
     APTR ig_ImageData		; pointer to the actual image bits
 
     ; the PlanePick and PlaneOnOff variables work much the same way as the
@@ -704,13 +710,13 @@ MAXPOT			EQU $FFFF	; maximum pot value
     ; three, and the Gadget will reside in a five-plane display, plane zero
     ; of your imagery would be all ones, bit plane one would have data that
     ; describes the imagery, and bit planes two through four would be
-    ; all zeroes.  Using these flags allows you to avoid wasting all that 
-    ; memory in this way:  
-    ; first, you specify which planes you want your data to appear 
-    ; in using the PlanePick variable.  For each bit set in the variable, the 
+    ; all zeroes.  Using these flags allows you to avoid wasting all that
+    ; memory in this way:
+    ; first, you specify which planes you want your data to appear
+    ; in using the PlanePick variable.  For each bit set in the variable, the
     ; next "plane" of your image data is blitted to the display.  For each bit
     ; clear in this variable, the corresponding bit in PlaneOnOff is examined.
-    ; If that bit is clear, a "plane" of zeroes will be used.  If the bit is 
+    ; If that bit is clear, a "plane" of zeroes will be used.  If the bit is
     ; set, ones will go out instead.  So, for our example:
     ;   Gadget.PlanePick = 0x02;
     ;   Gadget.PlaneOnOff = 0x01;
@@ -726,8 +732,8 @@ MAXPOT			EQU $FFFF	; maximum pot value
     BYTE ig_PlanePick
     BYTE ig_PlaneOnOff
 
-    ; if the NextImage variable is not NULL, Intuition presumes that 
-    ; it points to another Image structure with another Image to be 
+    ; if the NextImage variable is not NULL, Intuition presumes that
+    ; it points to another Image structure with another Image to be
     ; rendered
     APTR ig_NextImage
 
@@ -737,9 +743,9 @@ MAXPOT			EQU $FFFF	; maximum pot value
 
 
 
-; ======================================================================== 
-; === IntuiMessage ======================================================= 
-; ======================================================================== 
+; ========================================================================
+; === IntuiMessage =======================================================
+; ========================================================================
  STRUCTURE IntuiMessage,0
 
     STRUCT im_ExecMessage,MN_SIZE
@@ -748,7 +754,7 @@ MAXPOT			EQU $FFFF	; maximum pot value
     ; special bit IDCMP_LONELYMESSAGE (defined below)
     LONG im_Class
 
-    ; the Code field is for special values like MENU number 
+    ; the Code field is for special values like MENU number
     WORD im_Code
 
     ; the Qualifier field is a copy of the current InputEvent's Qualifier
@@ -782,7 +788,7 @@ MAXPOT			EQU $FFFF	; maximum pot value
     LABEL  im_SIZEOF
 
 * New for V39:
-* All IntuiMessages are now slightly extended.	The ExtIntuiMessage
+* All IntuiMessages are now slightly extended.  The ExtIntuiMessage
 * structure has an additional field for tablet data, which is usually
 * NULL.  If a tablet driver which is sending IESUBCLASS_NEWTABLET
 * events is installed in the system, windows with the WA_TabletMessages
@@ -831,18 +837,18 @@ IDCMP_DELTAMOVE		EQU	$00100000
 IDCMP_VANILLAKEY	EQU	$00200000
 IDCMP_INTUITICKS	EQU	$00400000
 ;  for notifications from "boopsi" gadgets:
-IDCMP_IDCMPUPDATE	EQU	$00800000	; new for V36
+IDCMP_IDCMPUPDATE	EQU	$00800000  	; new for V36
 ; for getting help key report during menu session:
-IDCMP_MENUHELP		EQU	$01000000	; new for V36
+IDCMP_MENUHELP		EQU	$01000000  	; new for V36
 ; for notification of any move/size/zoom/change window:
-IDCMP_CHANGEWINDOW	EQU	$02000000	; new for V36
+IDCMP_CHANGEWINDOW	EQU	$02000000  	; new for V36
 IDCMP_GADGETHELP	EQU	$04000000	; new for V39
 
 ; NOTEZ-BIEN:		$80000000 is reserved for internal use by IDCMP
 
 ; the IDCMP Flags do not use this special bit, which is cleared when
 ; Intuition sends its special message to the Task, and set when Intuition
-; gets its Message back from the Task.	Therefore, I can check here to
+; gets its Message back from the Task.  Therefore, I can check here to
 ; find out fast whether or not this Message is available for me to send
 IDCMP_LONELYMESSAGE	EQU	$80000000
 
@@ -852,6 +858,8 @@ IDCMP_LONELYMESSAGE	EQU	$80000000
 ; This group of codes is for the IDCMP_CHANGEWINDOW message
 CWCODE_MOVESIZE	EQU	$0000	; Window was moved and/or sized
 CWCODE_DEPTH	EQU	$0001	; Window was depth-arranged (new for V39)
+CWCODE_HIDE	EQU	$0002	; Window was hidden (new for V46)
+CWCODE_SHOW	EQU	$0003	; Window was shown (new for V46)
 
 ; This group of codes is for the IDCMP_MENUVERIFY message
 MENUHOT		EQU	$0001	; IntuiWants verification or MENUCANCEL
@@ -878,9 +886,9 @@ WBENCHCLOSE	EQU $0002
  LABEL	ibox_SIZEOF
 
 
-; ======================================================================== 
-; === Window ============================================================= 
-; ======================================================================== 
+; ========================================================================
+; === Window =============================================================
+; ========================================================================
  STRUCTURE Window,0
 
     APTR wd_NextWindow		; for the linked list of a Screen
@@ -890,8 +898,8 @@ WBENCHCLOSE	EQU $0002
     WORD wd_Width		; screen dimensions
     WORD wd_Height		; screen dimensions
 
-    WORD wd_MouseY		; relative top top-left corner 
-    WORD wd_MouseX		; relative top top-left corner 
+    WORD wd_MouseY		; relative top top-left corner
+    WORD wd_MouseX		; relative top top-left corner
 
     WORD wd_MinWidth		; minimum sizes
     WORD wd_MinHeight		; minimum sizes
@@ -904,8 +912,8 @@ WBENCHCLOSE	EQU $0002
 
     APTR wd_Title		; title text for the Window
 
-    APTR wd_FirstRequest	; first in linked list of active Requesters 
-    APTR wd_DMRequest		; the double-menu Requester 
+    APTR wd_FirstRequest	; first in linked list of active Requesters
+    APTR wd_DMRequest		; the double-menu Requester
     WORD wd_ReqCount		; number of Requesters blocking this Window
     APTR wd_WScreen		; this Window's Screen
     APTR wd_RPort		; this Window's very own RastPort
@@ -957,10 +965,10 @@ WBENCHCLOSE	EQU $0002
     ; if this is equal to NULL, you'll get the default imagery
     APTR wd_CheckMark
 
-    ; if non-null, Screen title when Window is active 
+    ; if non-null, Screen title when Window is active
     APTR wd_ScreenTitle
 
-    ; These variables have the mouse coordinates relative to the 
+    ; These variables have the mouse coordinates relative to the
     ; inner-Window of WFLG_GIMMEZEROZERO Windows.  This is compared with the
     ; MouseX and MouseY variables, which contain the mouse coordinates
     ; relative to the upper-left corner of the Window, WFLG_GIMMEZEROZERO
@@ -974,7 +982,7 @@ WBENCHCLOSE	EQU $0002
 
     APTR wd_ExtData
 
-    ; general-purpose pointer to User data extension 
+    ; general-purpose pointer to User data extension
     APTR wd_UserData
     APTR wd_WLayer	; stash of Window.RPort->Layer
 
@@ -993,10 +1001,10 @@ WBENCHCLOSE	EQU $0002
     LABEL wd_SIZEOF	; you should never use this: only Intuition allocates
 
 ; --- Flags requested at OpenWindow() time by the application -------------
-WFLG_SIZEGADGET	EQU $0001	; include sizing system-gadget?
-WFLG_DRAGBAR		EQU $0002	; include dragging system-gadget?
-WFLG_DEPTHGADGET	EQU $0004	; include depth arrangement gadget?
-WFLG_CLOSEGADGET	EQU $0008	; include close-box system-gadget?
+WFLG_SIZEGADGET  	EQU $0001	; include sizing system-gadget?
+WFLG_DRAGBAR    	EQU $0002	; include dragging system-gadget?
+WFLG_DEPTHGADGET   	EQU $0004	; include depth arrangement gadget?
+WFLG_CLOSEGADGET   	EQU $0008	; include close-box system-gadget?
 
 WFLG_SIZEBRIGHT		EQU $0010	; size gadget uses right border
 WFLG_SIZEBBOTTOM	EQU $0020	; size gadget uses bottom border
@@ -1018,24 +1026,24 @@ WFLG_GIMMEZEROZERO	EQU $0400	; make extra border stuff
 WFLG_BORDERLESS		EQU $0800	; set this to get a Window sans border
 
 WFLG_ACTIVATE		EQU $1000	; when Window opens, it's the Active
-					; one 
+					; one
 
 ; --- Other User Flags -------------------------------------------------------
-WFLG_RMBTRAP    	EQU $00010000	; Catch RMB events for your own 
+WFLG_RMBTRAP    	EQU $00010000	; Catch RMB events for your own
 WFLG_NOCAREREFRESH	EQU $00020000	; not to be bothered with REFRESH
 
-; - V36 new Flags which the programmer may specify in NewScreen.Flags 
+; - V36 new Flags which the programmer may specify in NewScreen.Flags
 WFLG_NW_EXTENDED	EQU $00040000	; extension data provided
 					; see ExtNewWindow structure
-; - V39 new Flags which the programmer may specify in NewScreen.Flags 
+; - V39 new Flags which the programmer may specify in NewScreen.Flags
 WFLG_NEWLOOKMENUS	EQU $00200000	; window has NewLook menus
 
 
 ; These flags are set only by Intuition.  YOU MAY NOT SET THEM YOURSELF!
-WFLG_WINDOWACTIVE	EQU $2000	; this window is the active one 
-WFLG_INREQUEST    	EQU $4000	; this window is in request mode 
+WFLG_WINDOWACTIVE	EQU $2000	; this window is the active one
+WFLG_INREQUEST    	EQU $4000	; this window is in request mode
 WFLG_MENUSTATE    	EQU $8000	; this Window is active with its
-					; Menus on 
+					; Menus on
 WFLG_WINDOWREFRESH	EQU $01000000	; Window is currently refreshing
 WFLG_WBENCHWINDOW	EQU $02000000	; WorkBench Window
 WFLG_WINDOWTICKED	EQU $04000000	; only one timer tick at a time
@@ -1044,21 +1052,22 @@ WFLG_WINDOWTICKED	EQU $04000000	; only one timer tick at a time
 WFLG_VISITOR		EQU $08000000	; visitor window (see autodoc for OpenWindow)
 WFLG_ZOOMED		EQU $10000000	; identifies "zoom state"
 WFLG_HASZOOM		EQU $20000000	; window has a zoom gadget
+WFLG_HASICONIFY		EQU $40000000	; window has an iconification gadget (V47)
 
 
 SUPER_UNUSED	EQU $FCFC0000	; OBSOLETE (was bits of Flag unused yet)
 
 
-; --- Other Window Values ---------------------------------------------- 
+; --- Other Window Values ----------------------------------------------
 DEFAULTMOUSEQUEUE	EQU 5	 ; no more mouse messages
 
 
 ; --- see struct IntuiMessage for the IDCMP Flag definitions -----------------
 
 
-; ======================================================================== 
-; === NewWindow ========================================================== 
-; ======================================================================== 
+; ========================================================================
+; === NewWindow ==========================================================
+; ========================================================================
 ; NOTE: to use the new features of V36, you may need to use the
 ; ExtNewWindow structure, below.
  STRUCTURE NewWindow,0
@@ -1069,7 +1078,7 @@ DEFAULTMOUSEQUEUE	EQU 5	 ; no more mouse messages
     WORD nw_Height		; initial Window dimensions
 
     BYTE nw_DetailPen		; for rendering the detail bits of the Window
-    BYTE nw_BlockPen		; for rendering the block-fill bits 
+    BYTE nw_BlockPen		; for rendering the block-fill bits
 
     LONG nw_IDCMPFlags		; initial IDCMP state
 
@@ -1081,7 +1090,7 @@ DEFAULTMOUSEQUEUE	EQU 5	 ; no more mouse messages
     ; the bit definitions under the Window structure definition)
     APTR	nw_FirstGadget
 
-    ; the CheckMark is a pointer to the imagery that will be used when 
+    ; the CheckMark is a pointer to the imagery that will be used when
     ; rendering MenuItems of this Window that want to be checkmarked
     ; if this is equal to NULL, you'll get the default imagery
     APTR nw_CheckMark
@@ -1164,7 +1173,7 @@ DEFAULTMOUSEQUEUE	EQU 5	 ; no more mouse messages
     EITEM WA_Checkmark
     EITEM WA_Title
     EITEM WA_ScreenTitle	; means you don't have to call SetWindowTitles
-				; after you open your window
+			 	; after you open your window
 
     EITEM WA_CustomScreen
     EITEM WA_SuperBitMap	; also implies WFLG_SUPER_BITMAP property
@@ -1281,7 +1290,7 @@ DEFAULTMOUSEQUEUE	EQU 5	 ; no more mouse messages
     EITEM WA_PointerDelay
 			; ti_Data is boolean.  Set to TRUE to
 			; request that the changing of the
-			; pointer be slightly delayed.	The change
+			; pointer be slightly delayed.  The change
 			; will be called off if you call NewSetPointer()
 			; before the delay expires.  This allows
 			; you to post a busy-pointer even if you think
@@ -1322,6 +1331,21 @@ DEFAULTMOUSEQUEUE	EQU 5	 ; no more mouse messages
 			; group.  Defaults to NULL, which has no effect.
 			; See also the HelpControl() function.
 
+WA_Hidden		EQU TAG_USER+99+$3C
+			; If TRUE, the window will open in hidden state. V47.
+
+WA_PointerType		EQU TAG_USER+99+$50
+			; Allows you to set one of Intuition's built-in pointers
+			; for your window. Zero signifies the default pointer.
+			; This tag may be passed to OpenWindowTags()
+			; or SetWindowPointer(). V47 and V53.
+
+WA_IconifyGadget        EQU TAG_USER+99+$60
+                        ; New for V46: If this tag is present, intuition builds
+			; an iconification gadget for this window and places
+			; it into the top window border. The application will
+			; receive a CLOSEWINDOW event with ie_Code set to 1
+			; as soon as this gadget is pressed.
 
 *** End of Window attribute enumeration ***
 
@@ -1333,6 +1357,15 @@ DEFAULTMOUSEQUEUE	EQU 5	 ; no more mouse messages
 
 HC_GADGETHELP	EQU	1
 
+
+
+*
+* Special codes for ShowWindow() and WA_InFrontOf:
+* Give this as target window where to move your window to.
+*
+
+WINDOW_BACKMOST  EQU 0
+WINDOW_FRONTMOST EQU 1
 
 	IFND INTUITION_SCREENS_I
 	INCLUDE "intuition/screens.i"
@@ -1404,8 +1437,8 @@ HC_GADGETHELP	EQU	1
 ;#define SRBNUM(n)  (0x08 - (n >> 4))  /* SerRWBits -> read bits per char */
 ;#define SWBNUM(n)  (0x08 - (n & 0x0F))/* SerRWBits -> write bits per chr */
 ;#define SSBNUM(n)  (0x01 + (n >> 4))  /* SerStopBuf -> stop bits per chr */
-;#define SPARNUM(n) (n >> 4)	       /* SerParShk -> parity setting	 */
-;#define SHAKNUM(n) (n & 0x0F)	       /* SerParShk -> handshake mode	 */
+;#define SPARNUM(n) (n >> 4)           /* SerParShk -> parity setting    */
+;#define SHAKNUM(n) (n & 0x0F)         /* SerParShk -> handshake mode    */
 ;
 ; = MENU STUFF ===========================================================
 NOMENU EQU	$001F
@@ -1414,7 +1447,7 @@ NOSUB  EQU	$001F
 MENUNULL EQU	$FFFF
 
 
-; = =RJ='s peculiarities ================================================= 
+; = =RJ='s peculiarities =================================================
 ;#define FOREVER for(;;)
 ;#define SIGN(x) ( ((x) > 0) - ((x) < 0) )
 
@@ -1432,8 +1465,8 @@ LOWCOMMWIDTH	EQU	16
 ; the AlertNumber you supply must have the ALERT_TYPE bits set to one
 ; of these patterns
 ALERT_TYPE	EQU	$80000000
-RECOVERY_ALERT	EQU	$00000000	; the system can recover from this 
-DEADEND_ALERT 	EQU	$80000000	; no recovery possible, this is it 
+RECOVERY_ALERT	EQU	$00000000	; the system can recover from this
+DEADEND_ALERT 	EQU	$80000000	; no recovery possible, this is it
 
 
 ; When you're defining IntuiText for the Positive and Negative Gadgets
@@ -1470,8 +1503,8 @@ CURSORDOWN	EQU	$4D
 KEYCODE_Q	EQU	$10
 KEYCODE_Z	EQU	$31
 KEYCODE_X	EQU	$32
-KEYCODE_V	EQU	$34
-KEYCODE_B	EQU	$35
+KEYCODE_V   	EQU	$34
+KEYCODE_B   	EQU	$35
 KEYCODE_N	EQU	$36
 KEYCODE_M	EQU	$37
 KEYCODE_LESS	EQU	$38
@@ -1491,7 +1524,7 @@ KEYCODE_GREATER	EQU	$39
 * must set the WA_TabletMessages attribute to TRUE to receive this
 * extended information in its IntuiMessages.
 *
-* The definitions given here MUST be followed.	Pay careful attention
+* The definitions given here MUST be followed.  Pay careful attention
 * to normalization and the interpretation of signs.
 *
 * TABLETA_TabletZ:  the current value of the tablet in the Z direction.
@@ -1518,7 +1551,7 @@ KEYCODE_GREATER	EQU	$39
 * from +Z towards the origin.
 *
 *	Note: a stylus that supports tilt should use the TABLETA_AngleX
-*	and TABLETA_AngleY attributes.	Tilting the stylus so the tip
+*	and TABLETA_AngleY attributes.  Tilting the stylus so the tip
 *	points towards increasing or decreasing X is actually a rotation
 *	around the Y-axis.  Thus, if the stylus tip points towards
 *	positive X, then that tilt is represented as a negative

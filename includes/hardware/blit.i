@@ -1,13 +1,12 @@
 	IFND	HARDWARE_BLIT_I
 HARDWARE_BLIT_I	SET	1
 **
-**	$VER: blit.i 39.2 (12.8.1993)
-**	Includes Release 45.1
+**	$VER: blit.i 47.1 (1.8.2019)
 **
 **	Defines for direct hardware use of the blitter.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I

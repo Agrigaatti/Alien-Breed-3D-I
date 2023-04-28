@@ -1,15 +1,13 @@
 	IFND	RESOURCES_MATHRESOURCE_I
 RESOURCES_MATHRESOURCE_I	SET	1
 **
-**	$VER: mathresource.i 36.3 (13.7.1990)
-**	Includes Release 45.1
+**	$VER: mathresource.i 47.1 (8.11.2021)
 **
 **	Data structure returned by OpenResource of:
 **	"MathIEEE.resource"
 **
-**
-**	(C) Copyright 1987-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019-2022 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND EXEC_NODES_I
@@ -17,15 +15,15 @@ RESOURCES_MATHRESOURCE_I	SET	1
 	ENDC
 
 *
-*	The 'Init' entries are only used if the corresponding
-*	bit is set in the Flags field.
+*       The 'Init' entries are only used if the corresponding
+*       bit is set in the Flags field.
 *
-*	So if you are just a 68881, you do not need the Init stuff
-*	just make sure you have cleared the Flags field.
+*       So if you are just a 68881, you do not need the Init stuff
+*       just make sure you have cleared the Flags field.
 *
-*	This should allow us to add Extended Precision later.
+*       This should allow us to add Extended Precision later.
 *
-*	For Init users, if you need to be called whenever a task
+*       For Init users, if you need to be called whenever a task
 *	opens this library for use, you need to change the appropriate
 *	entries in MathIEEELibrary.
 *

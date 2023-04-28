@@ -1,14 +1,12 @@
 	 IFND	  REXX_RXSLIB_I
 REXX_RXSLIB_I  SET   1
 **
-**	$VER: rxslib.i 36.15 (8.11.1991)
-**	Includes Release 45.1
+**	$VER: rxslib.i 47.1 (3.8.2019)
 **
-**	Include file for the REXX Systems Library
+**	The header file for the REXX Systems Library
 **
-**	(C) Copyright 1986,1987,1988,1989,1990 William S. Hawes.
-**	(C) Copyright 1990-2001 Amiga, Inc.
-**		All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	 IFND	  REXX_STORAGE_I
@@ -77,6 +75,7 @@ RXSTNAME MACRO			       ; name for tasks
 
 	 UWORD	  rl_TraceCnt	       ; trace console usage count
 	 WORD	  rl_avail
+	 APTR	  rl_UtilityBase
 	 LABEL	  rl_SIZEOF
 
 * Global flag bit definitions for RexxMaster
@@ -96,94 +95,7 @@ RXSNEST  EQU	  32		       ; expression nesting limit
 RXSTPRI  EQU	  0		       ; task priority
 RXSSTACK EQU	  4096		       ; stack size
 
-	 ; The library entry point offsets
-
-	 LIBINIT
-	 LIBDEF   _LVORexx	       ; Main entry point
-	 LIBDEF   _LVOrxParse	       ; (private)
-	 LIBDEF   _LVOrxInstruct       ; (private)
-	 LIBDEF   _LVOrxSuspend        ; (private)
-	 LIBDEF   _LVOEvalOp	       ; (private)
-
-	 LIBDEF   _LVOAssignValue      ; (private)
-	 LIBDEF   _LVOEnterSymbol      ; (private)
-	 LIBDEF   _LVOFetchValue       ; (private)
-	 LIBDEF   _LVOLookUpValue      ; (private)
-	 LIBDEF   _LVOSetValue	       ; (private)
-	 LIBDEF   _LVOSymExpand        ; (private)
-
-	 LIBDEF   _LVOErrorMsg
-	 LIBDEF   _LVOIsSymbol
-	 LIBDEF   _LVOCurrentEnv
-	 LIBDEF   _LVOGetSpace
-	 LIBDEF   _LVOFreeSpace
-
-	 LIBDEF   _LVOCreateArgstring
-	 LIBDEF   _LVODeleteArgstring
-	 LIBDEF   _LVOLengthArgstring
-	 LIBDEF   _LVOCreateRexxMsg
-	 LIBDEF   _LVODeleteRexxMsg
-	 LIBDEF   _LVOClearRexxMsg
-	 LIBDEF   _LVOFillRexxMsg
-	 LIBDEF   _LVOIsRexxMsg
-
-	 LIBDEF   _LVOAddRsrcNode
-	 LIBDEF   _LVOFindRsrcNode
-	 LIBDEF   _LVORemRsrcList
-	 LIBDEF   _LVORemRsrcNode
-	 LIBDEF   _LVOOpenPublicPort
-	 LIBDEF   _LVOClosePublicPort
-	 LIBDEF   _LVOListNames
-
-	 LIBDEF   _LVOClearMem
-	 LIBDEF   _LVOInitList
-	 LIBDEF   _LVOInitPort
-	 LIBDEF   _LVOFreePort
-
-	 LIBDEF   _LVOCmpString
-	 LIBDEF   _LVOStcToken
-	 LIBDEF   _LVOStrcmpN
-	 LIBDEF   _LVOStrcmpU
-	 LIBDEF   _LVOStrcpyA	       ; obsolete
-	 LIBDEF   _LVOStrcpyN
-	 LIBDEF   _LVOStrcpyU
-	 LIBDEF   _LVOStrflipN
-	 LIBDEF   _LVOStrlen
-	 LIBDEF   _LVOToUpper
-
-	 LIBDEF   _LVOCVa2i
-	 LIBDEF   _LVOCVi2a
-	 LIBDEF   _LVOCVi2arg
-	 LIBDEF   _LVOCVi2az
-	 LIBDEF   _LVOCVc2x
-	 LIBDEF   _LVOCVx2c
-
-	 LIBDEF   _LVOOpenF
-	 LIBDEF   _LVOCloseF
-	 LIBDEF   _LVOReadStr
-	 LIBDEF   _LVOReadF
-	 LIBDEF   _LVOWriteF
-	 LIBDEF   _LVOSeekF
-	 LIBDEF   _LVOQueueF
-	 LIBDEF   _LVOStackF
-	 LIBDEF   _LVOExistF
-
-	 LIBDEF   _LVODOSCommand
-	 LIBDEF   _LVODOSRead
-	 LIBDEF   _LVODOSWrite
-	 LIBDEF   _LVOCreateDOSPkt     ; obsolete
-	 LIBDEF   _LVODeleteDOSPkt     ; obsolete
-	 LIBDEF   _LVOSendDOSPkt       ; (private)
-	 LIBDEF   _LVOWaitDOSPkt       ; (private)
-	 LIBDEF   _LVOFindDevice       ; (private)
-
-	 LIBDEF   _LVOAddClipNode
-	 LIBDEF   _LVORemClipNode
-	 LIBDEF   _LVOLockRexxBase
-	 LIBDEF   _LVOUnlockRexxBase
-	 LIBDEF   _LVOCreateCLI        ; (private)
-	 LIBDEF   _LVODeleteCLI        ; (private)
-	 LIBDEF   _LVOCVs2i
+	 ; Library entry points are no longer part of this file
 
 * Character attribute flag bits used in REXX.
 CTB_SPACE   EQU   0		       ; white space characters

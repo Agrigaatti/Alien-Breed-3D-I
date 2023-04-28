@@ -1,13 +1,12 @@
     IFND     DEVICES_PARALLEL_I
 DEVICES_PARALLEL_I SET 1
 **
-**	$VER: parallel.i 34.9 (25.5.89)
-**	Includes Release 45.1
+**	$VER: parallel.i 47.1 (28.6.2019)
 **
-**	external declarations for the parallel device
+**	parallel.device I/O request structure information
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
     IFND     EXEC_IO_I
     include "exec/io.i"

@@ -1,13 +1,12 @@
 	IFND	GRAPHICS_GELS_I
 GRAPHICS_GELS_I	SET	1
 **
-**	$VER: gels.i 39.0 (21.8.1991)
-**	Includes Release 45.1
+**	$VER: gels.i 47.1 (28.7.2019)
 **
 **	include file for AMIGA GELS (Graphics Elements)
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND    EXEC_TYPES_I
@@ -17,7 +16,7 @@ GRAPHICS_GELS_I	SET	1
 *------ VS_vSflags ---------------------------------------------------
 
 *   ;-- user-set vSprite flags --
-SUSERFLAGS  EQU $00FF	      ; mask of all user-settable vSprite-flags
+SUSERFLAGS  EQU $00FF         ; mask of all user-settable vSprite-flags
     BITDEF  VS,VSPRITE,0      ; set if vSprite, clear if bob
     BITDEF  VS,SAVEBACK,1     ; set if background is to be saved/restored
     BITDEF  VS,OVERLAY,2      ; set to mask image of bob onto background
@@ -96,19 +95,19 @@ RemBob      MACRO   * &b
     APTR    vs_CollMask       ; *WORD: similar to above except this is a 
 *    matrix pointer to this vSprite's color definitions (not used by bobs)
     APTR    vs_SprColors      ; *WORD
-    APTR    vs_VSBob	      ; struct *bob: points home if this vSprite is
-			      ;  part of a bob
+    APTR    vs_VSBob          ; struct *bob: points home if this vSprite is 
+                              ;  part of a bob
 *    planePick flag:  set bit selects a plane from image, clear bit selects
-*	  use of shadow mask for that plane
+*         use of shadow mask for that plane
 *    OnOff flag: if using shadow mask to fill plane, this bit (corresponding
-*	  to bit in planePick) describes whether to fill with 0's or 1's
+*         to bit in planePick) describes whether to fill with 0's or 1's
 *    There are two uses for these flags:
-*	       - if this is the vSprite of a bob, these flags describe how
-*		 the bob is to be drawn into memory
-*	       - if this is a simple vSprite and the user intends on setting
-*		 the MUSTDRAW flag of the vSprite, these flags must be set
-*		 too to describe which color registers the user wants for
-*		 the image
+*              - if this is the vSprite of a bob, these flags describe how 
+*                the bob is to be drawn into memory
+*              - if this is a simple vSprite and the user intends on setting 
+*                the MUSTDRAW flag of the vSprite, these flags must be set 
+*                too to describe which color registers the user wants for 
+*                the image
     BYTE    vs_PlanePick
     BYTE    vs_PlaneOnOff
     LABEL   vs_SUserExt       ; user definable
@@ -121,18 +120,18 @@ RemBob      MACRO   * &b
 *   -- COMMON VARIABLES --
     WORD    bob_BobFlags      ; general purpose flags (see definitions below)
 *   -- USER VARIABLES --
-    APTR    bob_SaveBuffer    ; *WORD pointer to the buffer for background
+    APTR    bob_SaveBuffer    ; *WORD pointer to the buffer for background 
 *    save used by bobs for "cookie-cutting" and multi-plane masking
     APTR    bob_ImageShadow   ; *WORD
 *    pointer to BOBs for sequenced drawing of bobs
 *      for correct overlaying of multiple component animations
-    APTR    bob_Before	      ; struct *bob: draw this bob before bob pointed
-			      ; to by before
-    APTR    bob_After	      ; struct *bob: draw this bob after bob pointed
-			      ; to by after
+    APTR    bob_Before        ; struct *bob: draw this bob before bob pointed
+                              ; to by before
+    APTR    bob_After         ; struct *bob: draw this bob after bob pointed
+                              ; to by after
     APTR    bob_BobVSprite    ; struct *vSprite: this bob's vSprite definition
-    APTR    bob_BobComp       ; struct *animComp: pointer to this bob's
-			      ; animComp def
+    APTR    bob_BobComp       ; struct *animComp: pointer to this bob's 
+                              ; animComp def
     APTR    bob_DBuffer       ; struct dBufPacket: pointer to this bob's 
                               ; dBuf packet
     LABEL   bob_BUserExt      ; bob user extension

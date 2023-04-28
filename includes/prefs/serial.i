@@ -1,13 +1,12 @@
 	IFND	PREFS_SERIAL_I
 PREFS_SERIAL_I	SET	1
 **
-**	$VER: serial.i 38.2 (10.7.1991)
-**	Includes Release 45.1
+**	$VER: serial.i 47.1 (2.8.2019)
 **
 **	File format for serial preferences
 **
-**	(C) Copyright 1991-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

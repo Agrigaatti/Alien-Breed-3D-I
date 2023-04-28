@@ -1,25 +1,25 @@
 *********************************************************************************************
 
-                  opt                    P=68020
+                          opt                    P=68020
 
 *********************************************************************************************
 
-                  ifnd                   ENABLESEEWALL
+                          ifnd                   ENABLESEEWALL
 ENABLESEEWALL equ 0
-                  endc
+                          endc
 
 *********************************************************************************************
 
-                  incdir                 "includes"
-                  include                "macros.i"
+                          incdir                 "includes"
+                          include                "macros.i"
 
 *********************************************************************************************
 
-leftclip:         dc.w                   0
-rightclip:        dc.w                   0
-deftopclip:       dc.w                   0
-defbotclip:       dc.w                   0
-leftclipandlast:  dc.w                   0
+leftclip:                 dc.w                   0
+rightclip:                dc.w                   0
+deftopclip:               dc.w                   0
+defbotclip:               dc.w                   0
+leftclipandlast:          dc.w                   0
 
 *********************************************************************************************
 ; The screendivide routine is simpler using 
@@ -49,96 +49,96 @@ DoLeftEnd:
 ; a0 = #store
 ; d7 = #maxscrdiv
 
-                  move.w                 leftclip,d0
-                  sub.w                  #1,d0
-                  move.w                 d0,leftclipandlast
+                          move.w                 leftclip,d0
+                          sub.w                  #1,d0
+                          move.w                 d0,leftclipandlast
 
 
-                  move.w                 (a0),d0                            ; a0 = store
-                  move.w                 2(a0),d1
-                  sub.w                  d0,d1
-                  bge.s                  someToDraw
-                  rts
+                          move.w                 (a0),d0                            ; a0 = store
+                          move.w                 2(a0),d1
+                          sub.w                  d0,d1
+                          bge.s                  someToDraw
+                          rts
 
 someToDraw:
-                  move.w                 itertab(pc,d1.w*4),d7
-                  swap                   d0
-                  move.w                 itertab+2(pc,d1.w*4),d6
-                  clr.w                  d0
-                  swap                   d1
-                  clr.w                  d1
-                  asr.l                  d6,d1
-                  move.l                 d1,(a0)
+                          move.w                 itertab(pc,d1.w*4),d7
+                          swap                   d0
+                          move.w                 itertab+2(pc,d1.w*4),d6
+                          clr.w                  d0
+                          swap                   d1
+                          clr.w                  d1
+                          asr.l                  d6,d1
+                          move.l                 d1,(a0)
 
-                  bra                    pstit
+                          bra                    pstit
 
 *********************************************************************************************
 
-itertab:          incbin                 "data/math/iterfile"
+itertab:                  incbin                 "data/math/iterfile"
 
 *********************************************************************************************
 
 pstit:
 
-                  moveq                  #0,d1
-                  move.w                 4(a0),d1
-                  moveq                  #0,d2
-                  move.w                 6(a0),d2
-                  sub.w                  d1,d2
-                  swap                   d1
-                  swap                   d2
-                  asr.l                  d6,d2
-                  move.l                 d2,4(a0)
+                          moveq                  #0,d1
+                          move.w                 4(a0),d1
+                          moveq                  #0,d2
+                          move.w                 6(a0),d2
+                          sub.w                  d1,d2
+                          swap                   d1
+                          swap                   d2
+                          asr.l                  d6,d2
+                          move.l                 d2,4(a0)
  
-                  moveq                  #0,d2
-                  move.w                 8(a0),d2
-                  moveq                  #0,d3
-                  move.w                 10(a0),d3
-                  sub.w                  d2,d3
-                  swap                   d2
-                  swap                   d3
-                  asr.l                  d6,d3
-                  move.l                 d3,8(a0)
+                          moveq                  #0,d2
+                          move.w                 8(a0),d2
+                          moveq                  #0,d3
+                          move.w                 10(a0),d3
+                          sub.w                  d2,d3
+                          swap                   d2
+                          swap                   d3
+                          asr.l                  d6,d3
+                          move.l                 d3,8(a0)
 
-                  moveq                  #0,d3
-                  move.w                 12(a0),d3
-                  moveq                  #0,d4
-                  move.w                 14(a0),d4
-                  sub.w                  d3,d4
-                  swap                   d3
-                  swap                   d4
-                  asr.l                  d6,d4
-                  move.l                 d4,12(a0)
+                          moveq                  #0,d3
+                          move.w                 12(a0),d3
+                          moveq                  #0,d4
+                          move.w                 14(a0),d4
+                          sub.w                  d3,d4
+                          swap                   d3
+                          swap                   d4
+                          asr.l                  d6,d4
+                          move.l                 d4,12(a0)
  
-                  moveq                  #0,d4
-                  move.w                 16(a0),d4
-                  moveq                  #0,d5
-                  move.w                 18(a0),d5
-                  sub.w                  d4,d5
-                  swap                   d4
-                  swap                   d5
-                  asr.l                  d6,d5
-                  move.l                 d5,16(a0)
+                          moveq                  #0,d4
+                          move.w                 16(a0),d4
+                          moveq                  #0,d5
+                          move.w                 18(a0),d5
+                          sub.w                  d4,d5
+                          swap                   d4
+                          swap                   d5
+                          asr.l                  d6,d5
+                          move.l                 d5,16(a0)
  
 ; Gouraud shading
 
-                  moveq                  #0,d5
-                  move.w                 26(a0),d5
-                  sub.w                  24(a0),d5
-                  add.w                  d5,d5
-                  swap                   d5
-                  asr.l                  d6,d5
-                  move.l                 d5,28(a0)
-                  moveq                  #0,d5
-                  move.w                 24(a0),d5
-                  add.w                  d5,d5
-                  swap                   d5
+                          moveq                  #0,d5
+                          move.w                 26(a0),d5
+                          sub.w                  24(a0),d5
+                          add.w                  d5,d5
+                          swap                   d5
+                          asr.l                  d6,d5
+                          move.l                 d5,28(a0)
+                          moveq                  #0,d5
+                          move.w                 24(a0),d5
+                          add.w                  d5,d5
+                          swap                   d5
  
-                  bra                    screendivide                       ; skip forward
+                          bra                    screendivide                       ; skip forward
 
 *********************************************************************************************
 
-itercount:        dc.w                   0
+itercount:                dc.w                   0
 
 *********************************************************************************************
 ; Seewall
@@ -146,49 +146,49 @@ itercount:        dc.w                   0
 screendividethru:
 
 .scrdrawlop:
-                  move.w                 (a0)+,d0
-                  move.l                 fromPt,a3                          ; Copper chunky
-                  adda.w                 .scrintocop(pc,d0.w*2),a3
-                  move.l                 (a0)+,d1
+                          move.w                 (a0)+,d0
+                          move.l                 fromPt,a3                          ; Copper chunky
+                          adda.w                 .scrintocop(pc,d0.w*2),a3
+                          move.l                 (a0)+,d1
  
-                  bra                    .pastscrinto                       ; skip forward
+                          bra                    .pastscrinto                       ; skip forward
 
 *********************************************************************************************
 
-.scrintocop:      incbin                 "data/helper/XTOCOPX"
+.scrintocop:              incbin                 "data/helper/XTOCOPX"
 
 *********************************************************************************************
 
 .pastscrinto: 
 
-                  swap                   d1
+                          swap                   d1
 
-                  move.w                 d1,d6
-                  and.w                  HORAND,d6
-                  move.l                 (a0)+,d2
-                  swap                   d2
-                  add.w                  fromtile(pc),d6
-                  add.w                  d6,d6
-                  move.w                 d6,a5
-                  move.l                 (a0)+,d3
-                  swap                   d3
-                  add.l                  #divthreetab,a5
-                  move.w                 (a5),StripData
+                          move.w                 d1,d6
+                          and.w                  HORAND,d6
+                          move.l                 (a0)+,d2
+                          swap                   d2
+                          add.w                  fromtile(pc),d6
+                          add.w                  d6,d6
+                          move.w                 d6,a5
+                          move.l                 (a0)+,d3
+                          swap                   d3
+                          add.l                  #divthreetab,a5
+                          move.w                 (a5),StripData
 
-                  move.l                 ChunkAddr,a5
-                  moveq                  #0,d6
-                  move.b                 StripData,d6
-                  add.w                  d6,d6
-                  move.w                 VALSHIFT,d4
-                  asl.w                  d4,d6
-                  add.w                  d6,a5
-                  move.l                 (a0)+,d4
-                  swap                   d4
-                  move.w                 d2,d6
+                          move.l                 ChunkAddr,a5
+                          moveq                  #0,d6
+                          move.b                 StripData,d6
+                          add.w                  d6,d6
+                          move.w                 VALSHIFT,d4
+                          asl.w                  d4,d6
+                          add.w                  d6,a5
+                          move.l                 (a0)+,d4
+                          swap                   d4
+                          move.w                 d2,d6
 
 **********************************************************
 ; old version
-                  asr.w                  #7,d6
+                          asr.w                  #7,d6
 
 **********************************************************
                 ; asr.w #3,d6
@@ -199,19 +199,19 @@ screendividethru:
                 ;tstbrbr:
 **********************************************************
 
-                  add.w                  angbright(pc),d6
-                  bge.s                  .brnotneg
-                  moveq                  #0,d6
+                          add.w                  angbright(pc),d6
+                          bge.s                  .brnotneg
+                          moveq                  #0,d6
 
 .brnotneg:
-                  cmp.w                  #32,d6
-                  blt.s                  .brnotpos
-                  move.w                 #32,d6
+                          cmp.w                  #32,d6
+                          blt.s                  .brnotpos
+                          move.w                 #32,d6
 
 .brnotpos:
-                  move.l                 PaletteAddr,a2
-                  move.l                 a2,a4
-                  add.w                  .ffscrpickhowbright(pc,d6*2),a2
+                          move.l                 PaletteAddr,a2
+                          move.l                 a2,a4
+                          add.w                  .ffscrpickhowbright(pc,d6*2),a2
 
 **********************************************************
                 ; and.b #$fe,d6
@@ -223,144 +223,144 @@ screendividethru:
                 ;.nobrightswap:
 **********************************************************
 
-                  move.w                 d7,-(a7)
-                  bsr                    ScreenWallstripdrawthru
-                  move.w                 (a7)+,d7
+                          move.w                 d7,-(a7)
+                          bsr                    ScreenWallstripdrawthru
+                          move.w                 (a7)+,d7
  
-                  dbra                   d7,.scrdrawlop
-                  rts
+                          dbra                   d7,.scrdrawlop
+                          rts
 
 *********************************************************************************************
 
 .ffscrpickhowbright:
-                  SCALE
+                          SCALE
 
 *********************************************************************************************
 
 screendivide:
 
-                  or.l                   #$ffff0000,d7
-                  move.w                 leftclipandlast(pc),d6
-                  move.l                 #WorkSpace,a2
+                          or.l                   #$ffff0000,d7
+                          move.w                 leftclipandlast(pc),d6
+                          move.l                 #WorkSpace,a2
 
-                  move.l                 (a0),a3
-                  move.l                 4(a0),a4
-                  move.l                 8(a0),a5
-                  move.l                 12(a0),a6
-                  move.l                 16(a0),a1
-                  move.l                 28(a0),a0
+                          move.l                 (a0),a3
+                          move.l                 4(a0),a4
+                          move.l                 8(a0),a5
+                          move.l                 12(a0),a6
+                          move.l                 16(a0),a1
+                          move.l                 28(a0),a0
  
 scrdivlop:
-                  swap                   d0
-                  cmp.w                  d6,d0
-                  bgt                    scrnotoffleft
-                  swap                   d0
-                  add.l                  a4,d1
-                  add.l                  a5,d2
-                  add.l                  a6,d3
-                  add.l                  a1,d4
-                  add.l                  a3,d0
-                  add.l                  a0,d5
-                  dbra                   d7,scrdivlop
-                  rts
+                          swap                   d0
+                          cmp.w                  d6,d0
+                          bgt                    scrnotoffleft
+                          swap                   d0
+                          add.l                  a4,d1
+                          add.l                  a5,d2
+                          add.l                  a6,d3
+                          add.l                  a1,d4
+                          add.l                  a3,d0
+                          add.l                  a0,d5
+                          dbra                   d7,scrdivlop
+                          rts
  
 scrnotoffleft:
-                  move.w                 d0,d6
+                          move.w                 d0,d6
 
-                  cmp.w                  rightclip(pc),d0
-                  bge.s                  outofcalc
+                          cmp.w                  rightclip(pc),d0
+                          bge.s                  outofcalc
  
 scrnotoffright:
-                  move.w                 d0,(a2)+
-                  move.l                 d1,(a2)+
-                  move.l                 d2,(a2)+
-                  move.l                 d3,(a2)+
-                  move.l                 d4,(a2)+
-                  move.l                 d5,(a2)+
-                  swap                   d0
-                  add.l                  a3,d0
-                  add.l                  a4,d1
-                  add.l                  a5,d2
-                  add.l                  a6,d3
-                  add.l                  a1,d4
-                  add.l                  a0,d5
-                  add.l                  #$10000,d7
-                  dbra                   d7,scrdivlop
+                          move.w                 d0,(a2)+
+                          move.l                 d1,(a2)+
+                          move.l                 d2,(a2)+
+                          move.l                 d3,(a2)+
+                          move.l                 d4,(a2)+
+                          move.l                 d5,(a2)+
+                          swap                   d0
+                          add.l                  a3,d0
+                          add.l                  a4,d1
+                          add.l                  a5,d2
+                          add.l                  a6,d3
+                          add.l                  a1,d4
+                          add.l                  a0,d5
+                          add.l                  #$10000,d7
+                          dbra                   d7,scrdivlop
  
 outofcalc:
-                  swap                   d7
-                  tst.w                  d7
-                  bge.s                  .somethingtodraw
-                  rts
+                          swap                   d7
+                          tst.w                  d7
+                          bge.s                  .somethingtodraw
+                          rts
 
 .somethingtodraw:
-                  move.l                 #consttab,a1
-                  move.l                 #WorkSpace,a0
+                          move.l                 #consttab,a1
+                          move.l                 #WorkSpace,a0
 
-                  IFNE                   ENABLESEEWALL
-                  tst.b                  seethru
-                  bne                    screendividethru
-                  ENDC
+                          IFNE                   ENABLESEEWALL
+                          tst.b                  seethru
+                          bne                    screendividethru
+                          ENDC
 
 scrdrawlop:
-                  move.w                 (a0)+,d0
-                  move.l                 fromPt,a3                          ; Copper chunky
-                  adda.w                 scrintocop(pc,d0.w*2),a3
-                  move.l                 (a0)+,d1
+                          move.w                 (a0)+,d0
+                          move.l                 fromPt,a3                          ; Copper chunky
+                          adda.w                 scrintocop(pc,d0.w*2),a3
+                          move.l                 (a0)+,d1
  
-                  bra                    pastscrinto                        ; skip forward
+                          bra                    pastscrinto                        ; skip forward
 
 *********************************************************************************************
 
-middleline:       dc.w                   0
+middleline:               dc.w                   0
 
 *********************************************************************************************
 
-scrintocop:       incbin                 "data/helper/XTOCOPX"
+scrintocop:               incbin                 "data/helper/XTOCOPX"
 
 *********************************************************************************************
 
-fromtile:         dc.l                   0
-fromquartertile:  dc.l                   0
-swapbrights:      dc.w                   0
-angbright:        dc.w                   0
+fromtile:                 dc.l                   0
+fromquartertile:          dc.l                   0
+swapbrights:              dc.w                   0
+angbright:                dc.w                   0
 
-leftside:         dc.b                   0
-rightside:        dc.b                   0
-firstleft:        dc.w                   0
+leftside:                 dc.b                   0
+rightside:                dc.b                   0
+firstleft:                dc.w                   0
 
 *********************************************************************************************
 
 pastscrinto:
 
-                  swap                   d1
+                          swap                   d1
 
-                  move.w                 d1,d6
-                  and.w                  HORAND,d6
-                  move.l                 (a0)+,d2
-                  swap                   d2
-                  add.w                  fromtile(pc),d6
-                  add.w                  d6,d6
-                  move.w                 d6,a5
-                  move.l                 (a0)+,d3
-                  swap                   d3
-                  add.l                  #divthreetab,a5
-                  move.w                 (a5),StripData
+                          move.w                 d1,d6
+                          and.w                  HORAND,d6
+                          move.l                 (a0)+,d2
+                          swap                   d2
+                          add.w                  fromtile(pc),d6
+                          add.w                  d6,d6
+                          move.w                 d6,a5
+                          move.l                 (a0)+,d3
+                          swap                   d3
+                          add.l                  #divthreetab,a5
+                          move.w                 (a5),StripData
 
-                  move.l                 ChunkAddr,a5
-                  moveq                  #0,d6
-                  move.b                 StripData,d6
-                  add.w                  d6,d6
-                  move.w                 VALSHIFT,d4
-                  asl.w                  d4,d6
-                  add.w                  d6,a5
-                  move.l                 (a0)+,d4
-                  swap                   d4
-                  move.w                 d2,d6
+                          move.l                 ChunkAddr,a5
+                          moveq                  #0,d6
+                          move.b                 StripData,d6
+                          add.w                  d6,d6
+                          move.w                 VALSHIFT,d4
+                          asl.w                  d4,d6
+                          add.w                  d6,a5
+                          move.l                 (a0)+,d4
+                          swap                   d4
+                          move.w                 d2,d6
 
 **********************************************************
 ; old version
-                  asr.w                  #7,d6
+                          asr.w                  #7,d6
 
 **********************************************************
                 ; asr.w #3,d6
@@ -371,22 +371,22 @@ pastscrinto:
                 ;tstbrbr:
 **********************************************************
 
-                  move.l                 (a0)+,d5
-                  swap                   d5
-                  ext.w                  d5
-                  add.w                  d5,d6
-                  bge.s                  .brnotneg
-                  moveq                  #0,d6
+                          move.l                 (a0)+,d5
+                          swap                   d5
+                          ext.w                  d5
+                          add.w                  d5,d6
+                          bge.s                  .brnotneg
+                          moveq                  #0,d6
 
 .brnotneg:
-                  cmp.w                  #64,d6
-                  blt.s                  .brnotpos
-                  move.w                 #64,d6
+                          cmp.w                  #64,d6
+                          blt.s                  .brnotpos
+                          move.w                 #64,d6
 
 .brnotpos:
-                  move.l                 PaletteAddr,a2
-                  move.l                 a2,a4
-                  add.w                  ffscrpickhowbright(pc,d6*2),a2
+                          move.l                 PaletteAddr,a2
+                          move.l                 a2,a4
+                          add.w                  ffscrpickhowbright(pc,d6*2),a2
 
 **********************************************************
                 ; and.b #$fe,d6
@@ -398,34 +398,34 @@ pastscrinto:
                 ;.nobrightswap:
 **********************************************************
 
-                  move.w                 d7,-(a7)
-                  bsr                    ScreenWallstripdraw
-                  move.w                 (a7)+,d7
+                          move.w                 d7,-(a7)
+                          bsr                    ScreenWallstripdraw
+                          move.w                 (a7)+,d7
  
 toosmall:
-                  dbra                   d7,scrdrawlop
+                          dbra                   d7,scrdrawlop
  
-                  rts
+                          rts
 
 *********************************************************************************************
 
 ffscrpickhowbright:
-                  SCALE
+                          SCALE
 
 *********************************************************************************************
 
 divthreetab:
-val               SET                    0
-                  REPT                   130
-                  dc.b                   val,0
-                  dc.b                   val,1
-                  dc.b                   val,2
-val               SET                    val+1
-                  ENDR
+val                       SET                    0
+                          REPT                   130
+                          dc.b                   val,0
+                          dc.b                   val,1
+                          dc.b                   val,2
+val                       SET                    val+1
+                          ENDR
 
 *********************************************************************************************
 
-StripData:        dc.w                   0
+StripData:                dc.w                   0
 
 *********************************************************************************************
 ; using a0=left pixel
@@ -446,7 +446,7 @@ StripData:        dc.w                   0
 
 *********************************************************************************************
 
-store:            ds.l                   500
+store:                    ds.l                   500
 
 *********************************************************************************************
 ; Curve drawing routine. We have to know:
@@ -457,132 +457,132 @@ store:            ds.l                   500
 ; The start and end positions along the bitmap of the arc
 ; Which bitmap to use for the arc
 
-xmiddle:          dc.w                   0
-zmiddle:          SET                    2
-                  dc.w                   0
-xradius:          SET                    4
-                  dc.w                   0
-zradius:          SET                    6
-                  dc.w                   0
-startbitmap:      SET                    8
-                  dc.w                   0
-bitmapcounter:    SET                    10
-                  dc.w                   0
-brightmult:       SET                    12
-                  dc.w                   0
-angadd:           SET                    14
-                  dc.l                   0
-xmiddlebig:       SET                    18
-                  dc.l                   0
-basebright:       SET                    22
-                  dc.w                   0
-shift:            SET                    24
-                  dc.w                   0
-count:            SET                    26
-                  dc.w                   0
+xmiddle:                  dc.w                   0
+zmiddle:                  SET                    2
+                          dc.w                   0
+xradius:                  SET                    4
+                          dc.w                   0
+zradius:                  SET                    6
+                          dc.w                   0
+startbitmap:              SET                    8
+                          dc.w                   0
+bitmapcounter:            SET                    10
+                          dc.w                   0
+brightmult:               SET                    12
+                          dc.w                   0
+angadd:                   SET                    14
+                          dc.l                   0
+xmiddlebig:               SET                    18
+                          dc.l                   0
+basebright:               SET                    22
+                          dc.w                   0
+shift:                    SET                    24
+                          dc.w                   0
+count:                    SET                    26
+                          dc.w                   0
 
 *********************************************************************************************
 
 subdividevals:
-                  dc.w                   2,4
-                  dc.w                   3,8
-                  dc.w                   4,16
-                  dc.w                   5,32
-                  dc.w                   6,64
+                          dc.w                   2,4
+                          dc.w                   3,8
+                          dc.w                   4,16
+                          dc.w                   5,32
+                          dc.w                   6,64
 
 *********************************************************************************************
 
 CurveDraw:
 ; a0 = ThisRoomToDraw+n
 
-                  move.w                 (a0)+,d0                           ; centre of rotation
-                  move.w                 (a0)+,d1                           ; point on arc
-                  move.l                 #Rotated,a1
-                  move.l                 #xmiddle,a2
-                  move.l                 (a1,d0.w*8),d2
-                  move.l                 d2,18(a2)
-                  asr.l                  #7,d2
-                  move.l                 (a1,d1.w*8),d4
-                  asr.l                  #7,d4
-                  sub.w                  d2,d4
-                  move.w                 d2,(a2)
-                  move.w                 d4,4(a2)
-                  move.w                 6(a1,d0.w*8),d2
-                  move.w                 6(a1,d1.w*8),d4
-                  sub.w                  d2,d4
-                  move.w                 d2,2(a2)
-                  asr.w                  #1,d4
-                  move.w                 d4,6(a2)
-                  move.w                 (a0)+,d4                           ; start of bitmap
-                  move.w                 (a0)+,d5                           ; end of bitmap
-                  move.w                 d4,8(a2)
-                  sub.w                  d4,d5
-                  move.w                 d5,10(a2)
-                  move.w                 (a0)+,d4
-                  ext.l                  d4
-                  move.l                 d4,14(a2)
-                  move.w                 (a0)+,d4
-                  move.l                 #subdividevals,a3
-                  move.l                 (a3,d4.w*4),shift(a2)
+                          move.w                 (a0)+,d0                           ; centre of rotation
+                          move.w                 (a0)+,d1                           ; point on arc
+                          move.l                 #Rotated,a1
+                          move.l                 #xmiddle,a2
+                          move.l                 (a1,d0.w*8),d2
+                          move.l                 d2,18(a2)
+                          asr.l                  #7,d2
+                          move.l                 (a1,d1.w*8),d4
+                          asr.l                  #7,d4
+                          sub.w                  d2,d4
+                          move.w                 d2,(a2)
+                          move.w                 d4,4(a2)
+                          move.w                 6(a1,d0.w*8),d2
+                          move.w                 6(a1,d1.w*8),d4
+                          sub.w                  d2,d4
+                          move.w                 d2,2(a2)
+                          asr.w                  #1,d4
+                          move.w                 d4,6(a2)
+                          move.w                 (a0)+,d4                           ; start of bitmap
+                          move.w                 (a0)+,d5                           ; end of bitmap
+                          move.w                 d4,8(a2)
+                          sub.w                  d4,d5
+                          move.w                 d5,10(a2)
+                          move.w                 (a0)+,d4
+                          ext.l                  d4
+                          move.l                 d4,14(a2)
+                          move.w                 (a0)+,d4
+                          move.l                 #subdividevals,a3
+                          move.l                 (a3,d4.w*4),shift(a2)
  
-                  move.l                 #walltiles,a3
-                  add.l                  (a0)+,a3
-                  adda.w                 wallyoff,a3
-                  move.l                 a3,fromtile
-                  move.w                 (a0)+,basebright(a2)
-                  move.w                 (a0)+,brightmult(a2)
-                  move.l                 (a0)+,topofwall
-                  move.l                 (a0)+,botofwall
-                  move.l                 yoff,d6
-                  sub.l                  d6,topofwall
-                  sub.l                  d6,botofwall
+                          move.l                 #walltiles,a3
+                          add.l                  (a0)+,a3
+                          adda.w                 wallyoff,a3
+                          move.l                 a3,fromtile
+                          move.w                 (a0)+,basebright(a2)
+                          move.w                 (a0)+,brightmult(a2)
+                          move.l                 (a0)+,topofwall
+                          move.l                 (a0)+,botofwall
+                          move.l                 yoff,d6
+                          sub.l                  d6,topofwall
+                          sub.l                  d6,botofwall
 
-                  move.l                 #databuffer,a1
-                  move.l                 #SineTable,a3
-                  lea                    2048(a3),a4
-                  moveq                  #0,d0
-                  moveq                  #0,d1
-                  move.w                 count(a2),d7
+                          move.l                 #databuffer,a1
+                          move.l                 #SineTable,a3
+                          lea                    2048(a3),a4
+                          moveq                  #0,d0
+                          moveq                  #0,d1
+                          move.w                 count(a2),d7
 
 DivideCurve:
-                  move.l                 d0,d2
-                  move.w                 shift(a2),d4
-                  asr.l                  d4,d2
-                  move.w                 (a3,d2.w*2),d4
-                  move.w                 d4,d5
-                  move.w                 (a4,d2.w*2),d3
-                  move.w                 d3,d6
-                  muls.w                 4(a2),d3
-                  muls.w                 6(a2),d4
-                  muls.w                 4(a2),d5
-                  muls.w                 6(a2),d6
-                  sub.l                  d4,d3
-                  add.l                  d6,d5
-                  asl.l                  #2,d5
-                  asr.l                  #8,d3
-                  add.l                  18(a2),d3
-                  swap                   d5
-                  move.w                 basebright(a2),d6
-                  move.w                 brightmult(a2),d4
-                  muls                   d5,d4
-                  swap                   d4
-                  add.w                  d4,d6
+                          move.l                 d0,d2
+                          move.w                 shift(a2),d4
+                          asr.l                  d4,d2
+                          move.w                 (a3,d2.w*2),d4
+                          move.w                 d4,d5
+                          move.w                 (a4,d2.w*2),d3
+                          move.w                 d3,d6
+                          muls.w                 4(a2),d3
+                          muls.w                 6(a2),d4
+                          muls.w                 4(a2),d5
+                          muls.w                 6(a2),d6
+                          sub.l                  d4,d3
+                          add.l                  d6,d5
+                          asl.l                  #2,d5
+                          asr.l                  #8,d3
+                          add.l                  18(a2),d3
+                          swap                   d5
+                          move.w                 basebright(a2),d6
+                          move.w                 brightmult(a2),d4
+                          muls                   d5,d4
+                          swap                   d4
+                          add.w                  d4,d6
  
-                  add.w                  2(a2),d5
-                  move.l                 d3,(a1)+
-                  move.w                 d5,(a1)+
-                  move.w                 d1,d2
-                  move.w                 shift(a2),d4
-                  asr.w                  d4,d2
-                  add.w                  8(a2),d2
-                  move.w                 d2,(a1)+
-                  move.w                 d6,(a1)+
+                          add.w                  2(a2),d5
+                          move.l                 d3,(a1)+
+                          move.w                 d5,(a1)+
+                          move.w                 d1,d2
+                          move.w                 shift(a2),d4
+                          asr.w                  d4,d2
+                          add.w                  8(a2),d2
+                          move.w                 d2,(a1)+
+                          move.w                 d6,(a1)+
 
-                  add.l                  14(a2),d0  
-                  add.w                  10(a2),d1
-                  dbra                   d7,DivideCurve
+                          add.l                  14(a2),d0  
+                          add.w                  10(a2),d1
+                          dbra                   d7,DivideCurve
  
-                  move.l                 a0,-(a7)
+                          move.l                 a0,-(a7)
 
 **********************************************************
                 ; move.w #31,d6
@@ -593,235 +593,235 @@ DivideCurve:
                 ; dbra d6,.emptylop
 **********************************************************
 
-                  bsr                    curvecalc
+                          bsr                    curvecalc
 
-                  move.l                 (a7)+,a0
+                          move.l                 (a7)+,a0
 
-                  rts
+                          rts
  
 *********************************************************************************************
 
 curvecalc:
-                  move.l                 #databuffer,a1
-                  move.w                 count(a2),d7
-                  subq                   #1,d7
+                          move.l                 #databuffer,a1
+                          move.w                 count(a2),d7
+                          subq                   #1,d7
 
 .findfirstinfront:
-                  move.l                 (a1)+,d1
-                  move.w                 (a1)+,d0
-                  bgt.s                  .foundinfront
+                          move.l                 (a1)+,d1
+                          move.w                 (a1)+,d0
+                          bgt.s                  .foundinfront
 
-                  move.w                 (a1)+,d4
-                  move.w                 (a1)+,d6
-                  dbra                   d7,.findfirstinfront
+                          move.w                 (a1)+,d4
+                          move.w                 (a1)+,d6
+                          dbra                   d7,.findfirstinfront
 
-                  SUPERVISOR             SetInstCacheOn
-                  rts                                                       ; no two points were in front
+                          SUPERVISOR             SetInstCacheOn
+                          rts                                                       ; no two points were in front
  
  *****************************************************************
  
 .foundinfront:
-                  move.w                 (a1)+,d4
-                  move.w                 (a1)+,d6
+                          move.w                 (a1)+,d4
+                          move.w                 (a1)+,d6
 
  ; d1=left x, d4=left end, d0=left dist
  ; d6=left angbright 
  
-                  divs                   d0,d1
-                  add.w                  #47,d1
+                          divs                   d0,d1
+                          add.w                  #47,d1
  
-                  move.l                 topofwall(pc),d5
-                  divs                   d0,d5
-                  add.w                  #40,d5
-                  move.w                 d5,strtop
-                  move.l                 botofwall(pc),d5
-                  divs                   d0,d5
-                  add.w                  #40,d5
-                  move.w                 d5,strbot
+                          move.l                 topofwall(pc),d5
+                          divs                   d0,d5
+                          add.w                  #40,d5
+                          move.w                 d5,strtop
+                          move.l                 botofwall(pc),d5
+                          divs                   d0,d5
+                          add.w                  #40,d5
+                          move.w                 d5,strbot
  
-                  SUPERVISOR             SetInstCacheOff
+                          SUPERVISOR             SetInstCacheOff
  
 .computeloop:
-                  move.w                 4(a1),d2
-                  bgt.s                  .infront
+                          move.w                 4(a1),d2
+                          bgt.s                  .infront
  
 **********************************************************
                 ; addq #8,a1
                 ; dbra d7,.findfirstinfront
 **********************************************************                
  
-                  SUPERVISOR             SetInstCacheOn
-                  rts
+                          SUPERVISOR             SetInstCacheOn
+                          rts
 
 *****************************************************************
 
 .infront:
-                  move.l                 #store,a0
-                  move.l                 (a1),d3
-                  move.w                 6(a1),d5
-                  add.w                  8(a1),d6
-                  asr.w                  #1,d6
-                  move.w                 d6,angbright
-                  divs                   d2,d3
-                  add.w                  #47,d3
-                  move.w                 strtop(pc),12(a0)
-                  move.w                 strbot(pc),16(a0)
-                  move.l                 topofwall(pc),d6
-                  divs                   d2,d6
-                  add.w                  #40,d6
-                  move.w                 d6,strtop
-                  move.w                 d6,14(a0)
-                  move.l                 botofwall(pc),d6
-                  divs                   d2,d6
-                  add.w                  #40,d6
-                  move.w                 d6,strbot
-                  move.w                 d6,18(a0)
-                  move.w                 d3,2(a1)
-                  blt.s                  .alloffleft
-                  cmp.w                  #95,d1
-                  bgt.s                  .alloffleft
+                          move.l                 #store,a0
+                          move.l                 (a1),d3
+                          move.w                 6(a1),d5
+                          add.w                  8(a1),d6
+                          asr.w                  #1,d6
+                          move.w                 d6,angbright
+                          divs                   d2,d3
+                          add.w                  #47,d3
+                          move.w                 strtop(pc),12(a0)
+                          move.w                 strbot(pc),16(a0)
+                          move.l                 topofwall(pc),d6
+                          divs                   d2,d6
+                          add.w                  #40,d6
+                          move.w                 d6,strtop
+                          move.w                 d6,14(a0)
+                          move.l                 botofwall(pc),d6
+                          divs                   d2,d6
+                          add.w                  #40,d6
+                          move.w                 d6,strbot
+                          move.w                 d6,18(a0)
+                          move.w                 d3,2(a1)
+                          blt.s                  .alloffleft
+                          cmp.w                  #95,d1
+                          bgt.s                  .alloffleft
 
-                  cmp.w                  d1,d3
-                  blt.s                  .alloffleft
+                          cmp.w                  d1,d3
+                          blt.s                  .alloffleft
 
-                  move.w                 d1,(a0)
-                  move.w                 d3,2(a0)
-                  move.w                 d4,4(a0)
-                  move.w                 d5,6(a0)
-                  move.w                 d0,8(a0)
-                  move.w                 d2,10(a0)
-                  move.w                 d7,-(a7)
-                  move.w                 #maxscrdiv,d7
-                  bsr                    DoLeftEnd
-                  move.w                 (a7)+,d7
+                          move.w                 d1,(a0)
+                          move.w                 d3,2(a0)
+                          move.w                 d4,4(a0)
+                          move.w                 d5,6(a0)
+                          move.w                 d0,8(a0)
+                          move.w                 d2,10(a0)
+                          move.w                 d7,-(a7)
+                          move.w                 #maxscrdiv,d7
+                          bsr                    DoLeftEnd
+                          move.w                 (a7)+,d7
 
 .alloffleft:
-                  move.l                 (a1)+,d1
-                  move.w                 (a1)+,d0
-                  move.w                 (a1)+,d4
-                  move.w                 (a1)+,d6
+                          move.l                 (a1)+,d1
+                          move.w                 (a1)+,d0
+                          move.w                 (a1)+,d4
+                          move.w                 (a1)+,d6
 
-                  dbra                   d7,.computeloop
+                          dbra                   d7,.computeloop
  
 .alloffright:
-                  SUPERVISOR             SetInstCacheOn
-                  rts
+                          SUPERVISOR             SetInstCacheOn
+                          rts
 
 *********************************************************************************************
 
-iters:            dc.w                   0
-multcount:        dc.w                   0
+iters:                    dc.w                   0
+multcount:                dc.w                   0
 
 *********************************************************************************************
 
 walldraw:
 
-                  tst.w                  d1
-                  bgt.s                  oneinfront1
-                  tst.w                  d3
-                  bgt.s                  oneinfront
-                  rts
+                          tst.w                  d1
+                          bgt.s                  oneinfront1
+                          tst.w                  d3
+                          bgt.s                  oneinfront
+                          rts
 
 oneinfront1:
-                  tst.w                  d3
-                  ble.s                  oneinfront
+                          tst.w                  d3
+                          ble.s                  oneinfront
 
 ; Bothinfront!
 
-                  nop
+                          nop
 
 oneinfront:
-                  move.w                 #16,d7
-                  move.w                 #2,d6
+                          move.w                 #16,d7
+                          move.w                 #2,d6
  
-                  move.w                 d3,d0
-                  sub.w                  d1,d0
-                  bge.s                  notnegzdiff
-                  neg.w                  d0
+                          move.w                 d3,d0
+                          sub.w                  d1,d0
+                          bge.s                  notnegzdiff
+                          neg.w                  d0
 
 notnegzdiff:
-                  cmp.w                  #1024,d0
-                  blt.s                  nd01
-                  add.w                  d7,d7
-                  add.w                  #1,d6
+                          cmp.w                  #1024,d0
+                          blt.s                  nd01
+                          add.w                  d7,d7
+                          add.w                  #1,d6
 
 nd01:
-                  cmp.w                  #512,d0
-                  blt.s                  nd0 
-                  add.w                  d7,d7
-                  add.w                  #1,d6
-                  bra                    nha
+                          cmp.w                  #512,d0
+                          blt.s                  nd0 
+                          add.w                  d7,d7
+                          add.w                  #1,d6
+                          bra                    nha
 
 nd0:
-                  cmp.w                  #256,d0
-                  bgt.s                  nh1
-                  asr.w                  #1,d7
-                  subq                   #1,d6
+                          cmp.w                  #256,d0
+                          bgt.s                  nh1
+                          asr.w                  #1,d7
+                          subq                   #1,d6
 
 nh1:
-                  cmp.w                  #128,d0
-                  bgt.s                  nh2
-                  asr.w                  #1,d7
-                  subq                   #1,d6
+                          cmp.w                  #128,d0
+                          bgt.s                  nh2
+                          asr.w                  #1,d7
+                          subq                   #1,d6
 
 nh2:
 nha:
-                  move.w                 d3,d0
-                  cmp.w                  d1,d3
-                  blt.s                  rightnearest
-                  move.w                 d1,d0
+                          move.w                 d3,d0
+                          cmp.w                  d1,d3
+                          blt.s                  rightnearest
+                          move.w                 d1,d0
 
 rightnearest:
-                  cmp.w                  #64,d0
-                  bgt.s                  nd1
-                  addq                   #1,d6
-                  add.w                  d7,d7
+                          cmp.w                  #64,d0
+                          bgt.s                  nd1
+                          addq                   #1,d6
+                          add.w                  d7,d7
 
 nd1:
-                  cmp.w                  #128,d0
-                  blt.s                  nh3
-                  asr.w                  #1,d7
-                  subq                   #1,d6
-                  blt.s                  nh3
-                  cmp.w                  #256,d0
-                  blt.s                  nh3
-                  asr.w                  #1,d7
-                  subq                   #1,d6
+                          cmp.w                  #128,d0
+                          blt.s                  nh3
+                          asr.w                  #1,d7
+                          subq                   #1,d6
+                          blt.s                  nh3
+                          cmp.w                  #256,d0
+                          blt.s                  nh3
+                          asr.w                  #1,d7
+                          subq                   #1,d6
 
 nh3:
-                  move.w                 d6,iters
-                  subq                   #1,d7
-                  move.w                 d7,multcount
+                          move.w                 d6,iters
+                          subq                   #1,d7
+                          move.w                 d7,multcount
 
-                  move.l                 #databuffer,a3
-                  move.l                 a0,d0
-                  move.l                 a2,d2
+                          move.l                 #databuffer,a3
+                          move.l                 a0,d0
+                          move.l                 a2,d2
 
-                  move.l                 d0,(a3)+
-                  add.l                  d2,d0
-                  move.w                 d1,(a3)+
-                  asr.l                  #1,d0
-                  move.w                 d4,(a3)+
+                          move.l                 d0,(a3)+
+                          add.l                  d2,d0
+                          move.w                 d1,(a3)+
+                          asr.l                  #1,d0
+                          move.w                 d4,(a3)+
 
-                  move.w                 leftwallbright,d6
-                  move.w                 d6,(a3)+
+                          move.w                 leftwallbright,d6
+                          move.w                 d6,(a3)+
  
-                  add.w                  d5,d4
-                  move.l                 d0,(a3)+
-                  add.w                  d3,d1
-                  asr.w                  #1,d1
-                  move.w                 d1,(a3)+
-                  asr.w                  #1,d4
-                  move.w                 d4,(a3)+
+                          add.w                  d5,d4
+                          move.l                 d0,(a3)+
+                          add.w                  d3,d1
+                          asr.w                  #1,d1
+                          move.w                 d1,(a3)+
+                          asr.w                  #1,d4
+                          move.w                 d4,(a3)+
  
-                  add.w                  rightwallbright,d6
-                  asr.w                  #1,d6
-                  move.w                 d6,(a3)+
+                          add.w                  rightwallbright,d6
+                          asr.w                  #1,d6
+                          move.w                 d6,(a3)+
  
-                  move.l                 d2,(a3)+
-                  move.w                 d3,(a3)+
-                  move.w                 d5,(a3)+
-                  move.w                 rightwallbright,(a3)+
+                          move.l                 d2,(a3)+
+                          move.w                 d3,(a3)+
+                          move.w                 d5,(a3)+
+                          move.w                 rightwallbright,(a3)+
  
 ; We now have the two endpoints and the midpoint
 ; so we need to perform 1 iteration of the inner
@@ -830,178 +830,178 @@ nh3:
 ; Decide how often to subdivide by how far away the wall is, and
 ; how perp. it is to the player.
 
-                  move.l                 #databuffer,a0
-                  move.l                 #databuffer2,a1
+                          move.l                 #databuffer,a0
+                          move.l                 #databuffer2,a1
  
-                  move.w                 iters,d6
-                  blt                    noiters
-                  move.l                 #1,a2
+                          move.w                 iters,d6
+                          blt                    noiters
+                          move.l                 #1,a2
  
 iterloop:
-                  move.l                 a0,a3
-                  move.l                 a1,a4
-                  move.w                 a2,d7
-                  exg                    a0,a1
+                          move.l                 a0,a3
+                          move.l                 a1,a4
+                          move.w                 a2,d7
+                          exg                    a0,a1
 
-                  move.l                 (a3)+,d0
-                  move.w                 (a3)+,d1
-                  move.l                 (a3)+,d2
+                          move.l                 (a3)+,d0
+                          move.w                 (a3)+,d1
+                          move.l                 (a3)+,d2
 
 middleloop:
-                  move.l                 d0,(a4)+
-                  move.l                 (a3)+,d3
-                  add.l                  d3,d0
-                  move.w                 d1,(a4)+
-                  asr.l                  #1,d0
-                  move.w                 (a3)+,d4
-                  add.w                  d4,d1
-                  move.l                 d2,(a4)+
-                  asr.w                  #1,d1
-                  move.l                 (a3)+,d5
-                  add.l                  d5,d2
-                  move.l                 d0,(a4)+
-                  asr.l                  #1,d2
-                  move.w                 d1,(a4)+
-                  move.l                 d2,(a4)+
+                          move.l                 d0,(a4)+
+                          move.l                 (a3)+,d3
+                          add.l                  d3,d0
+                          move.w                 d1,(a4)+
+                          asr.l                  #1,d0
+                          move.w                 (a3)+,d4
+                          add.w                  d4,d1
+                          move.l                 d2,(a4)+
+                          asr.w                  #1,d1
+                          move.l                 (a3)+,d5
+                          add.l                  d5,d2
+                          move.l                 d0,(a4)+
+                          asr.l                  #1,d2
+                          move.w                 d1,(a4)+
+                          move.l                 d2,(a4)+
  
-                  move.l                 d3,(a4)+
-                  move.l                 (a3)+,d0
-                  add.l                  d0,d3
+                          move.l                 d3,(a4)+
+                          move.l                 (a3)+,d0
+                          add.l                  d0,d3
  
-                  move.w                 d4,(a4)+
-                  asr.l                  #1,d3
-                  move.w                 (a3)+,d1
-                  add.w                  d1,d4
-                  move.l                 d5,(a4)+
-                  asr.w                  #1,d4
-                  move.l                 (a3)+,d2
-                  add.l                  d2,d5
-                  move.l                 d3,(a4)+
-                  asr.l                  #1,d5
-                  move.w                 d4,(a4)+
-                  move.l                 d5,(a4)+
+                          move.w                 d4,(a4)+
+                          asr.l                  #1,d3
+                          move.w                 (a3)+,d1
+                          add.w                  d1,d4
+                          move.l                 d5,(a4)+
+                          asr.w                  #1,d4
+                          move.l                 (a3)+,d2
+                          add.l                  d2,d5
+                          move.l                 d3,(a4)+
+                          asr.l                  #1,d5
+                          move.w                 d4,(a4)+
+                          move.l                 d5,(a4)+
 
 
-                  subq                   #1,d7
-                  bgt.s                  middleloop
-                  move.l                 d0,(a4)+
-                  move.w                 d1,(a4)+
-                  move.l                 d2,(a4)+
+                          subq                   #1,d7
+                          bgt.s                  middleloop
+                          move.l                 d0,(a4)+
+                          move.w                 d1,(a4)+
+                          move.l                 d2,(a4)+
  
-                  add.w                  a2,a2
+                          add.w                  a2,a2
  
-                  dbra                   d6,iterloop
+                          dbra                   d6,iterloop
  
 noiters:
 CalcAndDraw:
-                  SUPERVISOR             SetInstCacheOn
+                          SUPERVISOR             SetInstCacheOn
  
-                  move.l                 a0,a1
-                  move.w                 multcount,d7
+                          move.l                 a0,a1
+                          move.w                 multcount,d7
 
 .findfirstinfront:
-                  move.l                 (a1)+,d1
-                  move.w                 (a1)+,d0
-                  bgt.s                  .foundinfront
-                  move.l                 (a1)+,d4
-                  dbra                   d7,.findfirstinfront
-                  rts                                                       ; no two points were in front
+                          move.l                 (a1)+,d1
+                          move.w                 (a1)+,d0
+                          bgt.s                  .foundinfront
+                          move.l                 (a1)+,d4
+                          dbra                   d7,.findfirstinfront
+                          rts                                                       ; no two points were in front
  
 .foundinfront:
-                  move.w                 (a1)+,d4
-                  move.w                 (a1)+,lbr
+                          move.w                 (a1)+,d4
+                          move.w                 (a1)+,lbr
                   
  ; d1=left x, d4=left end, d0=left dist 
  
-                  divs                   d0,d1
-                  add.w                  #47,d1
+                          divs                   d0,d1
+                          add.w                  #47,d1
  
-                  move.l                 topofwall(pc),d5
-                  divs                   d0,d5
-                  add.w                  #40,d5
-                  move.w                 d5,strtop
-                  move.l                 botofwall(pc),d5
-                  divs                   d0,d5
-                  add.w                  #40,d5
-                  move.w                 d5,strbot
+                          move.l                 topofwall(pc),d5
+                          divs                   d0,d5
+                          add.w                  #40,d5
+                          move.w                 d5,strtop
+                          move.l                 botofwall(pc),d5
+                          divs                   d0,d5
+                          add.w                  #40,d5
+                          move.w                 d5,strbot
  
 .computeloop:
-                  move.w                 4(a1),d2
-                  bgt.s                  .infront
-                  rts
+                          move.w                 4(a1),d2
+                          bgt.s                  .infront
+                          rts
 
 .infront:
-                  move.l                 #store,a0
-                  move.l                 (a1),d3
-                  divs                   d2,d3
-                  move.w                 6(a1),d5
-                  add.w                  #47,d3
-                  move.w                 strtop(pc),12(a0)
-                  move.l                 topofwall(pc),d6
-                  divs                   d2,d6
-                  move.w                 strbot(pc),16(a0)
-                  add.w                  #40,d6
-                  move.w                 d6,strtop
-                  move.w                 d6,14(a0)
-                  move.l                 botofwall(pc),d6
-                  divs                   d2,d6
-                  add.w                  #41,d6
-                  move.w                 d6,strbot
-                  move.w                 d6,18(a0)
-                  move.w                 d3,2(a1)
-                  cmp.w                  leftclip(pc),d3
-                  blt.s                  .alloffleft
-                  cmp.w                  rightclip(pc),d1
+                          move.l                 #store,a0
+                          move.l                 (a1),d3
+                          divs                   d2,d3
+                          move.w                 6(a1),d5
+                          add.w                  #47,d3
+                          move.w                 strtop(pc),12(a0)
+                          move.l                 topofwall(pc),d6
+                          divs                   d2,d6
+                          move.w                 strbot(pc),16(a0)
+                          add.w                  #40,d6
+                          move.w                 d6,strtop
+                          move.w                 d6,14(a0)
+                          move.l                 botofwall(pc),d6
+                          divs                   d2,d6
+                          add.w                  #41,d6
+                          move.w                 d6,strbot
+                          move.w                 d6,18(a0)
+                          move.w                 d3,2(a1)
+                          cmp.w                  leftclip(pc),d3
+                          blt.s                  .alloffleft
+                          cmp.w                  rightclip(pc),d1
 
 **********************************************************
                 ; cmp.w #95,d1
 **********************************************************
 
-                  bge.s                  .alloffright
+                          bge.s                  .alloffright
 
-                  move.w                 d1,(a0)
-                  move.w                 d3,2(a0)
-                  move.w                 d4,4(a0)
-                  move.w                 d5,6(a0)
-                  move.w                 d0,8(a0)
-                  move.w                 d2,10(a0)
+                          move.w                 d1,(a0)
+                          move.w                 d3,2(a0)
+                          move.w                 d4,4(a0)
+                          move.w                 d5,6(a0)
+                          move.w                 d0,8(a0)
+                          move.w                 d2,10(a0)
  
-                  move.w                 lbr,d5
-                  sub.w                  #300,d5
-                  ext.w                  d5
-                  move.w                 d5,24(a0)
-                  move.w                 8(a1),d5
-                  sub.w                  #300,d5
-                  ext.w                  d5
-                  move.w                 d5,26(a0)
+                          move.w                 lbr,d5
+                          sub.w                  #300,d5
+                          ext.w                  d5
+                          move.w                 d5,24(a0)
+                          move.w                 8(a1),d5
+                          sub.w                  #300,d5
+                          ext.w                  d5
+                          move.w                 d5,26(a0)
  
-                  movem.l                d7/a1,-(a7)
-                  move.w                 #maxscrdiv,d7
-                  bsr                    DoLeftEnd
-                  movem.l                (a7)+,d7/a1
+                          movem.l                d7/a1,-(a7)
+                          move.w                 #maxscrdiv,d7
+                          bsr                    DoLeftEnd
+                          movem.l                (a7)+,d7/a1
 
 .alloffleft:
-                  move.l                 (a1)+,d1
-                  move.w                 (a1)+,d0
-                  move.w                 (a1)+,d4
-                  move.w                 (a1)+,lbr
+                          move.l                 (a1)+,d1
+                          move.w                 (a1)+,d0
+                          move.w                 (a1)+,d4
+                          move.w                 (a1)+,lbr
 
-                  dbra                   d7,.computeloop
-                  rts
+                          dbra                   d7,.computeloop
+                          rts
  
 .alloffright:
-                  rts
+                          rts
 
 *********************************************************************************************
 
-lbr:              dc.w                   0
-leftwallbright:   dc.w                   0
-rightwallbright:  dc.w                   0
-strtop:           dc.w                   0
-strbot:           dc.w                   0
+lbr:                      dc.w                   0
+leftwallbright:           dc.w                   0
+rightwallbright:          dc.w                   0
+strtop:                   dc.w                   0
+strbot:                   dc.w                   0
  
-databuffer:       ds.l                   600
-databuffer2:      ds.l                   600
+databuffer:               ds.l                   600
+databuffer2:              ds.l                   600
 
 *********************************************************************************************
 ; Need a routine which takes...?
@@ -1012,31 +1012,31 @@ databuffer2:      ds.l                   600
 ; And produces the appropriate strip on the
 ; screen.
 
-topofwall:        dc.l                   0
-botofwall:        dc.l                   0
+topofwall:                dc.l                   0
+botofwall:                dc.l                   0
 
 *********************************************************************************************
 
-nostripq:         rts
+nostripq:                 rts
 
 *********************************************************************************************
 
 ScreenWallstripdraw:
-                  move.w                 d4,d6
-                  cmp.w                  topclip(pc),d6
-                  blt.s                  nostripq
-                  cmp.w                  botclip(pc),d3
-                  bgt.s                  nostripq
+                          move.w                 d4,d6
+                          cmp.w                  topclip(pc),d6
+                          blt.s                  nostripq
+                          cmp.w                  botclip(pc),d3
+                          bgt.s                  nostripq
  
-                  cmp.w                  botclip(pc),d6
-                  ble.s                  noclipbot
-                  move.w                 botclip(pc),d6
+                          cmp.w                  botclip(pc),d6
+                          ble.s                  noclipbot
+                          move.w                 botclip(pc),d6
 
 noclipbot:
-                  move.w                 d3,d5
-                  cmp.w                  topclip(pc),d5
-                  bge.s                  nocliptop
-                  move.w                 topclip(pc),d5
+                          move.w                 d3,d5
+                          cmp.w                  topclip(pc),d5
+                          bge.s                  nocliptop
+                          move.w                 topclip(pc),d5
 
 **********************************************************
                 ; btst #0,d5
@@ -1045,10 +1045,10 @@ noclipbot:
                 ;.nsbd:
  **********************************************************
  
-                  sub.w                  d5,d6                              ; height to draw.
-                  ble.s                  nostripq
+                          sub.w                  d5,d6                              ; height to draw.
+                          ble.s                  nostripq
  
-                  bra                    gotoend
+                          bra                    gotoend
  
 nocliptop:
 
@@ -1059,14 +1059,14 @@ nocliptop:
                 ;.nsbd:
  **********************************************************
  
-                  sub.w                  d5,d6                              ; height to draw.
-                  ble.s                  nostripq
+                          sub.w                  d5,d6                              ; height to draw.
+                          ble.s                  nostripq
  
-                  bra                    gotoend
+                          bra                    gotoend
 
 *********************************************************************************************
 
-wlcnt:            dc.w                   0 
+wlcnt:                    dc.w                   0 
 
 *********************************************************************************************
 
@@ -1087,24 +1087,24 @@ wlcnt:            dc.w                   0
 
 *********************************************************************************************
 
-                  CNOP                   0,128 
+                          CNOP                   0,128 
 
 *********************************************************************************************
 
 drawwallPACK0:
-                  and.w                  d7,d4
-                  move.b                 1(a5,d4.w*2),d1
-                  and.b                  #31,d1
-                  add.l                  d3,d4
-                  move.w                 (a2,d1.w*2),(a3)
-                  adda.w                 d0,a3
-                  addx.w                 d2,d4
-                  dbra                   d6,drawwallPACK0
-                  rts
+                          and.w                  d7,d4
+                          move.b                 1(a5,d4.w*2),d1
+                          and.b                  #31,d1
+                          add.l                  d3,d4
+                          move.w                 (a2,d1.w*2),(a3)
+                          adda.w                 d0,a3
+                          addx.w                 d2,d4
+                          dbra                   d6,drawwallPACK0
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
@@ -1122,26 +1122,26 @@ drawwallPACK0:
 
 *********************************************************************************************
 
-                  CNOP                   0,4 
+                          CNOP                   0,4 
 
 *********************************************************************************************
 
 drawwallPACK1:
-                  and.w                  d7,d4
-                  move.w                 (a5,d4.w*2),d1
-                  lsr.w                  #5,d1
-                  and.w                  #31,d1
-                  add.l                  d3,d4
-                  move.w                 (a2,d1.w*2),(a3)
-                  adda.w                 d0,a3
-                  addx.w                 d2,d4
-                  dbra                   d6,drawwallPACK1
+                          and.w                  d7,d4
+                          move.w                 (a5,d4.w*2),d1
+                          lsr.w                  #5,d1
+                          and.w                  #31,d1
+                          add.l                  d3,d4
+                          move.w                 (a2,d1.w*2),(a3)
+                          adda.w                 d0,a3
+                          addx.w                 d2,d4
+                          dbra                   d6,drawwallPACK1
 
-                  rts
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
@@ -1158,34 +1158,34 @@ drawwallPACK1:
 
 *********************************************************************************************
 
-                  CNOP                   0,4 
+                          CNOP                   0,4 
 
 *********************************************************************************************
 
 drawwallPACK2:
-                  and.w                  d7,d4
-                  move.b                 (a5,d4.w*2),d1
-                  lsr.b                  #2,d1
-                  add.l                  d3,d4
-                  move.w                 (a2,d1.w*2),(a3)
-                  adda.w                 d0,a3
-                  addx.w                 d2,d4
-                  dbra                   d6,drawwallPACK2
-                  rts
+                          and.w                  d7,d4
+                          move.b                 (a5,d4.w*2),d1
+                          lsr.b                  #2,d1
+                          add.l                  d3,d4
+                          move.w                 (a2,d1.w*2),(a3)
+                          adda.w                 d0,a3
+                          addx.w                 d2,d4
+                          dbra                   d6,drawwallPACK2
+                          rts
 
 *********************************************************************************************
 
 usesimple:
-                  mulu                   d3,d4
+                          mulu                   d3,d4
  
-                  add.l                  d0,d4
-                  swap                   d4
-                  add.w                  totalyoff(pc),d4
+                          add.l                  d0,d4
+                          swap                   d4
+                          add.w                  totalyoff(pc),d4
 
 cliptopusesimple
-                  move.w                 VALAND,d7
-                  move.w                 #widthOffset,d0
-                  moveq                  #0,d1
+                          move.w                 VALAND,d7
+                          move.w                 #widthOffset,d0
+                          moveq                  #0,d1
 
 **********************************************************
                 ; cmp.l a4,a2
@@ -1194,96 +1194,96 @@ cliptopusesimple
                 ;usea2:
 **********************************************************
 
-                  and.w                  d7,d4
+                          and.w                  d7,d4
  
-                  move.l                 d2,d5
-                  clr.w                  d5
-                  cmp.b                  #1,StripData+1
-                  dbge                   d6,simplewalliPACK0
-                  dbne                   d6,simplewalliPACK1
-                  dble                   d6,simplewalliPACK2
-                  rts
+                          move.l                 d2,d5
+                          clr.w                  d5
+                          cmp.b                  #1,StripData+1
+                          dbge                   d6,simplewalliPACK0
+                          dbne                   d6,simplewalliPACK1
+                          dble                   d6,simplewalliPACK2
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 simplewalliPACK0:
-                  move.b                 1(a5,d4.w*2),d1
-                  and.b                  #31,d1
-                  move.w                 (a2,d1.w*2),d3
+                          move.b                 1(a5,d4.w*2),d1
+                          and.b                  #31,d1
+                          move.w                 (a2,d1.w*2),d3
 
 simplewallPACK0:
-                  move.w                 d3,(a3)
-                  adda.w                 d0,a3
-                  add.l                  d2,d4
-                  bcc.s                  .noread
-                  addq                   #1,d4
-                  and.w                  d7,d4
-                  move.b                 1(a5,d4.w*2),d1
-                  and.b                  #31,d1
-                  move.w                 (a2,d1.w*2),d3
+                          move.w                 d3,(a3)
+                          adda.w                 d0,a3
+                          add.l                  d2,d4
+                          bcc.s                  .noread
+                          addq                   #1,d4
+                          and.w                  d7,d4
+                          move.b                 1(a5,d4.w*2),d1
+                          and.b                  #31,d1
+                          move.w                 (a2,d1.w*2),d3
 
 .noread:
-                  dbra                   d6,simplewallPACK0
-                  rts
+                          dbra                   d6,simplewallPACK0
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 simplewalliPACK1:
-                  move.w                 (a5,d4.w*2),d1
-                  lsr.w                  #5,d1
-                  and.w                  #31,d1
-                  move.w                 (a2,d1.w*2),d3
+                          move.w                 (a5,d4.w*2),d1
+                          lsr.w                  #5,d1
+                          and.w                  #31,d1
+                          move.w                 (a2,d1.w*2),d3
 
 simplewallPACK1:
-                  move.w                 d3,(a3)
-                  adda.w                 d0,a3
-                  add.l                  d5,d4
-                  bcc.s                  .noread
-                  addq                   #1,d4
-                  and.w                  d7,d4
-                  move.w                 (a5,d4.w*2),d1
-                  lsr.w                  #5,d1
-                  and.w                  #31,d1
-                  move.w                 (a2,d1.w*2),d3
+                          move.w                 d3,(a3)
+                          adda.w                 d0,a3
+                          add.l                  d5,d4
+                          bcc.s                  .noread
+                          addq                   #1,d4
+                          and.w                  d7,d4
+                          move.w                 (a5,d4.w*2),d1
+                          lsr.w                  #5,d1
+                          and.w                  #31,d1
+                          move.w                 (a2,d1.w*2),d3
 
 .noread:
-                  dbra                   d6,simplewallPACK1
-                  rts
+                          dbra                   d6,simplewallPACK1
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 simplewalliPACK2:
-                  move.b                 (a5,d4.w*2),d1
-                  lsr.b                  #2,d1
-                  and.b                  #31,d1
-                  move.w                 (a2,d1.w*2),d3
+                          move.b                 (a5,d4.w*2),d1
+                          lsr.b                  #2,d1
+                          and.b                  #31,d1
+                          move.w                 (a2,d1.w*2),d3
 
 simplewallPACK2:
-                  move.w                 d3,(a3)
-                  adda.w                 d0,a3
-                  add.l                  d5,d4
-                  bcc.s                  .noread
-                  addq                   #1,d4
-                  and.w                  d7,d4
-                  move.b                 (a5,d4.w*2),d1
-                  lsr.b                  #2,d1
-                  move.w                 (a2,d1.w*2),d3
+                          move.w                 d3,(a3)
+                          adda.w                 d0,a3
+                          add.l                  d5,d4
+                          bcc.s                  .noread
+                          addq                   #1,d4
+                          and.w                  d7,d4
+                          move.b                 (a5,d4.w*2),d1
+                          lsr.b                  #2,d1
+                          move.w                 (a2,d1.w*2),d3
 
 .noread:
-                  dbra                   d6,simplewallPACK2
-                  rts
+                          dbra                   d6,simplewallPACK2
+                          rts
  
 ********************************************************** 
                 ;gotoendnomult:
@@ -1306,68 +1306,68 @@ simplewallPACK2:
 **********************************************************
 
 gotoend:
-                  add.l                  timeslarge(pc,d5.w*4),a3 
-                  move.w                 d5,d4
-                  move.l                 4(a1,d2.w*8),d0
-                  move.l                 (a1,d2.w*8),d2
-                  moveq                  #0,d3
-                  move.w                 d2,d3
-                  swap                   d2
-                  tst.w                  d2
-                  bne.s                  .notsimple
-                  cmp.l                  #$b000,d3
-                  ble                    usesimple
+                          add.l                  timeslarge(pc,d5.w*4),a3 
+                          move.w                 d5,d4
+                          move.l                 4(a1,d2.w*8),d0
+                          move.l                 (a1,d2.w*8),d2
+                          moveq                  #0,d3
+                          move.w                 d2,d3
+                          swap                   d2
+                          tst.w                  d2
+                          bne.s                  .notsimple
+                          cmp.l                  #$b000,d3
+                          ble                    usesimple
 
 .notsimple:
-                  mulu                   d3,d4
-                  muls                   d2,d5
-                  add.l                  d0,d4
-                  swap                   d4
-                  add.w                  d5,d4
-                  add.w                  totalyoff(pc),d4
+                          mulu                   d3,d4
+                          muls                   d2,d5
+                          add.l                  d0,d4
+                          swap                   d4
+                          add.w                  d5,d4
+                          add.w                  totalyoff(pc),d4
 
 cliptop:
-                  move.w                 VALAND,d7
-                  and.w                  d7,d4
-                  move.w                 #widthOffset,d0
-                  moveq                  #0,d1
+                          move.w                 VALAND,d7
+                          and.w                  d7,d4
+                          move.w                 #widthOffset,d0
+                          moveq                  #0,d1
 
-                  move.l                 d2,d3
-                  clr.w                  d3
+                          move.l                 d2,d3
+                          clr.w                  d3
 
-                  cmp.b                  #1,StripData+1
-                  dbge                   d6,drawwallPACK0
-                  dbne                   d6,drawwallPACK1
-                  dble                   d6,drawwallPACK2
-                  rts
+                          cmp.b                  #1,StripData+1
+                          dbge                   d6,drawwallPACK0
+                          dbne                   d6,drawwallPACK1
+                          dble                   d6,drawwallPACK2
+                          rts
 
 timeslarge:
 
-val               SET                    widthOffset
-                  REPT                   80
-                  dc.l                   val
-val               SET                    val+widthOffset
-                  ENDR
+val                       SET                    widthOffset
+                          REPT                   80
+                          dc.l                   val
+val                       SET                    val+widthOffset
+                          ENDR
 
 nostripqthru:
-                  rts
+                          rts
 
 ScreenWallstripdrawthru:
-                  move.w                 d4,d6
-                  cmp.w                  topclip(pc),d6
-                  blt.s                  nostripqthru
-                  cmp.w                  botclip(pc),d3
-                  bgt.s                  nostripqthru
+                          move.w                 d4,d6
+                          cmp.w                  topclip(pc),d6
+                          blt.s                  nostripqthru
+                          cmp.w                  botclip(pc),d3
+                          bgt.s                  nostripqthru
  
-                  cmp.w                  botclip(pc),d6
-                  ble.s                  .noclipbot
-                  move.w                 botclip(pc),d6
+                          cmp.w                  botclip(pc),d6
+                          ble.s                  .noclipbot
+                          move.w                 botclip(pc),d6
 
 .noclipbot:
-                  move.w                 d3,d5
-                  cmp.w                  topclip(pc),d5
-                  bge.s                  .nocliptop
-                  move.w                 topclip(pc),d5
+                          move.w                 d3,d5
+                          cmp.w                  topclip(pc),d5
+                          bge.s                  .nocliptop
+                          move.w                 topclip(pc),d5
 
 **********************************************************
                 ; btst #0,d5
@@ -1376,10 +1376,10 @@ ScreenWallstripdrawthru:
                 ;.nsbd:
  **********************************************************
  
-                  sub.w                  d5,d6                              ; height to draw.
-                  ble.s                  nostripqthru
+                          sub.w                  d5,d6                              ; height to draw.
+                          ble.s                  nostripqthru
  
-                  bra                    gotoendthru
+                          bra                    gotoendthru
  
 .nocliptop:
 
@@ -1390,485 +1390,485 @@ ScreenWallstripdrawthru:
                 ;.nsbdthru:
  **********************************************************
  
-                  sub.w                  d5,d6                              ; height to draw.
-                  ble.s                  nostripqthru
+                          sub.w                  d5,d6                              ; height to draw.
+                          ble.s                  nostripqthru
  
-                  bra                    gotoendthru
+                          bra                    gotoendthru
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 drawwalldimthruPACK0:
-                  and.w                  d7,d4
-                  move.b                 1(a5,d4.w*2),d1
-                  and.b                  #31,d1
-                  beq.s                  .holey
-                  move.w                 (a4,d1.w*2),(a3)
+                          and.w                  d7,d4
+                          move.b                 1(a5,d4.w*2),d1
+                          and.b                  #31,d1
+                          beq.s                  .holey
+                          move.w                 (a4,d1.w*2),(a3)
 
 .holey:
-                  adda.w                 d0,a3
-                  add.l                  d3,d4
-                  addx.w                 d2,d4
-                  dbra                   d6,drawwallthruPACK0
-                  rts
+                          adda.w                 d0,a3
+                          add.l                  d3,d4
+                          addx.w                 d2,d4
+                          dbra                   d6,drawwallthruPACK0
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 drawwallthruPACK0:
-                  and.w                  d7,d4
-                  move.b                 1(a5,d4.w*2),d1
-                  and.b                  #31,d1
-                  beq.s                  .holey
-                  move.w                 (a2,d1.w*2),(a3)
+                          and.w                  d7,d4
+                          move.b                 1(a5,d4.w*2),d1
+                          and.b                  #31,d1
+                          beq.s                  .holey
+                          move.w                 (a2,d1.w*2),(a3)
 
 .holey:
-                  adda.w                 d0,a3
-                  add.l                  d3,d4
-                  addx.w                 d2,d4
-                  dbra                   d6,drawwalldimthruPACK0
+                          adda.w                 d0,a3
+                          add.l                  d3,d4
+                          addx.w                 d2,d4
+                          dbra                   d6,drawwalldimthruPACK0
 
 nostripthru:
-                  rts
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 drawwalldimthruPACK1:
-                  and.w                  d7,d4
-                  move.w                 (a5,d4.w*2),d1
-                  lsr.w                  #5,d1
-                  and.w                  #31,d1
-                  beq.s                  .holey
-                  move.w                 (a4,d1.w*2),(a3)
+                          and.w                  d7,d4
+                          move.w                 (a5,d4.w*2),d1
+                          lsr.w                  #5,d1
+                          and.w                  #31,d1
+                          beq.s                  .holey
+                          move.w                 (a4,d1.w*2),(a3)
 
 .holey:
-                  adda.w                 d0,a3
-                  add.l                  d3,d4
-                  addx.w                 d2,d4
-                  dbra                   d6,drawwallthruPACK1
-                  rts
+                          adda.w                 d0,a3
+                          add.l                  d3,d4
+                          addx.w                 d2,d4
+                          dbra                   d6,drawwallthruPACK1
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 drawwallthruPACK1:
-                  and.w                  d7,d4
-                  move.w                 (a5,d4.w*2),d1
-                  lsr.w                  #5,d1
-                  and.w                  #31,d1
-                  beq.s                  .holey
-                  move.w                 (a2,d1.w*2),(a3)
+                          and.w                  d7,d4
+                          move.w                 (a5,d4.w*2),d1
+                          lsr.w                  #5,d1
+                          and.w                  #31,d1
+                          beq.s                  .holey
+                          move.w                 (a2,d1.w*2),(a3)
 
 .holey:
-                  adda.w                 d0,a3
-                  add.l                  d3,d4
-                  addx.w                 d2,d4
-                  dbra                   d6,drawwalldimthruPACK1
-                  rts
+                          adda.w                 d0,a3
+                          add.l                  d3,d4
+                          addx.w                 d2,d4
+                          dbra                   d6,drawwalldimthruPACK1
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 drawwalldimthruPACK2:
-                  and.w                  d7,d4
-                  move.b                 (a5,d4.w*2),d1
-                  lsr.b                  #2,d1
-                  and.b                  #31,d1
-                  beq.s                  .holey
-                  move.w                 (a4,d1.w*2),(a3)
+                          and.w                  d7,d4
+                          move.b                 (a5,d4.w*2),d1
+                          lsr.b                  #2,d1
+                          and.b                  #31,d1
+                          beq.s                  .holey
+                          move.w                 (a4,d1.w*2),(a3)
 
 .holey:
-                  adda.w                 d0,a3
-                  add.l                  d3,d4
-                  addx.w                 d2,d4
-                  dbra                   d6,drawwallthruPACK2
-                  rts
+                          adda.w                 d0,a3
+                          add.l                  d3,d4
+                          addx.w                 d2,d4
+                          dbra                   d6,drawwallthruPACK2
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 drawwallthruPACK2:
-                  and.w                  d7,d4
-                  move.b                 (a5,d4.w*2),d1
-                  lsr.b                  #2,d1
-                  and.b                  #31,d1
-                  beq.s                  .holey
-                  move.w                 (a2,d1.w*2),(a3)
+                          and.w                  d7,d4
+                          move.b                 (a5,d4.w*2),d1
+                          lsr.b                  #2,d1
+                          and.b                  #31,d1
+                          beq.s                  .holey
+                          move.w                 (a2,d1.w*2),(a3)
 
 .holey:
-                  adda.w                 d0,a3
-                  add.l                  d3,d4
-                  addx.w                 d2,d4
-                  dbra                   d6,drawwalldimthruPACK2
-                  rts
+                          adda.w                 d0,a3
+                          add.l                  d3,d4
+                          addx.w                 d2,d4
+                          dbra                   d6,drawwalldimthruPACK2
+                          rts
 
 usesimplethru:
-                  mulu                   d3,d4
+                          mulu                   d3,d4
  
-                  add.l                  d0,d4
-                  swap                   d4
-                  add.w                  totalyoff(pc),d4
+                          add.l                  d0,d4
+                          swap                   d4
+                          add.w                  totalyoff(pc),d4
  
 cliptopusesimplethru:
-                  moveq                  #63,d7
-                  move.w                 #widthOffset,d0
-                  moveq                  #0,d1
-                  cmp.l                  a4,a2
-                  blt.s                  usea2thru
-                  move.l                 a4,a2
+                          moveq                  #63,d7
+                          move.w                 #widthOffset,d0
+                          moveq                  #0,d1
+                          cmp.l                  a4,a2
+                          blt.s                  usea2thru
+                          move.l                 a4,a2
 
 usea2thru:
-                  and.w                  d7,d4
+                          and.w                  d7,d4
  
-                  move.l                 d2,d5
-                  clr.w                  d5
+                          move.l                 d2,d5
+                          clr.w                  d5
  
-                  cmp.b                  #1,StripData+1
-                  dbge                   d6,simplewallthruiPACK0
-                  dbne                   d6,simplewallthruiPACK1
-                  dble                   d6,simplewallthruiPACK2
-                  rts
+                          cmp.b                  #1,StripData+1
+                          dbge                   d6,simplewallthruiPACK0
+                          dbne                   d6,simplewallthruiPACK1
+                          dble                   d6,simplewallthruiPACK2
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 simplewallthruiPACK0:
-                  move.b                 1(a5,d4.w*2),d1
-                  and.b                  #31,d1
-                  move.w                 (a2,d1.w*2),d3
+                          move.b                 1(a5,d4.w*2),d1
+                          and.b                  #31,d1
+                          move.w                 (a2,d1.w*2),d3
 
 simplewallthruPACK0:
-                  move.w                 d3,(a3)
-                  adda.w                 d0,a3
-                  add.l                  d5,d4
-                  bcc.s                  noreadthruPACK0
+                          move.w                 d3,(a3)
+                          adda.w                 d0,a3
+                          add.l                  d5,d4
+                          bcc.s                  noreadthruPACK0
 
 maybeholePACK0:
-                  addx.w                 d2,d4
-                  and.w                  d7,d4
-                  move.b                 1(a5,d4.w*2),d1
-                  and.b                  #31,d1
-                  beq.s                  holeysimplePACK0
-                  move.w                 (a2,d1.w*2),d3
-                  dbra                   d6,simplewallthruPACK0
-                  rts
+                          addx.w                 d2,d4
+                          and.w                  d7,d4
+                          move.b                 1(a5,d4.w*2),d1
+                          and.b                  #31,d1
+                          beq.s                  holeysimplePACK0
+                          move.w                 (a2,d1.w*2),d3
+                          dbra                   d6,simplewallthruPACK0
+                          rts
 
 noreadthruPACK0:
-                  addx.w                 d2,d4
-                  dbra                   d6,simplewallthruPACK0
-                  rts
+                          addx.w                 d2,d4
+                          dbra                   d6,simplewallthruPACK0
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 simplewallholePACK0:
-                  adda.w                 d0,a3
-                  add.l                  d5,d4
-                  bcs.s                  maybeholePACK0
-                  addx.w                 d2,d4
+                          adda.w                 d0,a3
+                          add.l                  d5,d4
+                          bcs.s                  maybeholePACK0
+                          addx.w                 d2,d4
 
 holeysimplePACK0:
-                  and.w                  d7,d4
-                  dbra                   d6,simplewallholePACK0
-                  rts
+                          and.w                  d7,d4
+                          dbra                   d6,simplewallholePACK0
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 simplewallthruiPACK1:
-                  move.w                 (a5,d4.w*2),d1
-                  lsr.w                  #5,d1
-                  and.w                  #31,d1
-                  move.w                 (a2,d1.w*2),d3
+                          move.w                 (a5,d4.w*2),d1
+                          lsr.w                  #5,d1
+                          and.w                  #31,d1
+                          move.w                 (a2,d1.w*2),d3
 
-                  simplewallthruPACK1    :
-                  move.w                 d3,(a3)
-                  adda.w                 d0,a3
-                  add.l                  d5,d4
-                  bcc.s                  noreadthruPACK1
+                          simplewallthruPACK1    :
+                          move.w                 d3,(a3)
+                          adda.w                 d0,a3
+                          add.l                  d5,d4
+                          bcc.s                  noreadthruPACK1
 
 maybeholePACK1:
-                  addx.w                 d2,d4
-                  and.w                  d7,d4
-                  move.w                 (a5,d4.w*2),d1
-                  lsr.w                  #5,d1
-                  and.w                  #31,d1
-                  beq.s                  holeysimplePACK1
-                  move.w                 (a2,d1.w*2),d3
-                  dbra                   d6,simplewallthruPACK1
-                  rts
+                          addx.w                 d2,d4
+                          and.w                  d7,d4
+                          move.w                 (a5,d4.w*2),d1
+                          lsr.w                  #5,d1
+                          and.w                  #31,d1
+                          beq.s                  holeysimplePACK1
+                          move.w                 (a2,d1.w*2),d3
+                          dbra                   d6,simplewallthruPACK1
+                          rts
 
 noreadthruPACK1:
-                  addx.w                 d2,d4
-                  dbra                   d6,simplewallthruPACK1
-                  rts
+                          addx.w                 d2,d4
+                          dbra                   d6,simplewallthruPACK1
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 simplewallholePACK1:
-                  adda.w                 d0,a3
-                  add.l                  d5,d4
-                  bcs.s                  maybeholePACK1
-                  addx.w                 d5,d4
+                          adda.w                 d0,a3
+                          add.l                  d5,d4
+                          bcs.s                  maybeholePACK1
+                          addx.w                 d5,d4
 
 holeysimplePACK1:
-                  and.w                  d7,d4
-                  dbra                   d6,simplewallholePACK1
-                  rts
+                          and.w                  d7,d4
+                          dbra                   d6,simplewallholePACK1
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 simplewallthruiPACK2:
-                  move.b                 (a5,d4.w*2),d1
-                  lsr.b                  #2,d1
-                  and.b                  #31,d1
-                  move.w                 (a2,d1.w*2),d3
+                          move.b                 (a5,d4.w*2),d1
+                          lsr.b                  #2,d1
+                          and.b                  #31,d1
+                          move.w                 (a2,d1.w*2),d3
 
 simplewallthruPACK2:
-                  move.w                 d3,(a3)
-                  adda.w                 d0,a3
-                  add.l                  d5,d4
-                  bcc.s                  noreadthruPACK2
+                          move.w                 d3,(a3)
+                          adda.w                 d0,a3
+                          add.l                  d5,d4
+                          bcc.s                  noreadthruPACK2
 
 maybeholePACK2:
-                  addx.w                 d2,d4
-                  and.w                  d7,d4
-                  move.b                 (a5,d4.w*2),d1
-                  lsr.b                  #2,d1
-                  and.b                  #31,d1
-                  beq.s                  holeysimplePACK2
-                  move.w                 (a2,d1.w*2),d3
-                  dbra                   d6,simplewallthruPACK2
-                  rts
+                          addx.w                 d2,d4
+                          and.w                  d7,d4
+                          move.b                 (a5,d4.w*2),d1
+                          lsr.b                  #2,d1
+                          and.b                  #31,d1
+                          beq.s                  holeysimplePACK2
+                          move.w                 (a2,d1.w*2),d3
+                          dbra                   d6,simplewallthruPACK2
+                          rts
 
 noreadthruPACK2:
-                  addx.w                 d2,d4
-                  dbra                   d6,simplewallthruPACK2
-                  rts
+                          addx.w                 d2,d4
+                          dbra                   d6,simplewallthruPACK2
+                          rts
 
 *********************************************************************************************
 
-                  CNOP                   0,4
+                          CNOP                   0,4
 
 *********************************************************************************************
 
 simplewallholePACK2:
-                  adda.w                 d0,a3
-                  add.l                  d5,d4
-                  bcs.s                  maybeholePACK2
-                  addx.w                 d2,d4
+                          adda.w                 d0,a3
+                          add.l                  d5,d4
+                          bcs.s                  maybeholePACK2
+                          addx.w                 d2,d4
 
 holeysimplePACK2:
-                  and.w                  d7,d4
-                  dbra                   d6,simplewallholePACK2
-                  rts
+                          and.w                  d7,d4
+                          dbra                   d6,simplewallholePACK2
+                          rts
 
 gotoendthru:
-                  add.l                  timeslargethru(pc,d5.w*4),a3 
-                  move.w                 d5,d4
-                  move.l                 4(a1,d2.w*8),d0
-                  move.l                 (a1,d2.w*8),d2
-                  moveq                  #0,d3
-                  move.w                 d2,d3
-                  swap                   d2
-                  tst.w                  d2
-                  bne.s                  .notsimple
-                  cmp.l                  #$b000,d3
-                  ble                    usesimplethru
+                          add.l                  timeslargethru(pc,d5.w*4),a3 
+                          move.w                 d5,d4
+                          move.l                 4(a1,d2.w*8),d0
+                          move.l                 (a1,d2.w*8),d2
+                          moveq                  #0,d3
+                          move.w                 d2,d3
+                          swap                   d2
+                          tst.w                  d2
+                          bne.s                  .notsimple
+                          cmp.l                  #$b000,d3
+                          ble                    usesimplethru
 
 .notsimple:
-                  mulu                   d3,d4
-                  muls                   d2,d5
-                  add.l                  d0,d4
-                  swap                   d4
-                  add.w                  d5,d4
-                  add.w                  wallyoff(pc),d4
+                          mulu                   d3,d4
+                          muls                   d2,d5
+                          add.l                  d0,d4
+                          swap                   d4
+                          add.w                  d5,d4
+                          add.w                  wallyoff(pc),d4
 
 cliptopthru:
-                  moveq                  #63,d7
-                  move.w                 #widthOffset,d0
-                  moveq                  #0,d1
+                          moveq                  #63,d7
+                          move.w                 #widthOffset,d0
+                          moveq                  #0,d1
  
-                  move.l                 d2,d3
-                  clr.w                  d3
+                          move.l                 d2,d3
+                          clr.w                  d3
 
-                  cmp.b                  #1,StripData+1
-                  dbge                   d6,drawwallthruPACK0
-                  dbne                   d6,drawwallthruPACK1
-                  dble                   d6,drawwallthruPACK2
+                          cmp.b                  #1,StripData+1
+                          dbge                   d6,drawwallthruPACK0
+                          dbne                   d6,drawwallthruPACK1
+                          dble                   d6,drawwallthruPACK2
  
-                  rts
+                          rts
 
 *********************************************************************************************
 
 timeslargethru:
 
-val               SET                    widthOffset
-                  REPT                   80
-                  dc.l                   val
-val               SET                    val+widthOffset
-                  ENDR
+val                       SET                    widthOffset
+                          REPT                   80
+                          dc.l                   val
+val                       SET                    val+widthOffset
+                          ENDR
 
 *********************************************************************************************
 
-totalyoff:        dc.w                   0
-wallyoff:         dc.w                   0
+totalyoff:                dc.w                   0
+wallyoff:                 dc.w                   0
 
 *********************************************************************************************
 ; Wall polygon
 
-leftend:          dc.w                   0
-wallbrightoff:    dc.w                   0
+leftend:                  dc.w                   0
+wallbrightoff:            dc.w                   0
 
 *********************************************************************************************
 
 itsawalldraw:
 
-                  move.l                 #Rotated,a5
-                  move.l                 #OnScreen,a6
+                          move.l                 #Rotated,a5
+                          move.l                 #OnScreen,a6
  
-                  move.w                 (a0)+,d0
-                  move.w                 (a0)+,d2
-                  move.w                 (a0)+,leftend
-                  move.w                 (a0)+,d5
-                  move.w                 (a0)+,d1
-                  asl.w                  #4,d1
-                  move.w                 d1,fromtile
+                          move.w                 (a0)+,d0
+                          move.w                 (a0)+,d2
+                          move.w                 (a0)+,leftend
+                          move.w                 (a0)+,d5
+                          move.w                 (a0)+,d1
+                          asl.w                  #4,d1
+                          move.w                 d1,fromtile
  
-                  move.w                 (a0)+,d1
-                  move.w                 d1,totalyoff
+                          move.w                 (a0)+,d1
+                          move.w                 d1,totalyoff
  
-                  move.w                 (a0)+,d1
-                  move.l                 #walltiles,a3
-                  move.l                 (a3,d1.w*4),a3
-                  move.l                 a3,PaletteAddr
-                  add.l                  #64*32,a3
-                  move.l                 a3,ChunkAddr
+                          move.w                 (a0)+,d1
+                          move.l                 #walltiles,a3
+                          move.l                 (a3,d1.w*4),a3
+                          move.l                 a3,PaletteAddr
+                          add.l                  #64*32,a3
+                          move.l                 a3,ChunkAddr
  
  **********************************************************
                 ; move.w (a0)+,d1
                 ; add.w ZoneBright,d1
 **********************************************************
 
-                  move.w                 ZoneBright,angbright
+                          move.w                 ZoneBright,angbright
 
 **********************************************************
                 ; move.w (a0)+,d1
                 ; move.w (a0)+,d4
 **********************************************************
 
-                  move.l                 yoff,d6
+                          move.l                 yoff,d6
  
-                  move.b                 (a0)+,VALAND+1
-                  move.b                 (a0)+,VALSHIFT+1
-                  move.w                 (a0)+,HORAND
+                          move.b                 (a0)+,VALAND+1
+                          move.b                 (a0)+,VALSHIFT+1
+                          move.w                 (a0)+,HORAND
  
-                  move.w                 totalyoff,d1
-                  add.w                  wallyoff,d1
-                  and.w                  VALAND,d1
-                  move.w                 d1,totalyoff
+                          move.w                 totalyoff,d1
+                          add.w                  wallyoff,d1
+                          and.w                  VALAND,d1
+                          move.w                 d1,totalyoff
  
-                  move.l                 (a0)+,topofwall
-                  sub.l                  d6,topofwall
-                  move.l                 (a0)+,botofwall
-                  sub.l                  d6,botofwall
+                          move.l                 (a0)+,topofwall
+                          sub.l                  d6,topofwall
+                          move.l                 (a0)+,botofwall
+                          sub.l                  d6,botofwall
  
  
-                  move.w                 (a0)+,wallbrightoff
+                          move.w                 (a0)+,wallbrightoff
 
-                  move.l                 topofwall,d3
-                  cmp.l                  botofwall,d3
-                  bge                    wallfacingaway
+                          move.l                 topofwall,d3
+                          cmp.l                  botofwall,d3
+                          bge                    wallfacingaway
 
  
-                  tst.w                  6(a5,d0*8)
-                  bgt.s                  cantell
-                  tst.w                  6(a5,d2*8)
-                  ble                    wallfacingaway
-                  bra                    cliptotestfirstbehind
+                          tst.w                  6(a5,d0*8)
+                          bgt.s                  cantell
+                          tst.w                  6(a5,d2*8)
+                          ble                    wallfacingaway
+                          bra                    cliptotestfirstbehind
 
 cantell:
-                  tst.w                  6(a5,d2*8)
-                  ble.s                  cliptotestsecbehind
-                  bra                    pastclip
+                          tst.w                  6(a5,d2*8)
+                          ble.s                  cliptotestsecbehind
+                          bra                    pastclip
 
 cliptotestfirstbehind:
-                  move.l                 (a5,d0*8),d3
-                  sub.l                  (a5,d2*8),d3
-                  move.w                 6(a5,d0*8),d6
-                  sub.w                  6(a5,d2*8),d6
-                  divs                   d6,d3
-                  muls                   6(a5,d2*8),d3
-                  neg.l                  d3
-                  add.l                  (a5,d2*8),d3
-                  move.w                 (a6,d2*2),d6
-                  sub.w                  #47,d6
-                  ext.l                  d6
-                  cmp.l                  d6,d3
-                  bge                    wallfacingaway
-                  bra                    cant_tell
-                  bra                    pastclip
+                          move.l                 (a5,d0*8),d3
+                          sub.l                  (a5,d2*8),d3
+                          move.w                 6(a5,d0*8),d6
+                          sub.w                  6(a5,d2*8),d6
+                          divs                   d6,d3
+                          muls                   6(a5,d2*8),d3
+                          neg.l                  d3
+                          add.l                  (a5,d2*8),d3
+                          move.w                 (a6,d2*2),d6
+                          sub.w                  #47,d6
+                          ext.l                  d6
+                          cmp.l                  d6,d3
+                          bge                    wallfacingaway
+                          bra                    cant_tell
+                          bra                    pastclip
  
 cliptotestsecbehind:
-                  move.l                 (a5,d2*8),d3
-                  sub.l                  (a5,d0*8),d3
-                  move.w                 6(a5,d2*8),d6
-                  sub.w                  6(a5,d0*8),d6
-                  divs                   d6,d3
-                  muls                   6(a5,d0*8),d3
-                  neg.l                  d3
-                  add.l                  (a5,d0*8),d3
-                  move.w                 (a6,d0*2),d6
-                  sub.w                  #47,d6
-                  ext.l                  d6
-                  cmp.l                  d6,d3
-                  ble                    wallfacingaway
-                  bra                    cant_tell
+                          move.l                 (a5,d2*8),d3
+                          sub.l                  (a5,d0*8),d3
+                          move.w                 6(a5,d2*8),d6
+                          sub.w                  6(a5,d0*8),d6
+                          divs                   d6,d3
+                          muls                   6(a5,d0*8),d3
+                          neg.l                  d3
+                          add.l                  (a5,d0*8),d3
+                          move.w                 (a6,d0*2),d6
+                          sub.w                  #47,d6
+                          ext.l                  d6
+                          cmp.l                  d6,d3
+                          ble                    wallfacingaway
+                          bra                    cant_tell
 
 pastclip:
-                  move.w                 (a6,d0*2),d3
-                  cmp.w                  #95,d3
-                  bgt                    wallfacingaway
-                  cmp.w                  (a6,d2*2),d3
-                  bge                    wallfacingaway
-                  tst.w                  (a6,d2*2)
-                  blt.s                  wallfacingaway
+                          move.w                 (a6,d0*2),d3
+                          cmp.w                  #95,d3
+                          bgt                    wallfacingaway
+                          cmp.w                  (a6,d2*2),d3
+                          bge                    wallfacingaway
+                          tst.w                  (a6,d2*2)
+                          blt.s                  wallfacingaway
 
 cant_tell:
 
@@ -1899,48 +1899,48 @@ cant_tell:
                 ; asl.w #2,d6
 **********************************************************
 
-                  movem.l                d7/a0/a5/a6,-(a7)
-                  move.l                 (a5,d0*8),a0
-                  move.w                 6(a5,d0*8),d1
-                  move.l                 (a5,d2*8),a2
-                  move.w                 6(a5,d2*8),d3
+                          movem.l                d7/a0/a5/a6,-(a7)
+                          move.l                 (a5,d0*8),a0
+                          move.w                 6(a5,d0*8),d1
+                          move.l                 (a5,d2*8),a2
+                          move.w                 6(a5,d2*8),d3
  
-                  move.l                 pointBrightsPtr,a5
-                  move.w                 (a5,d0.w*4),d0
-                  add.w                  #300,d0
-                  add.w                  wallbrightoff,d0
-                  move.w                 d0,leftwallbright
-                  move.w                 (a5,d2.w*4),d0
-                  add.w                  #300,d0
-                  add.w                  wallbrightoff,d0
-                  move.w                 d0,rightwallbright
+                          move.l                 pointBrightsPtr,a5
+                          move.w                 (a5,d0.w*4),d0
+                          add.w                  #300,d0
+                          add.w                  wallbrightoff,d0
+                          move.w                 d0,leftwallbright
+                          move.w                 (a5,d2.w*4),d0
+                          add.w                  #300,d0
+                          add.w                  wallbrightoff,d0
+                          move.w                 d0,rightwallbright
 
-                  move.w                 leftend(pc),d4
-                  move.l                 #max3ddiv,d7
-                  bsr                    walldraw
-                  movem.l                (a7)+,d7/a0/a5/a6
+                          move.w                 leftend(pc),d4
+                          move.l                 #max3ddiv,d7
+                          bsr                    walldraw
+                          movem.l                (a7)+,d7/a0/a5/a6
 
 wallfacingaway:
-                  rts
+                          rts
 
 *********************************************************************************************
 
-pointBrightsPtr:  dc.l                   0
-midpt:            dc.l                   0
-dist1:            dc.l                   0
-dist2:            dc.l                   0
-VALAND:           dc.w                   0
-VALSHIFT:         dc.w                   0
-HORAND:           dc.w                   0
+pointBrightsPtr:          dc.l                   0
+midpt:                    dc.l                   0
+dist1:                    dc.l                   0
+dist2:                    dc.l                   0
+VALAND:                   dc.w                   0
+VALSHIFT:                 dc.w                   0
+HORAND:                   dc.w                   0
 
-sinval:           dc.w                   0
-cosval:           dc.w                   0
+sinval:                   dc.w                   0
+cosval:                   dc.w                   0
 
-oldxoff:          dc.w                   0
-oldzoff:          dc.w                   0
+oldxoff:                  dc.w                   0
+oldzoff:                  dc.w                   0
 
-topclip:          dc.w                   0
-botclip:          dc.w                   0
-seethru:          dc.w                   0
+topclip:                  dc.w                   0
+botclip:                  dc.w                   0
+seethru:                  dc.w                   0
 
 *********************************************************************************************

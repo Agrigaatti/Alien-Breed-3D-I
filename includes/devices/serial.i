@@ -1,13 +1,12 @@
 	IFND DEVICES_SERIAL_I
 DEVICES_SERIAL_I SET 1
 **
-**	$VER: serial.i 33.6 (6.11.1990)
-**	Includes Release 45.1
+**	$VER: serial.i 47.1 (28.6.2019)
 **
 **	external declarations for the serial device
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
     IFND     EXEC_IO_I
     include "exec/io.i"

@@ -1,13 +1,12 @@
 	IFND	RESOURCES_DISK_I
 RESOURCES_DISK_I	SET	1
 **
-**	$VER: disk.i 27.10 (21.11.1990)
-**	Includes Release 45.1
+**	$VER: disk.i 47.2 (7.8.2020)
 **
-**	disk.i -- external declarations for the disk resource
+**	external declarations for the disk resource
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright 2019-2020 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I
@@ -30,7 +29,6 @@ RESOURCES_DISK_I	SET	1
 	INCLUDE	"exec/libraries.i"
 	ENDC	!EXEC_LIBRARIES_I
 
-
 *********************************************************************
 *
 * Resource structures
@@ -43,12 +41,10 @@ RESOURCES_DISK_I	SET	1
 	STRUCT	DRU_INDEX,IS_SIZE
 	LABEL	DRU_SIZE
 
-
-
     STRUCTURE DISCRESOURCE,LIB_SIZE
 	APTR	DR_CURRENT	; pointer to current unit structure
 	UBYTE	DR_FLAGS
-	UBYTE	DR_pad
+	UBYTE	DR_UNITINIT
 	APTR	DR_SYSLIB
 	APTR	DR_CIARESOURCE
 	STRUCT	DR_UNITID,4*4
@@ -63,8 +59,8 @@ RESOURCES_DISK_I	SET	1
 	BITDEF	DR,ALLOC1,1	; unit one is allocated
 	BITDEF	DR,ALLOC2,2	; unit two is allocated
 	BITDEF	DR,ALLOC3,3	; unit three is allocated
+	BITDEF	DR,DETECT0,4	; forced detection of unit zero was performed
 	BITDEF	DR,ACTIVE,7	; is the disc currently busy?
-
 
 *********************************************************************
 *
@@ -72,9 +68,7 @@ RESOURCES_DISK_I	SET	1
 *
 *********************************************************************
 
-
 DSKDMAOFF	EQU	$4000	; idle command for dsklen register
-
 
 *********************************************************************
 *
@@ -106,7 +100,6 @@ DISKNAME:	MACRO
 
 DR_LASTCOMM	EQU	DR_READUNITID
 
-
 *********************************************************************
 *
 * drive types
@@ -119,3 +112,4 @@ DRT_EMPTY	EQU	$FFFFFFFF
 DRT_150RPM	EQU	$AAAAAAAA
 
 	ENDC	; RESOURCES_DISK_I
+

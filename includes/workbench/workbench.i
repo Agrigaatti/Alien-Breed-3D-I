@@ -1,13 +1,12 @@
 	IFND	WORKBENCH_WORKBENCH_I
 WORKBENCH_WORKBENCH_I	EQU	1
 **
-**	$VER: workbench.i 45.6 (23.11.2000)
-**	Includes Release 45.1
+**	$VER: workbench.i 47.5 (27.10.2021)
 **
 **	workbench.library general definitions
 **
-**	Copyright © 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019-2022 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I
@@ -68,9 +67,15 @@ DDVM_BYSIZE		equ 4	; view as text, sorted by size
 DDVM_BYTYPE		equ 5	; view as text, sorted by type
 
 ; definitions for dd_Flags
-DDFLAGS_SHOWDEFAULT	equ 0	; default (show only icons)
-DDFLAGS_SHOWICONS	equ 1	; show only icons
-DDFLAGS_SHOWALL		equ 2	; show all files
+DDFLAGS_SHOWMASK	equ $0003	; show mode for drawers
+DDFLAGS_SHOWDEFAULT	equ $0000	; default (inherit parent's show mode)
+DDFLAGS_SHOWICONS	equ $0001	; show only icons
+DDFLAGS_SHOWALL		equ $0002	; show all files
+
+DDFLAGS_SORTMASK	equ $0300	; sort order for text mode drawers (V47)
+DDFLAGS_SORTDEFAULT	equ $0000	; default (inherit parent's sort order)
+DDFLAGS_SORTASC		equ $0100	; sort files in ascending order
+DDFLAGS_SORTDESC	equ $0200	; sort files in descending order
 
  STRUCTURE DiskObject,0
     UWORD	do_Magic		; a magic num at the start of the file
@@ -162,6 +167,7 @@ AMCLASSICON_LeaveOut	equ	6	; The "Leave Out" menu item was invoked
 AMCLASSICON_PutAway	equ	7	; The "Put Away" menu item was invoked
 AMCLASSICON_Delete	equ	8	; The "Delete" menu item was invoked
 AMCLASSICON_FormatDisk	equ	9	; The "Format Disk" menu item was invoked
+AMCLASSICON_EjectDisk	equ	13	; The "Eject Disk" menu item was invoked
 AMCLASSICON_EmptyTrash	equ	10	; The "Empty Trash" menu item was invoked
 
 AMCLASSICON_Selected	equ	11	; The icon is now selected
@@ -227,6 +233,9 @@ WBAPPICONA_SupportsDelete	equ	(WBA_Dummy+9)
 
 ; AppIcon responds to the "FormatDisk" menu item (BOOL).
 WBAPPICONA_SupportsFormatDisk	equ	(WBA_Dummy+10)
+
+; AppIcon responds to the "EjectDisk" menu item (BOOL).
+WBAPPICONA_SupportsEjectDisk	equ	(WBA_Dummy+158)
 
 ; AppIcon responds to the "EmptyTrash" menu item (BOOL).
 WBAPPICONA_SupportsEmptyTrash	equ	(WBA_Dummy+11)
@@ -371,7 +380,7 @@ WBCTRLA_GetTextInputHook	equ	(WBA_Dummy+73)
 ; or a new drawer is to be created (struct Hook *); (V45)
 WBCTRLA_SetTextInputHook	equ	(WBA_Dummy+74)
 
-; Add a hook that will be invoked when Workbench is about 
+; Add a hook that will be invoked when Workbench is about
 ; to shut down (cleanup), and when Workbench has returned
 ; to operational state (setup) (struct Hook *); (V45)
 WBCTRLA_AddSetupCleanupHook	equ	(WBA_Dummy+78)
@@ -379,6 +388,26 @@ WBCTRLA_AddSetupCleanupHook	equ	(WBA_Dummy+78)
 ; Remove a hook that has been installed with the
 ; WBCTRLA_AddSetupCleanupHook tag (struct Hook *); (V45)
 WBCTRLA_RemSetupCleanupHook	equ	(WBA_Dummy+79)
+
+; Set assorted Workbench options. See below for the various
+; public flags (ULONG); (V47)
+WBCTRLA_SetGlobalFlags		equ	(WBA_Dummy+130)
+
+; Get assorted Workbench options. See below for the various
+; public flags (ULONG); (V47)
+WBCTRLA_GetGlobalFlags		equ	(WBA_Dummy+131)
+
+; Obtain the hook that will be invoked when Workbench detects
+; an unreadable drive, such as a MS-Dos formatted disk in
+; a trackdisk.device driven handler. (struct Hook **); (V47)
+WBCTRLA_GetDiskInfoHook		equ	(WBA_Dummy+159)
+
+; Add a hook that will be invoked when Workbench detects an
+; unreadable disk, and which is called with the object
+; as struct InfoData *, and message as struct MsgPort *.
+; The result code is the new disk state to be used by
+; the workbench. (struct Hook *) (V47)
+WBCTRLA_SetDiskInfoHook		equ	(WBA_Dummy+160)
 
 ;------------------------------------------------------------------------------
 
@@ -392,6 +421,17 @@ SCHMSTATE_TryCleanup	equ	0	; Workbench will attempt to shut down now.
 SCHMSTATE_Cleanup	equ	1	; Workbench will really shut down now.
 SCHMSTATE_Setup		equ	2	; Workbench is operational again or
 					; could not be shut down.
+
+;------------------------------------------------------------------------------
+
+; Flags for WBCTRLA_SetGlobalFlags/WBCTRLA_GetGlobalFlags.
+
+WBF_DRAWERPOSMASK	equ	$00000003	; Drawer placement mask (text mode)
+WBF_DRAWERPOSFREE	equ	$00000000	; Place drawers mixed with files
+WBF_DRAWERPOSHEAD	equ	$00000001	; Place drawers at top of list
+WBF_DRAWERPOSTAIL	equ	$00000002	; Place drawers at bottom of list
+WBF_BOUNDTEXTVIEW	equ	$00000080	; Limit scrolling in text mode drawers
+WBF_OLDDATESFIRST	equ	$00010000	; Reverse default ordering of dates
 
 ;------------------------------------------------------------------------------
 
@@ -426,6 +466,66 @@ WBDZA_Box	equ	(WBA_Dummy+34)
 
 ; Hook to invoke when the mouse enters or leave a drop zone (struct Hook *).
 WBDZA_Hook	equ	(WBA_Dummy+35)
+
+;------------------------------------------------------------------------------
+
+; Tags for use with WhichWorkbenchObjectA() (V47)
+
+; Type of icon: one of the WB#? definitions from above (ULONG *).
+WBOBJA_Type		equ	(WBA_Dummy+86)
+
+; Left offset of the icon box relative to its parent window (LONG *).
+WBOBJA_Left		equ	(WBA_Dummy+87)
+
+; Top offset of the icon box relative to its parent window (LONG *).
+WBOBJA_Top		equ	(WBA_Dummy+88)
+
+; Width of the icon box, including border (ULONG *).
+WBOBJA_Width		equ	(WBA_Dummy+89)
+
+; Height of the icon box, including border (ULONG *).
+WBOBJA_Height		equ	(WBA_Dummy+90)
+
+; Current state of the icon: IDS_NORMAL, IDS_SELECTED... (ULONG *).
+WBOBJA_State		equ	(WBA_Dummy+91)
+
+; Is the icon a fake one (i.e. without a real .info file)? (ULONG *).
+WBOBJA_IsFake		equ	(WBA_Dummy+92)
+
+; Name of the icon as displayed in the Workbench window (STRPTR).
+WBOBJA_Name		equ	(WBA_Dummy+93)
+
+; Size of the buffer provided with WBOBJA_Name; default is 64 (ULONG).
+WBOBJA_NameSize		equ	(WBA_Dummy+94)
+
+; Full path (if applicable) of the object the icon represents (STRPTR).
+WBOBJA_FullPath		equ	(WBA_Dummy+95)
+
+; Size of the buffer provided with WBOBJA_FullPath; default is 512 (ULONG).
+WBOBJA_FullPathSize	equ	(WBA_Dummy+96)
+
+; Does the icon represent a link, rather than a real file? (ULONG *).
+WBOBJA_IsLink		equ	(WBA_Dummy+97)
+
+; Path of the drawer whose window the given coordinates fall into (STRPTR).
+WBOBJA_DrawerPath	equ	(WBA_Dummy+98)
+
+; Size of the buffer provided with WBOBJA_DrawerPath; default is 64 (ULONG).
+WBOBJA_DrawerPathSize	equ	(WBA_Dummy+99)
+
+; Current flags of the drawer found at the given coordinates (ULONG *).
+WBOBJA_DrawerFlags	equ	(WBA_Dummy+116)
+
+; Current viewmodes of the drawer found at the given coordinates (ULONG *).
+WBOBJA_DrawerModes	equ	(WBA_Dummy+117)
+
+;------------------------------------------------------------------------------
+
+; Possible results from WhichWorkbenchObjectA() (V47)
+
+WBO_NONE	equ	(0)	; No Workbench object is found at these coordinates
+WBO_DRAWER	equ	(1)	; A drawer window is found at these coordinates
+WBO_ICON	equ	(2)	; An icon is found at these coordinates
 
 ;------------------------------------------------------------------------------
 
@@ -543,9 +643,9 @@ CPACTION_Copy	equ	(1)	; This message arrives for each file or
 				; drawer to be copied.
 CPACTION_End	equ	(2)	; This message arrives when all files/drawers
 				; have been copied.
-                
+
 ;----------------------------------------------------------------------------
-                		
+
 ; The messages your delete hook is invoked with.
     STRUCTURE DeleteBeginMsg,0
 	ULONG	dbm_Length	; Size of this data structure in bytes.
@@ -617,7 +717,7 @@ TIACTION_Execute	equ	(3)	; A program or script is to be
 ; Parameters for the UpdateWorkbench() function.
 
 UPDATEWB_ObjectRemoved	equ	(0)	; Object has been deleted.
-UPDATEWB_ObjectAdded	eqz	(1)	; Object is new or has changed.
+UPDATEWB_ObjectAdded	equ	(1)	; Object is new or has changed.
 
 ;----------------------------------------------------------------------------
 

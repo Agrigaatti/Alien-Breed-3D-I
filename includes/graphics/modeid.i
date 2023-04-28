@@ -2,13 +2,12 @@
 GRAPHICS_MODEID_I	SET	1
 
 **
-**	$VER: modeid.i 39.8 (27.5.1993)
-**	Includes Release 45.1
+**	$VER: modeid.i 47.1 (31.7.2019)
 **
 **	include define file for graphics display mode IDs.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	GRAPHICS_DISPLAYINFO_I

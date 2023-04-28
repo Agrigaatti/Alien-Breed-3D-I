@@ -1,13 +1,12 @@
 	IFND	HARDWARE_DMABITS_I
 HARDWARE_DMABITS_I	SET	1
 **
-**	$VER: dmabits.i 39.1 (18.9.1992)
-**	Includes Release 45.1
+**	$VER: dmabits.i 47.1 (1.8.2019)
 **
 **	include file for defining dma control stuff
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 * write definitions for dmaconw

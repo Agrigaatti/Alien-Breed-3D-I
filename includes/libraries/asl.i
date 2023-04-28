@@ -1,14 +1,12 @@
 	IFND LIBRARIES_ASL_I
 LIBRARIES_ASL_I	SET	1
 **
-**	$VER: asl.i 45.2 (18.11.2000)
-**	Includes Release 45.1
+**	$VER: asl.i 47.1 (28.7.2019)
 **
 **	ASL library structures and constants
 **
-**	Copyright © 1989-2001 Amiga, Inc.
-**	Copyright © 1989-1990 Charlie Heath
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------
@@ -168,13 +166,13 @@ ASLFRSORTORDER_Descend  equ 1
 	UBYTE	fo_FrontPen	     ; Returned front pen
 	UBYTE	fo_BackPen	     ; Returned back pen
 	UBYTE	fo_DrawMode	     ; Returned drawing mode
-	UBYTE	fo_Reserved1
+   	UBYTE	fo_SpecialDrawMode   ; Return special draw mode (V47)
 	APTR	fo_UserData	     ; You can store your own data here
 	WORD	fo_LeftEdge	     ; Coordinates of requester on exit
 	WORD	fo_TopEdge
 	WORD	fo_Width
 	WORD	fo_Height
-	STRUCT	fo_TAttr,tta_SIZEOF  ; Returned TTextAttr
+	STRUCT	fo_TAttr,tta_SIZEOF  ; Returned TTextAttr.
 
 ; Font requester tag values, used by AllocAslRequest() and AslRequest()
 
@@ -210,6 +208,8 @@ ASLFO_InitialFlags    equ ASL_TB+13  ; Initial font flags for TextAttr
 ASLFO_InitialFrontPen equ ASL_TB+14  ; Initial front pen
 ASLFO_InitialBackPen  equ ASL_TB+15  ; Initial back pen
 ASLFO_InitialDrawMode equ ASL_TB+59  ; Initial draw mode
+ASLFO_InitialSpecMode equ ASL_TB+139 ; Initial special drawmode (V47)
+ASLFO_InitialCharSet  equ ASL_TB+134 ; reserved
 
 ; Options
 ASLFO_Flags	      equ ASL_TB+20  ; Option flags
@@ -217,13 +217,21 @@ ASLFO_DoFrontPen      equ ASL_TB+44  ; Display Front color selector?
 ASLFO_DoBackPen       equ ASL_TB+45  ; Display Back color selector?
 ASLFO_DoStyle	      equ ASL_TB+46  ; Display Style checkboxes?
 ASLFO_DoDrawMode      equ ASL_TB+47  ; Display DrawMode cycle gadget?
+ASLFO_DoSpecialMode   equ ASL_TB+140 ; Display DrawMode cycle gadget 
+                                     ; with options Text,            
+                                     ; Text+Background, Text+Outline,
+                                     ; Text+Shadow? (V47)            
+ASLFO_DoCharSet       equ ASL_TB+135 ; reserved
 ASLFO_SampleText      equ ASL_TB+133 ; Text to display in font sample area (V45)
 
 ; Filtering
 ASLFO_FixedWidthOnly  equ ASL_TB+48  ; Only allow fixed-width fonts?
+ASLFO_OTagOnly        equ ASL_TB+136 ; Only allow bulletAPI fonts? (V46)
+ASLFO_ScalableOnly    equ ASL_TB+137 ; Only allow scalable bulletAPI fonts? (V46)
 ASLFO_MinHeight       equ ASL_TB+16  ; Minimum font height to display
 ASLFO_MaxHeight       equ ASL_TB+17  ; Maximum font height to display
 ASLFO_FilterFunc      equ ASL_TB+49  ; Function to filter fonts
+ASLFO_CSFilterFunc    equ ASL_TB+138 ; Function to filter charsets
 ASLFO_HookFunc	      equ ASL_TB+7   ; Combined callback function
 ASLFO_MaxFrontPen     equ ASL_TB+66  ; Max # of colors in front palette
 ASLFO_MaxBackPen      equ ASL_TB+67  ; Max # of colors in back palette
@@ -242,6 +250,11 @@ ASLFO_BackColors      equ ASL_TB+65  ; Color table for back pen palette
 	BITDEF FO,PRIVATE,5
 	BITDEF FO,DOMSGFUNC,6
 	BITDEF FO,DOWILDFUNC,7
+
+; Values for ASLFO_InitialSpecMode and fo_SpecialDrawMode (V47)
+	BITDEF FO,SPECIALMODE_NONE,0     ; Normal text
+	BITDEF FO,SPECIALMODE_OUTLINE,1  ; Outlined text
+	BITDEF FO,SPECIALMODE_SHADOW,2   ; Shadowed text
 
 ;---------------------------------------------------------------------------
 ;*
@@ -356,7 +369,7 @@ ASL_SEMAPHORE_NAME macro
 	DC.B 'asl.library',0
 	ENDM
 
-   STRUCTURE	AslSemaphore
+   STRUCTURE	AslSemaphore,0
 	STRUCT	as_Semaphore,SS_SIZE
 	UWORD	as_Version		; Must be >= 45
 	ULONG	as_Size			; Size of this data structure.

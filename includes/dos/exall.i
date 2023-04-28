@@ -1,14 +1,14 @@
 	IFND DOS_EXALL_I
 DOS_EXALL_I SET 1
 **
-**	$VER: exall.i 36.6 (5.4.1992)
-**	Includes Release 45.1
+**	$VER: exall.i 47.1 (29.7.2019)
 **
 **	include file for ExAll() data structures
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
+
 
      IFND  EXEC_TYPES_I
      INCLUDE "exec/types.i"

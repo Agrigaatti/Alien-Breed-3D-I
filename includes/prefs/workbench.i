@@ -1,13 +1,12 @@
 	IFND	PREFS_WORKBENCH_I
 PREFS_WORKBENCH_I	SET	1
 **
-**	$VER: workbench.i 45.1 (17.11.2000)
-**	Includes Release 45.1
+**	$VER: workbench.i 47.1 (2.8.2019)
 **
-**	Workbench preferences file definitions
+**	File format for workbench control preferences
 **
-**	(C) Copyright 1991-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------
@@ -18,10 +17,6 @@ PREFS_WORKBENCH_I	SET	1
 
 	IFND LIBRARIES_IFFPARSE_I
 	INCLUDE "libraries/iffparse.i"
-	ENDC
-
-	IFND GRAPHICS_GFX_I
-	INCLUDE "graphics/gfx.i"
 	ENDC
 
 ;---------------------------------------------------------------------------
@@ -39,12 +34,21 @@ ID_WBNC		equ	'WBNC'
 	LONG	wbp_MaxNameLength
 	BOOL	wbp_NewIconsSupport
 	BOOL	wbp_ColorIconSupport
-	ULONG	wbp_ImageMemType
-	BOOL	wbp_LockPens
-	BOOL	wbp_NoTitleBar
-	BOOL	wbp_NoGauge
     LABEL WorkbenchPrefs_SIZEOF
 
+* The following includes extensions from V45/Os 3.9 *
+						    
+    STRUCTURE WorkbenchExtendedPrefs,WorkbenchPrefs_SIZEOF
+	ULONG	wbe_IconMemoryType		; exec MEMF_xxxx, obsolete
+	BOOL	wbe_LockPens			; if TRUE, locks pens 4..7 with predefined colors
+	BOOL	wbe_DisableTitleBar
+	BOOL	wbe_DisableVolumeGauge
+	/* new for V47 */
+	UWORD   wbe_TitleUpdateDelay    ; in milliseconds
+	ULONG   wbe_CopyBufferSize      ; in bytes
+	ULONG   wbe_Flags               ; assorted options
+	LABEL WorkbenchExtendedPrefs_SIZEOF
+    
 ;---------------------------------------------------------------------------
 
 ID_WBHD		equ	'WBHD'
@@ -56,5 +60,17 @@ ID_WBHD		equ	'WBHD'
     LABEL WorkbenchHiddenDevicePrefs_SIZEOF
 
 ;---------------------------------------------------------------------------
+
+/* New for V47 */
+ID_WBTF		equ	'WBTF'
+
+;---------------------------------------------------------------------------
+
+    STRUCTURE WorkbenchTitleFormatPrefs,0
+    UBYTE	wtfp_Format
+    LABEL WorkbenchTitleFormatPrefs_SIZEOF
+
+;---------------------------------------------------------------------------
+
 
 	ENDC	; PREFS_WORKBENCH_I

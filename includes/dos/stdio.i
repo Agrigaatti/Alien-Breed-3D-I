@@ -1,13 +1,12 @@
 	IFND DOS_STDIO_I
 DOS_STDIO_I	EQU	1
 **
-**	$VER: stdio.i 37.2 (1.11.1991)
-**	Includes Release 45.1
+**	$VER: stdio.i 47.1 (29.7.2019)
 **
 **	ANSI-like stdio defines for dos buffered I/O
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 

@@ -1,13 +1,12 @@
 	IFND INTUITION_CLASSES_I
 INTUITION_CLASSES_I SET 1
 **
-**  $VER: classes.i 40.0 (15.2.1994)
-**  Includes Release 45.1
+**	$VER: classes.i 47.1 (1.8.2019)
 **
-**  Only used by class implementors
+**	Used only by class implementors
 **
-**  (C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;******************************************************************************

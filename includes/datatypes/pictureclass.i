@@ -1,13 +1,12 @@
 	IFND DATATYPES_PICTURECLASS_I
 DATATYPES_PICTURECLASS_I	SET	1
 **
-**  $VER: pictureclass.i 45.1 (23.10.2000)
-**  Includes Release 45.1
+**	$VER: pictureclass.i 47.2 (14.12.2021)
 **
 **  Interface definitions for DataType picture objects.
 **
-**  Copyright © 1992-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019-2022 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND UTILITY_TAGITEM_I
@@ -120,9 +119,6 @@ PDTA_DitherQuality		equ (DTA_Dummy + 222)
 ; Pointer to the allocated pen table (UBYTE *). (V44)
 PDTA_AllocatedPens		equ (DTA_Dummy + 223)
 
-; Quality for scaling. (V45)
-PDTA_ScaleQuality		equ (DTA_Dummy + 224)
-
 ;------------------------------------------------------------------------------
 
 ; When querying the number of pictures stored in a file, the
@@ -138,13 +134,29 @@ PDTANUMPICTURES_Unknown equ 0
 PDTA_SourceMode			equ (DTA_Dummy + 250)
 
 ; Set the app datatype interface mode (LONG); see "Interface modes" below
-PDTA_DestMode			equ (DTA_Dummy + 251)	
+PDTA_DestMode			equ (DTA_Dummy + 251)
 
 ; Allocates the resulting bitmap as a friend bitmap (BOOL)
-PDTA_UseFriendBitMap		equ (DTA_Dummy + 255)	
+PDTA_UseFriendBitMap		equ (DTA_Dummy + 255)
 
 ; NULL or mask plane for use with BltMaskBitMapRastPort() (PLANEPTR)
 PDTA_MaskPlane			equ (DTA_Dummy + 258)
+
+; not in AmigaOS for m68k
+PDTA_ForeignPlaceholder1        equ (DTA_Dummy + 259)
+
+; request permission to write directly into the backbuffer pixmap (APTR)
+; pass this tag alongside PDTA_SourceMode=PMODE_V43 with a pointer to
+; a pbpa_PixelData struct (pdtBlitPixelArray_SIZEOF bytes)
+PDTA_ObtainPixelBuffer          equ (DTA_Dummy + 260)
+
+; allow a non initialized frame buffer (LONG)
+; 0=default=zero buffer; 1=dirty=nonzeroed buffer
+PDTA_SubClassRendersAll         equ (DTA_Dummy + 261)
+
+; Returns TRUE if the bitmap has a valid alpha channel (BOOL), added in 47.9
+PDTA_AlphaChannel               equ (DTA_Dummy + 256)
+
 
 ;------------------------------------------------------------------------------
 
@@ -188,15 +200,28 @@ PBPAFMT_GREY8	equ 4	; 1 byte per pixel (0==black, 255==white)
 ; V45 extensions (methods)
 
 ; Scale pixel data to the specified size
-PDTM_SCALE		equ (PDTM_Dummy + 2)
+PDTM_SCALE 	equ (PDTM_Dummy + 2)
 
-; PDTM_SCALE
     STRUCTURE pdtScale,0
-	ULONG MethodID
-	ULONG ps_NewWidth	; The new width the pixel data should have 
-	ULONG ps_NewHeight	; The new height the pixel data should have
-	ULONG ps_Flags		; should be 0 for now 
-    LABEL pdtScale_SIZEOF
+        ULONG ps_MethodID       ; PDTM_SCALE
+        ULONG ps_NewWidth       ; The new width the pixel data should have
+        ULONG ps_NewHeight      ; The new height the pixel data should have
+        ULONG ps_Flags          ; should be 0 for now
+        LABEL pdtScale_SIZEOF
+
+;------------------------------------------------------------------------------
+
+; V47 extensions (methods)
+PDTM_OBTAINPIXELARRAY   EQU     (PDTM_Dummy + 7)
+
+     STRUCTURE pdtObtainPixelArray,0
+        ULONG  popa_MethodID                            ; PDTM_OBTAINPIXELARRAY
+        STRUCT popa_PixelArray,pdtBlitPixelArray_SIZEOF ;
+        ULONG  popa_Flags                               ; see below
+
+; If array is 8-bit, request it be set for PBPAFMT_GREY8 writes instead of LUT8
+POBAB_WRITEGREY8        EQU     0
+POPAF_WRITEGREY8        EQU     (1<<POBAB_WRITEGREY8)
 
 ;------------------------------------------------------------------------------
 

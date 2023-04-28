@@ -1,13 +1,12 @@
 	IFND LIBRARIES_GADTOOLS_I
 LIBRARIES_GADTOOLS_I	SET	1
 **
-**	$VER: gadtools.i 39.12 (24.8.1993)
-**	Includes Release 45.1
+**	$VER: gadtools.i 47.4 (4.1.2021)
 **
 **	gadtools.library definitions
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	All Rights Reserved.
+**	Copyright (C) 2019-2022 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 *------------------------------------------------------------------------*
@@ -103,6 +102,10 @@ PLACETEXT_BELOW	EQU	$0008	* Center text below
 PLACETEXT_IN	EQU	$0010	* Center text on
 
 NG_HIGHLABEL	EQU	$0020	* Highlight the label
+NG_GRIDLAYOUT	EQU	$0080	* New for V45: scale positions along
+				* the design font set by SetDesignFont()
+
+
 
 *------------------------------------------------------------------------*
 
@@ -160,7 +163,7 @@ NM_BARLABEL	EQU	-1
 NM_MENUDISABLED		EQU	MENUENABLED
 NM_ITEMDISABLED		EQU	ITEMENABLED
 
-* New for V39:	NM_COMMANDSTRING.  For a textual MenuItem or SubItem,
+* New for V39:  NM_COMMANDSTRING.  For a textual MenuItem or SubItem,
 * point nm_CommKey at an arbitrary string, and set the NM_COMMANDSTRING
 * flag.
 NM_COMMANDSTRING	EQU	COMMSEQ
@@ -182,7 +185,7 @@ NM_FLAGMASK_V39		EQU	~(ITEMTEXT!HIGHFLAGS)
 
 * A UserData pointer can be associated with each Menu and MenuItem structure.
 * The CreateMenus() call allocates space for a UserData after each
-* Menu or MenuItem (header, item or sub-item).	You should use the
+* Menu or MenuItem (header, item or sub-item).  You should use the
 * GTMENU_USERDATA or GTMENUITEM_USERDATA macro to extract it. */
 
 GTMENU_USERDATA	MACRO
@@ -300,7 +303,7 @@ GTMX_Spacing	EQU	GT_TagBase+61	; Added to font height to
 			; figure spacing between mx choices.  Use this
 			; instead of LAYOUTA_SPACING for mx gadgets.
 
-* New to V37 GadTools.	Ignored by GadTools V36.
+* New to V37 GadTools.  Ignored by GadTools V36.
 GTMN_FullMenu	EQU	GT_TagBase+62  ; Asks CreateMenus() to
 		; validate that this is a complete menu structure
 GTMN_SecondaryError	EQU	GT_TagBase+63  ; ti_Data is a pointer
@@ -354,6 +357,64 @@ GTPA_ColorTable      EQU GT_TagBase+82      ; colors to use in palette
 GTTX_Clipped         EQU GT_TagBase+85 	    ; make a TEXT_KIND clip text
 GTNM_Clipped         EQU GT_TagBase+85 	    ; make a NUMBER_KIND clip text
 
+GTBB_reserved1       EQU GT_TagBase+90      ; Reserved for V50
+GTMN_reserved1       EQU GT_TagBase+91      ; Reserved for V50
+
+* New to V47 GadTools.  Ignored by older versions
+
+* Read-only ListView tags. NB: although these are numerically equivalent to
+* GTBB_Scale and GTBB_Headline, no conflicts are possible due to the wholly
+* different usage contexts (gadgets vs. bevel boxes).
+
+GTLV_Total           EQU GT_TagBase+92      ; ListView total entries
+GTLV_Visible         EQU GT_TagBase+93      ; ListView visible entries
+
+; Bevel box tags, new in V47
+GTBB_Scale           EQU GT_TagBase+92 	    ; scale coordinates according to
+					    ; the grid layout of the visual
+					    ; info
+
+GTBB_Headline        EQU GT_TagBase+93      ; Include a headline in the bevel box
+					    ; that is inserted on top of the
+					    ; bevel box. The argument is a
+					    ; UBYTE *
+
+GTBB_HeadlinePen     EQU GT_TagBase+94      ; Pen to be used for rendering the text
+					    ; for rendering the headline.
+
+GTBB_HeadlineFont    EQU GT_TagBase+95      ; struct TextAttr to be used
+					    ; for rendering the headline.
+; VisualInfo tags, new in V47
+GTVI_LeftBorder      EQU GT_TagBase+96      ; Left edge for grid layout,
+					    ; default is screen->WBorLeft
+
+GTVI_TopBorder       EQU GT_TagBase+97      ; Top edge for grid layout,
+					    ; default is screen->WBorTop
+					    ; + sc->Font->ta_YSize + 1
+
+; Generic gadget placement
+GTVI_AlignRight      EQU GT_TagBase+98      ; Instead of scaling the width
+					    ; with the VisualInfo grid
+					    ; size, ensure that the right
+					    ; edge is aligned to a grid
+					    ; position.
+
+GTVI_AlignBottom     EQU GT_TagBase+99      ; Instead of scaling the height
+					    ; with the VisualInfo grid
+					    ; size, ensure that the bottom
+					    ; edge is aligned to a grid
+					    ; position.
+
+; More VisualInfo tags, new in V47
+GTVI_MinFontWidth    EQU GT_TagBase+100     ; Minimum font width in pixels
+GTVI_MinFontHeight   EQU GT_TagBase+101     ; Minimum font height in pixels
+
+* Gadget tags, new in V47
+GTMX_ScaledSpacing   EQU GT_TagBase+102     ; Like GTMX_Spacing, but scaled
+                                            ; according to the grid layout
+                                            ; of the VisualInfo. Ignored if
+                                            ; no grid layout is in use.
+
 * Old definition, now obsolete:
 GT_Reserved0	EQU	GTST_EditHook
 
@@ -370,6 +431,8 @@ GTJ_CENTER EQU 2
 BBFT_BUTTON	 EQU 1  * Standard button gadget box
 BBFT_RIDGE	 EQU 2  * Standard string gadget box
 BBFT_ICONDROPBOX EQU 3  * Standard icon drop box
+BBFT_DISPLAY	 EQU 6  * Standard display box (V47)
+BBFT_CTXTFRAME	 EQU 7  * Context frame with headline (V47)
 
 *------------------------------------------------------------------------*
 

@@ -1,13 +1,12 @@
 	IFND	LIBRARIES_REALTIME_I
 LIBRARIES_REALTIME_I	  SET	  1
 **
-**	$VER: realtime.i 40.3 (5.4.1993)
-**	Includes Release 45.1
+**	$VER: realtime.i 47.1 (29.7.2019)
 **
 **	realtime.library timing and syncing system
 **
-**	(C) Copyright 1991-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

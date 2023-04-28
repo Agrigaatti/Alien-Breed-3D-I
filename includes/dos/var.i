@@ -1,13 +1,13 @@
 	IFND	DOS_VAR_I
 DOS_VAR_I SET	1
 **
-**	$VER: var.i 36.13 (2.6.1992)
-**	Includes Release 45.1
+**
+**	$VER: var.i 47.1 (29.7.2019)
 **
 **	include file for dos local and environment variables
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
      IFND  EXEC_NODES_I

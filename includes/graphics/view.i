@@ -2,22 +2,21 @@
     IFND    GRAPHICS_VIEW_I
 GRAPHICS_VIEW_I SET 1
 **
-**	$VER: view.i 39.32 (12.3.1993)
-**	Includes Release 45.1
+**	$VER: view.i 47.1 (31.7.2019)
 **
-**	graphics view/viewport definitions
+**	graphics view/viewport definintions
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND    EXEC_TYPES_I
     include "exec/types.i"
     ENDC
 
-	IFND	EXEC_SEMAPHORES_I
-	include	"exec/semaphores.i"
-	ENDC
+    IFND	EXEC_SEMAPHORES_I
+    include	"exec/semaphores.i"
+    ENDC
 
     IFND    GRAPHICS_GFX_I
     include "graphics/gfx.i"
@@ -29,7 +28,7 @@ GRAPHICS_VIEW_I SET 1
 
     IFND    GRAPHICS_GFXNODES_I
     include "graphics/gfxnodes.i"
-	ENDC
+    ENDC
 
     IFND    GRAPHICS_DISPLAYINFO_I
     include "graphics/displayinfo.i"

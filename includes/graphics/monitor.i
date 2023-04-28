@@ -1,13 +1,12 @@
     IFND    GRAPHICS_MONITOR_I
 GRAPHICS_MONITOR_I SET 1
 **
-**	$VER: monitor.i 39.3 (8.6.1992)
-**	Includes Release 45.1
+**	$VER: monitor.i 47.1 (31.7.2019)
 **
-**	graphics monitorspec definitions
+**	graphics monitorspec definintions
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND    EXEC_TYPES_I
@@ -18,13 +17,13 @@ GRAPHICS_MONITOR_I SET 1
     include 'graphics/gfx.i'
     ENDC
 
-    IFND    GRAPHICS_GFXNODES_I
-    include 'graphics/gfxnodes.i'
+    IFND    GRAPHICS_GFXNODES_I 
+    include 'graphics/gfxnodes.i' 
     ENDC
 
     IFND    GRAPHICS_VIEW_I
-    include 'graphics/view.i'
-    ENDC
+    include 'graphics/view.i' 
+    ENDC 
 
     IFND    EXEC_SEMAPHORES_I
     include 'exec/semaphores.i'
@@ -41,10 +40,10 @@ GRAPHICS_MONITOR_I SET 1
     APTR	spm_reserved1
     APTR	spm_reserved2
     APTR	spm_reserved3
-    STRUCT	spm_hblank,asi_SIZEOF
-    STRUCT	spm_vblank,asi_SIZEOF
-    STRUCT	spm_hsync,asi_SIZEOF
-    STRUCT	spm_vsync,asi_SIZEOF
+    STRUCT  	spm_hblank,asi_SIZEOF
+    STRUCT  	spm_vblank,asi_SIZEOF
+    STRUCT  	spm_hsync,asi_SIZEOF
+    STRUCT  	spm_vsync,asi_SIZEOF
     LABEL	spm_SIZEOF
 
     STRUCTURE	MonitorSpec,XLN_SIZE
@@ -63,12 +62,12 @@ GRAPHICS_MONITOR_I SET 1
     APTR	ms_scale
     UWORD	ms_xoffset
     UWORD	ms_yoffset
-    STRUCT	ms_LegalView,ra_SIZEOF
+    STRUCT  	ms_LegalView,ra_SIZEOF
     APTR	ms_maxoscan
     APTR	ms_videoscan
     UWORD	ms_DeniseMinDisplayColumn
     ULONG	ms_DisplayCompatible
-    STRUCT	ms_DisplayInfoDataBase,LH_SIZE
+    STRUCT  	ms_DisplayInfoDataBase,LH_SIZE
     STRUCT	ms_DIDBSemaphore,SS_SIZE
     ULONG	ms_MrgCop
     ULONG	ms_LoadView

@@ -1,13 +1,12 @@
 	IFND	WORKBENCH_STARTUP_I
 WORKBENCH_STARTUP_I	EQU	1
 **
-**	$VER: startup.i 36.4 (2.12.1990)
-**	Includes Release 45.1
+**	$VER: startup.i 47.1 (3.8.2019)
 **
 **	workbench startup definitions
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I

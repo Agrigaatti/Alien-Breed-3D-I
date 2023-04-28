@@ -1,17 +1,16 @@
 	IFND	EXEC_MACROS_I
 EXEC_MACROS_I	 SET	 1
 **
-**	$VER: macros.i 39.0 (15.10.1991)
-**	Includes Release 45.1
+**	$VER: macros.i 47.1 (28.6.2019)
 **
 **	Handy macros for assembly language programmers.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 		IFND	DEBUG_DETAIL
-DEBUG_DETAIL	SET	0	;Detail level of debugging.  Zero for none.
+DEBUG_DETAIL  	SET	0	;Detail level of debugging.  Zero for none.
 		ENDC
 
 
@@ -25,12 +24,12 @@ JMPLIB		MACRO	;FunctionName
 		jmp	_LVO\1(a6)
 		ENDM
 
-BSRSELF	MACRO
+BSRSELF 	MACRO
 		XREF	\1
 		bsr	\1
 		ENDM
 
-BRASELF	MACRO
+BRASELF 	MACRO
 		XREF	\1
 		bra	\1
 		ENDM
@@ -105,7 +104,7 @@ PUSHCOUNT	SET	PUSHCOUNT+4
 		bra.s	PSE\@
 
 PSS\@		dc.b	\2
-		IFEQ	(\1&1)	;If even, add CR/LF par...
+		IFEQ	(\1&1)  ;If even, add CR/LF par...
 		   dc.b 13,10
 		ENDC
 		dc.b	0

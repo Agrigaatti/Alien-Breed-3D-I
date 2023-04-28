@@ -1,13 +1,12 @@
     IFND INTUITION_GADGETCLASS_I
 INTUITION_GADGETCLASS_I SET 1
 **
-** $VER: gadgetclass.i 44.1 (19.10.1999)
-** Includes Release 45.1
+**	$VER: gadgetclass.i 47.2 (8.12.2020)
 **
-** Custom and 'boopsi' gadget class interface
+**	Custom and 'boopsi' gadget class interface
 **
-**  (C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2020 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND EXEC_TYPES_I
@@ -129,6 +128,9 @@ PGA_Visible		EQU	(PGA_Dummy+$0008)
 PGA_Top			EQU	(PGA_Dummy+$0009)
 ; New for V37:
 PGA_NewLook		EQU	(PGA_Dummy+$000A)
+; New for V47:
+PGA_KnobImage		EQU	(PGA_Dummy+$000D)
+* custom auto knob image (BOOPSI only)
 
 * STRGCLASS attributes
 

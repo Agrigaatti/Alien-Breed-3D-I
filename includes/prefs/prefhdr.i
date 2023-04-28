@@ -1,13 +1,12 @@
 	IFND	PREFS_PREFHDR_I
 PREFS_PREFHDR_I	SET	1
 **
-**	$VER: prefhdr.i 38.1 (19.6.1991)
-**	Includes Release 45.1
+**	$VER: prefhdr.i 47.1 (2.8.2019)
 **
 **	File format for preferences header
 **
-**	(C) Copyright 1991-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

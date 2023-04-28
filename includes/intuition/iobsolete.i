@@ -1,13 +1,12 @@
 	IFND INTUITION_IOBSOLETE_I
 INTUITION_IOBSOLETE_I SET 1
 **
-**  $VER: iobsolete.i 38.0 (12.6.1991)
-**  Includes Release 45.1
+**	$VER: iobsolete.i 47.1 (1.8.2019)
 **
-**  Obsolete identifiers for Intuition.  Use the new ones instead!
+**	Obsolete identifiers for Intuition.  Use the new ones instead!
 **
-**  (C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 
@@ -56,7 +55,7 @@ GADGHCOMP	equ	GFLG_GADGHCOMP
 GADGHBOX	equ	GFLG_GADGHBOX
 GADGHIMAGE	equ	GFLG_GADGHIMAGE
 GADGHNONE	equ	GFLG_GADGHNONE
-GADGIMAGE	equ	GFLG_GADGIMAGE
+GADGIMAGE 	equ	GFLG_GADGIMAGE 
 GRELBOTTOM	equ	GFLG_RELBOTTOM
 GRELRIGHT	equ	GFLG_RELRIGHT
 GRELWIDTH	equ	GFLG_RELWIDTH

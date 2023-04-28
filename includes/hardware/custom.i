@@ -1,13 +1,12 @@
 	IFND	HARDWARE_CUSTOM_I
 HARDWARE_CUSTOM_I	SET	1
 **
-**	$VER: custom.i 39.1 (18.9.1992)
-**	Includes Release 45.1
+**	$VER: custom.i 47.1 (1.8.2019)
 **
-**	Offsets of Amiga custom chip registers
+**      Offsets of Amiga custom chip registers
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 *

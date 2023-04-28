@@ -1,22 +1,21 @@
 	IFND	DOS_DOS_LIB_I
 DOS_DOS_LIB_I	SET	1
 **
-**	$VER: dos_lib.i 36.1 (4.11.1990)
-**	Includes Release 45.1
+**	$VER: dos_lib.i 47.1 (8.11.2021)
 **
 **	Library interface offsets for DOS library
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019-2022 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
-reserve EQU	4
-vsize	EQU	6
-count	SET	-vsize*(reserve+1)
-LIBENT	MACRO
-_LVO\1	EQU	count
-count	SET	count-vsize
-	ENDM
+reserve EQU     4
+vsize   EQU     6
+count   SET     -vsize*(reserve+1)
+LIBENT  MACRO
+_LVO\1  EQU     count
+count   SET     count-vsize
+        ENDM
 *
 *
 *

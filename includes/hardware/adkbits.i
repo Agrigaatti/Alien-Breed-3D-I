@@ -1,13 +1,12 @@
 	IFND	HARDWARE_ADKBITS_I
 HARDWARE_ADKBITS_I	SET	1
 **
-**	$VER: adkbits.i 39.1 (18.9.1992)
-**	Includes Release 45.1
+**	$VER: adkbits.i 47.1 (1.8.2019)
 **
 **	bit definitions for adkcon register
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ADKB_SETCLR    EQU   15 ; standard set/clear bit

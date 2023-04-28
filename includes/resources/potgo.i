@@ -1,13 +1,12 @@
 	IFND	RESOURCES_POTGO_I
 RESOURCES_POTGO_I	EQU	1
 **
-**	$VER: potgo.i 36.0 (13.4.1990)
-**	Includes Release 45.1
+**	$VER: potgo.i 47.1 (3.8.2019)
 **
 **	potgo resource name
 **
-**	(C) Copyright 1986-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 POTGONAME MACRO
 		dc.b	'potgo.resource',0

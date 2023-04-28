@@ -1,13 +1,12 @@
 	IFND UTILITY_HOOKS_I
 UTILITY_HOOKS_I SET 1
 **
-**	$VER: hooks.i 39.1 (20.1.1992)
-**	Includes Release 45.1
+**	$VER: hooks.i 47.1 (3.8.2019)
 **
 **	Callback hooks
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

@@ -1,14 +1,17 @@
     IFND INTUITION_IMAGECLASS_I
 INTUITION_IMAGECLASS_I SET 1
 **
-**  $VER: imageclass.i 44.1 (19.10.1999)
-**  Includes Release 45.1
+**	$VER: imageclass.i 47.4 (1.1.2021)
 **
-**  Definitions for the image classes
+**	Definitions for the image classes
 **
-**  (C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019-2022 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
+
+    IFND UTILITY_TAGITEM_I
+    INCLUDE "utility/tagitem.i"
+    ENDC
 
     IFND INTUITION_INTUITION_I
     INCLUDE "intuition/intuition.i"
@@ -90,14 +93,34 @@ IA_FrameType	EQU (IMAGE_ATTRIBUTES+$001b)
 		    ; of the FRAME_ specifiers below.  Defaults
 		    ; to FRAME_DEFAULT.
 
-
 IA_Underscore	EQU (IMAGE_ATTRIBUTES+$001c)
 IA_Scalable	EQU (IMAGE_ATTRIBUTES+$001d)
 IA_ActivateKey	EQU (IMAGE_ATTRIBUTES+$001e)
 IA_Screen	EQU (IMAGE_ATTRIBUTES+$001f)
 IA_Precision	EQU (IMAGE_ATTRIBUTES+$0020)
 
-* next attribute: (IMAGE_ATTRIBUTES+$0021)
+* New for V47:
+IA_Orientation	EQU (IMAGE_ATTRIBUTES+$0023)
+		    ; Defines orientation, for images needing this kind
+		    ; of information, such as the PROPKNOB frameiclass
+		    ; type. As of V47, the values can be 0 (horizontal)
+		    ; or 1 (vertical). Defaults to 0. (V47)
+
+IA_Label	EQU (IMAGE_ATTRIBUTES+$0028)
+		    ; Pointer to a string to be used as the image's text
+		    ; label, if it supports one. (STRPTR) Defaults to
+		    ; NULL. (V47)
+
+IA_EraseBackground	EQU (IMAGE_ATTRIBUTES+$002d)
+		    ; Erase the background before rendering the image?
+		    ; (BOOL) Typically defaults to TRUE for images having
+		    ; a non-rectangular shape, FALSE otherwise. (V47)
+
+IA_LabelPen	EQU (IMAGE_ATTRIBUTES+$0038)
+		    ; Color of the image's text label, if it supports one.
+		    ; (UWORD) The default depends on the class. (V47)
+
+* next attribute: (IMAGE_ATTRIBUTES+$0039)
 ******************************************************
 
 * data values for SYSIA_Size
@@ -105,12 +128,11 @@ SYSISIZE_MEDRES	EQU (0)
 SYSISIZE_LOWRES	EQU (1)
 SYSISIZE_HIRES	EQU (2)
 
-*
 * SYSIA_Which tag data values:
 * Specifies which system gadget you want an image for.
 * Some numbers correspond to internal Intuition #defines
 DEPTHIMAGE	EQU ($00)	; Window depth gadget image
-ZOOMIMAGE	EQU ($01)	; Window zoom gadget image
+ZOOMIMAGE	EQU ($01)	; Obsolete Window zoom gadget image, but still there
 SIZEIMAGE	EQU ($02)	; Window sizing gadget image
 CLOSEIMAGE	EQU ($03)	; Window close gadget image
 SDEPTHIMAGE	EQU ($05)	; Screen depth gadget image
@@ -119,10 +141,15 @@ UPIMAGE		EQU ($0B)	; Up-arrow gadget image
 RIGHTIMAGE	EQU ($0C)	; Right-arrow gadget image
 DOWNIMAGE	EQU ($0D)	; Down-arrow gadget image
 CHECKIMAGE	EQU ($0E)	; GadTools checkbox image
-MXIMAGE		EQU ($0F)	; GadTools mutual exclude "button" image
+MXIMAGE		EQU ($0F)	; GadTools mutual exclude "radio button" image
 * New for V39:
-MENUCHECK	EQU ($10)
-AMIGAKEY	EQU ($11)
+MENUCHECK	EQU ($10)	; Menu checkmark image
+AMIGAKEY	EQU ($11)	; Menu Amiga key image
+* New for V47:
+ICONIFYIMAGE	EQU ($16)	; Window iconify gadget image
+MENUMX		EQU ($1B)	; Menu mutual exclude "radio button" image
+MENUSUB		EQU ($1C)	; Menu sub-panel indicator
+SHIFTKEYIMAGE	EQU ($2A)	; Menu shift key image
 
 * Data values for IA_FrameType (recognized by FrameIClass)
 *
@@ -134,11 +161,26 @@ AMIGAKEY	EQU ($11)
 *	You can recess the ridge to get a groove image.
 * FRAME_ICONDROPBOX: A broad ridge which is the standard imagery
 *	for areas in AppWindows where icons may be dropped.
+* FRAME_PROPBORDER: A frame suitable for use as border of a
+*	proportional gadget container. (V47)
+* FRAME_PROPKNOB: A frame suitable for use as knob of a
+*	proportional gadget. (V47)
+* FRAME_DISPLAY: A recessed frame for display elements, such as
+*	read-only text or number gadgets. (V47)
+* FRAME_CONTEXT: A frame that is used to indicate contexts
+*	in GUIs that has a thin black/white border, with
+*	the black frame on top and the white frame offset in
+*	lower-right direction drawn underneath. (V47)
 
 FRAME_DEFAULT		EQU	0
 FRAME_BUTTON		EQU	1
 FRAME_RIDGE		EQU	2
 FRAME_ICONDROPBOX	EQU	3
+* New for V47:
+FRAME_PROPBORDER	EQU	4
+FRAME_PROPKNOB		EQU	5
+FRAME_DISPLAY		EQU	6
+FRAME_CONTEXT		EQU	7
 
 * image message id's
 IM_DRAW		EQU ($0202)	; draw yourself, with "state"
@@ -177,7 +219,11 @@ IDS_INDETERMINANT EQU IDS_INDETERMINATE
 ; Make do with the dimensions of FrameBox provided.
 FRAMEB_SPECIFY	EQU (0)
 FRAMEF_SPECIFY	EQU (1)
-
+; New for V47:
+; Don't add empty padding around contents, just the
+; sizes of the frame's edges. (V47)
+FRAMEB_MINIMAL	EQU (1)
+FRAMEF_MINIMAL	EQU (2)
 
 * IM_DRAW, IM_DRAWFRAME
  STRUCTURE impDraw,4		; starts with ULONG MethodID
@@ -209,7 +255,6 @@ FRAMEF_SPECIFY	EQU (1)
     WORD	imph_DimensionsWidth
     WORD	imph_DimensionsHeight
 
-
 * IM_DOMAINFRAME
  STRUCTURE impDomainFrame,4
     APTR	impdo_DrInfo
@@ -221,8 +266,6 @@ FRAMEF_SPECIFY	EQU (1)
 IDOMAIN_MINIMUM		EQU 0
 IDOMAIN_NOMINAL		EQU 1
 IDOMAIN_MAXIMUM		EQU 2
-
-
 
 * Include obsolete identifiers:
 	IFND	INTUITION_IOBSOLETE_I

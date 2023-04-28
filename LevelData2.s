@@ -1,85 +1,85 @@
 *********************************************************************************************
 
-                    opt       P=68020
+                          opt       P=68020
 
 *********************************************************************************************
 ; SET UP INITIAL POSITION OF PLAYER 
 
 InitPlayer:
 
-                    move.l    LEVELDATA,a1
-                    move.w    4(a1),d0
-                    move.l    zoneAdds,a0
-                    move.l    (a0,d0.w*4),d0
-                    add.l     LEVELDATA,d0
-                    move.l    d0,PLR1_Roompt
+                          move.l    LEVELDATA,a1
+                          move.w    4(a1),d0
+                          move.l    zoneAdds,a0
+                          move.l    (a0,d0.w*4),d0
+                          add.l     LEVELDATA,d0
+                          move.l    d0,PLR1_Roompt
 
-                    move.l    PLR1_Roompt,a0
-                    move.l    ToZoneFloor(a0),d0
-                    sub.l     #playerheight,d0
-                    move.l    d0,PLR1s_yoff
-                    move.l    d0,PLR1_tyoff
-                    move.l    d0,PLR1_yoff
-                    move.l    PLR1_Roompt,PLR1_OldRoompt
+                          move.l    PLR1_Roompt,a0
+                          move.l    ToZoneFloor(a0),d0
+                          sub.l     #playerheight,d0
+                          move.l    d0,PLR1s_yoff
+                          move.l    d0,PLR1_tyoff
+                          move.l    d0,PLR1_yoff
+                          move.l    PLR1_Roompt,PLR1_OldRoompt
 
-                    move.w    (a1),PLR1s_xoff
-                    move.w    2(a1),PLR1s_zoff 
+                          move.w    (a1),PLR1s_xoff
+                          move.w    2(a1),PLR1s_zoff 
                     
-                    move.w    (a1),PLR1_xoff
-                    move.w    2(a1),PLR1_zoff 
+                          move.w    (a1),PLR1_xoff
+                          move.w    2(a1),PLR1_zoff 
 
-                    cmp.w     #1,MPMode
-                    bne.b     skipLevelCoop
+                          cmp.w     #1,MPMode
+                          bne.b     skipLevelCoop
 
 *************************************************************
 
-                    move.l    PLR1_Roompt,PLR2_Roompt
-                    move.l    PLR2_Roompt,PLR2_OldRoompt  
+                          move.l    PLR1_Roompt,PLR2_Roompt
+                          move.l    PLR2_Roompt,PLR2_OldRoompt  
 
-                    move.l    PLR1s_yoff,d0
-                    move.l    d0,PLR2s_yoff
-                    move.l    d0,PLR2_tyoff
-                    move.l    d0,PLR2_yoff
+                          move.l    PLR1s_yoff,d0
+                          move.l    d0,PLR2s_yoff
+                          move.l    d0,PLR2_tyoff
+                          move.l    d0,PLR2_yoff
  
-                    move.w    PLR1s_xoff,PLR2s_xoff
+                          move.w    PLR1s_xoff,PLR2s_xoff
 
-                    move.w    PLR1s_zoff,d0
-                    add.l     #100,d0           
-                    move.w    d0,PLR2s_zoff 
+                          move.w    PLR1s_zoff,d0
+                          add.l     #100,d0           
+                          move.w    d0,PLR2s_zoff 
 
-                    move.w    PLR1_xoff,PLR2_xoff
-                    move.w    PLR1_zoff,PLR2_zoff                 
+                          move.w    PLR1_xoff,PLR2_xoff
+                          move.w    PLR1_zoff,PLR2_zoff                 
 
-                    bra       continueLevel
+                          bra       continueLevel
 
 *************************************************************
 
 skipLevelCoop:
-                    move.l    LEVELDATA,a1
-                    move.w    10(a1),d0
-                    move.l    zoneAdds,a0
-                    move.l    (a0,d0.w*4),d0
-                    add.l     LEVELDATA,d0
-                    move.l    d0,PLR2_Roompt
+                          move.l    LEVELDATA,a1
+                          move.w    10(a1),d0
+                          move.l    zoneAdds,a0
+                          move.l    (a0,d0.w*4),d0
+                          add.l     LEVELDATA,d0
+                          move.l    d0,PLR2_Roompt
                     
-                    move.l    PLR2_Roompt,a0
-                    move.l    ToZoneFloor(a0),d0
-                    sub.l     #playerheight,d0
-                    move.l    d0,PLR2s_yoff
-                    move.l    d0,PLR2_tyoff
-                    move.l    d0,PLR2_yoff
-                    move.l    PLR2_Roompt,PLR2_OldRoompt
+                          move.l    PLR2_Roompt,a0
+                          move.l    ToZoneFloor(a0),d0
+                          sub.l     #playerheight,d0
+                          move.l    d0,PLR2s_yoff
+                          move.l    d0,PLR2_tyoff
+                          move.l    d0,PLR2_yoff
+                          move.l    PLR2_Roompt,PLR2_OldRoompt
                     
-                    move.w    6(a1),PLR2s_xoff
-                    move.w    8(a1),PLR2s_zoff 
+                          move.w    6(a1),PLR2s_xoff
+                          move.w    8(a1),PLR2s_zoff 
                     
-                    move.w    6(a1),PLR2_xoff
-                    move.w    8(a1),PLR2_zoff
+                          move.w    6(a1),PLR2_xoff
+                          move.w    8(a1),PLR2_zoff
 
 *************************************************************
 
 continueLevel:
-                    rts
+                          rts
 
 *********************************************************************************************
 ; Floor lines:                                  
@@ -91,72 +91,72 @@ continueLevel:
 ; and the program calculates x,y,dx and dy from 
 ; this information and stores it in a buffer.   
 
-PointsToRotatePtr:  dc.l      0
+PointsToRotatePtr:        dc.l      0
 
 *********************************************************************************************
 ; ROOM GRAPHICAL DESCRIPTIONS : WALLS AND FLOORS 
 
-CONNECT_TABLE:      dc.l      0
-ListOfGraphRooms:   dc.l      0
-NastyShotData:      dc.l      0
-ObjectPoints:       dc.l      0
-PlayerShotData:     dc.l      0
-ObjectData:         dc.l      0
-FloorLines:         dc.l      0
-Points:             dc.l      0
-PLR1_Obj:           dc.l      0
-PLR2_Obj:           dc.l      0
-ZoneGraphAdds:      dc.l      0
-zoneAdds:           dc.l      0
-NumObjectPoints:    dc.w      0
-LiftData:           dc.l      0
-DoorData:           dc.l      0
-SwitchData:         dc.l      0
-CPtPos:             dc.l      0
-NumCPts:            dc.w      0
-OtherNastyData:     dc.l      0
+CONNECT_TABLE:            dc.l      0
+ListOfGraphRooms:         dc.l      0
+NastyShotData:            dc.l      0
+ObjectPoints:             dc.l      0
+PlayerShotData:           dc.l      0
+ObjectData:               dc.l      0
+FloorLines:               dc.l      0
+Points:                   dc.l      0
+PLR1_Obj:                 dc.l      0
+PLR2_Obj:                 dc.l      0
+ZoneGraphAdds:            dc.l      0
+zoneAdds:                 dc.l      0
+NumObjectPoints:          dc.w      0
+LiftData:                 dc.l      0
+DoorData:                 dc.l      0
+SwitchData:               dc.l      0
+CPtPos:                   dc.l      0
+NumCPts:                  dc.w      0
+OtherNastyData:           dc.l      0
 
 *********************************************************************************************
 
-wall                SET       0
-floor               SET       1
-roof                SET       2
-setclip             SET       3
-object              SET       4
-curve               SET       5
-light               SET       6
-water               SET       7
-bumpfloor           SET       8
-bumproof            SET       9
-smoothfloor         SET       10
-smoothroof          SET       11
-backdrop            SET       12
-seethruwall         SET       13
+wall                      SET       0
+floor                     SET       1
+roof                      SET       2
+setclip                   SET       3
+object                    SET       4
+curve                     SET       5
+light                     SET       6
+water                     SET       7
+bumpfloor                 SET       8
+bumproof                  SET       9
+smoothfloor               SET       10
+smoothroof                SET       11
+backdrop                  SET       12
+seethruwall               SET       13
 
-GreenStone          SET       0
-MetalA              SET       4096
-MetalB              SET       4096*2
-MetalC              SET       4096*3
-Marble              SET       4096*4
-BulkHead            SET       4096*5
-SpaceWall           SET       4096*6
+GreenStone                SET       0
+MetalA                    SET       4096
+MetalB                    SET       4096*2
+MetalC                    SET       4096*3
+Marble                    SET       4096*4
+BulkHead                  SET       4096*5
+SpaceWall                 SET       4096*6
 
-Sand                SET       0
-MarbleFloor         SET       2
+Sand                      SET       0
+MarbleFloor               SET       2
 
-RoofLights          SET       256
-GreyRoof            SET       258
-
-*********************************************************************************************
-
-LEVELDATA:          dc.l      0
+RoofLights                SET       256
+GreyRoof                  SET       258
 
 *********************************************************************************************
 
-LEVELGRAPHICS:      dc.l      0
+LEVELDATA:                dc.l      0
 
 *********************************************************************************************
 
-LEVELCLIPS:         dc.l      0
+LEVELGRAPHICS:            dc.l      0
+
+*********************************************************************************************
+
+LEVELCLIPS:               dc.l      0
 
 *********************************************************************************************

@@ -1,13 +1,12 @@
 	IFND	RESOURCES_FILESYSRES_I
 RESOURCES_FILESYSRES_I	SET	1
 **
-**	$VER: filesysres.i 36.4 (3.5.1990)
-**	Includes Release 45.1
+**	$VER: filesysres.i 47.1 (3.8.2019)
 **
 **	FileSystem.resource description
 **
-**	(C) Copyright 1988-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_NODES_I

@@ -1,14 +1,12 @@
 	IFND LIBRARIES_IFFPARSE_I
 LIBRARIES_IFFPARSE_I	SET	1
 **
-**	$VER: iffparse.i 39.1 (1.6.1992)
-**	Includes Release 45.1
+**	$VER: iffparse.i 47.1 (29.7.2019)
 **
-**	iffparse.library structures and constants
+**      iffparse.library structures and constants
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	(C) Copyright 1989-1990 Stuart Ferguson and Leo L. Schwab
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

@@ -1,13 +1,12 @@
 	IFND	EXEC_STRINGS_I
 EXEC_STRINGS_I	SET	1
 **
-**	$VER: strings.i 39.0 (15.10.1991)
-**	Includes Release 45.1
+**	$VER: strings.i 47.1 (28.6.2019)
 **
 **	Macros for defining old style CR/LF terminated string constants
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 *------ Terminal Control:

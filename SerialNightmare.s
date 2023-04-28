@@ -1,29 +1,30 @@
 *********************************************************************************************
 
-          opt        P=68020
+                          opt        P=68020
 
 *********************************************************************************************
 
-PAUSE     MACRO
-          move.l     #0,tstchip
-          move.l     #0,tstchip
-          move.l     #0,tstchip
-          move.l     #0,tstchip
-          move.l     #0,tstchip
-          move.l     #0,tstchip
-          move.l     #0,tstchip
-          ENDM
+PAUSE                     MACRO
+                          move.l     #0,tstchip
+                          move.l     #0,tstchip
+                          move.l     #0,tstchip
+                          move.l     #0,tstchip
+                          move.l     #0,tstchip
+                          move.l     #0,tstchip
+                          move.l     #0,tstchip
+                          ENDM
 
 *********************************************************************************************
 
-          incdir     "includes"
-          include    "macros.i"
-          include    "AB3DI.i"
-          include    "hardware/cia.i"
+                          incdir     "includes"
+                          include    "AB3DI.i"
+                          include    "macros.i"
+                          
+                          include    "hardware/cia.i"
 
 *********************************************************************************************
 
-          cnop       0,32
+                          cnop       0,32
 
 *********************************************************************************************
 ; sends the lower byte of d1 accross serial port corrupts bit 8 of d1
@@ -36,15 +37,15 @@ SERSEND:
 
 .checkTBE:
 
-          btst.b     #5,serdatr(a6)       ; bit 13 = TBE (Serial port transmit buffer empty)
-          beq.b      .checkTBE            ; wait until last byte sent
+                          btst.b     #5,serdatr(a6)       ; bit 13 = TBE (Serial port transmit buffer empty)
+                          beq.b      .checkTBE            ; wait until last byte sent
          
-          and.w      #$00ff,d1
-          bset.l     #8,d1                ; add stop bit (8N1)
-          move.w     d1,serdat(a6)
-          move.w     #$0001,intreq(a6)    ; level 1 - bit 0 = TBE (Serial port transmit buffer empty)
+                          and.w      #$00ff,d1
+                          bset.l     #8,d1                ; add stop bit (8N1)
+                          move.w     d1,serdat(a6)
+                          move.w     #$0001,intreq(a6)    ; level 1 - bit 0 = TBE (Serial port transmit buffer empty)
          
-          rts
+                          rts
 
 *********************************************************************************************
 ; waits for serial data and returns it in lower byte of d1
@@ -57,14 +58,14 @@ SERREC:
 
 .checkRBF:   
 
-          btst.b     #6,serdatr(a6)       ; bit 14 = RBF (Serial port receive buffer full)
-          beq.b      .checkRBF            ; wait util data available
+                          btst.b     #6,serdatr(a6)       ; bit 14 = RBF (Serial port receive buffer full)
+                          beq.b      .checkRBF            ; wait util data available
 
-          move.w     serdatr(a6),d1
-          move.w     #$0800,intreq(a6)    ; level 5 - bit 11 = RBF (Serial port receive buffer full)
-          and.w      #$00ff,d1            ; 8N1
+                          move.w     serdatr(a6),d1
+                          move.w     #$0800,intreq(a6)    ; level 5 - bit 11 = RBF (Serial port receive buffer full)
+                          and.w      #$00ff,d1            ; 8N1
 
-          rts
+                          rts
 
 *********************************************************************************************
 ; Sends and receives an interleaved long word from d0 into d0 (sends first)
@@ -73,36 +74,36 @@ SENDFIRST:
 ; in: d0.l = Data
 ; out: d0.l = Data
 
-          movem.l    d1-d7/a0-a6,-(a7)
-          lea        $dff000,a6
+                          movem.l    d1-d7/a0-a6,-(a7)
+                          lea        $dff000,a6
 
-          move.b     d0,d1
-          bsr        SERSEND
-          bsr        SERREC
-          move.b     d1,d2
-          ror.l      #8,d2
-          lsr.w      #8,d0
-          move.b     d0,d1
-          bsr        SERSEND
-          bsr        SERREC
-          move.b     d1,d2
-          ror.l      #8,d2
-          swap       d0
-          move.b     d0,d1
-          bsr        SERSEND
-          bsr        SERREC
-          move.b     d1,d2
-          ror.l      #8,d2
-          lsr.w      #8,d0
-          move.b     d0,d1
-          bsr        SERSEND
-          bsr        SERREC
-          move.b     d1,d2
-          ror.l      #8,d2
-          move.l     d2,d0
+                          move.b     d0,d1
+                          bsr        SERSEND
+                          bsr        SERREC
+                          move.b     d1,d2
+                          ror.l      #8,d2
+                          lsr.w      #8,d0
+                          move.b     d0,d1
+                          bsr        SERSEND
+                          bsr        SERREC
+                          move.b     d1,d2
+                          ror.l      #8,d2
+                          swap       d0
+                          move.b     d0,d1
+                          bsr        SERSEND
+                          bsr        SERREC
+                          move.b     d1,d2
+                          ror.l      #8,d2
+                          lsr.w      #8,d0
+                          move.b     d0,d1
+                          bsr        SERSEND
+                          bsr        SERREC
+                          move.b     d1,d2
+                          ror.l      #8,d2
+                          move.l     d2,d0
 
-          movem.l    (a7)+,d1-d7/a0-a6 
-          rts
+                          movem.l    (a7)+,d1-d7/a0-a6 
+                          rts
 
 *********************************************************************************************
 ; sends and receives an interleaved long word from d0 into d0 (receives first)
@@ -111,36 +112,36 @@ SENDFIRST:
 
 RECFIRST:
 
-          movem.l    d1-d7/a0-a6,-(a7)
-          lea        $dff000,a6
+                          movem.l    d1-d7/a0-a6,-(a7)
+                          lea        $dff000,a6
 
-          bsr        SERREC
-          move.b     d1,d2
-          move.b     d0,d1
-          bsr        SERSEND
-          ror.l      #8,d2
-          bsr        SERREC
-          move.b     d1,d2
-          lsr.w      #8,d0
-          move.b     d0,d1
-          bsr        SERSEND
-          ror.l      #8,d2
-          bsr        SERREC
-          move.b     d1,d2
-          swap       d0
-          move.b     d0,d1
-          bsr        SERSEND
-          ror.l      #8,d2
-          bsr        SERREC
-          move.b     d1,d2
-          lsr.w      #8,d0
-          move.b     d0,d1
-          bsr        SERSEND
-          ror.l      #8,d2
-          move.l     d2,d0
+                          bsr        SERREC
+                          move.b     d1,d2
+                          move.b     d0,d1
+                          bsr        SERSEND
+                          ror.l      #8,d2
+                          bsr        SERREC
+                          move.b     d1,d2
+                          lsr.w      #8,d0
+                          move.b     d0,d1
+                          bsr        SERSEND
+                          ror.l      #8,d2
+                          bsr        SERREC
+                          move.b     d1,d2
+                          swap       d0
+                          move.b     d0,d1
+                          bsr        SERSEND
+                          ror.l      #8,d2
+                          bsr        SERREC
+                          move.b     d1,d2
+                          lsr.w      #8,d0
+                          move.b     d0,d1
+                          bsr        SERSEND
+                          ror.l      #8,d2
+                          move.l     d2,d0
 
-          movem.l    (a7)+,d1-d7/a0-a6
-          rts
+                          movem.l    (a7)+,d1-d7/a0-a6
+                          rts
 
 *********************************************************************************************
 *********************************************************************************************
@@ -157,178 +158,178 @@ RECFIRST:
 
 INITSEND:
 
-          move.l     #$bfd000,a0
-          move.w     #15,d7
-          move.l     #$bfe001,a3
-          rts
+                          move.l     #$bfd000,a0
+                          move.w     #15,d7
+                          move.l     #$bfe001,a3
+                          rts
 
 *********************************************************************************************
 
 SENDLONG:
 
-          bset       #CIAB_COMRTS,(a0)
-          PAUSE
-          WT
-          move.w     d7,d6
+                          bset       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          WT
+                          move.w     d7,d6
 
 SENDLOOP:
-          add.l      d0,d0
-          bcc.s      SENDZERO
-          bset       #CIAB_COMDTR,(a0)
-          bra.s      SEND1
+                          add.l      d0,d0
+                          bcc.s      SENDZERO
+                          bset       #CIAB_COMDTR,(a0)
+                          bra.s      SEND1
 
 SENDZERO:
-          bclr       #CIAB_COMDTR,(a0)
+                          bclr       #CIAB_COMDTR,(a0)
 
 SEND1:
-          PAUSE
-          bclr       #CIAB_COMRTS,(a0)
-          PAUSE
-          WTNOT
-          add.l      d0,d0
-          bcc.s      SENDZERO2
-          bset       #CIAB_COMDTR,(a0)
-          bra.s      SEND12
+                          PAUSE
+                          bclr       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          WTNOT
+                          add.l      d0,d0
+                          bcc.s      SENDZERO2
+                          bset       #CIAB_COMDTR,(a0)
+                          bra.s      SEND12
 
 SENDZERO2:
-          bclr       #CIAB_COMDTR,(a0)
+                          bclr       #CIAB_COMDTR,(a0)
 
 SEND12:
-          PAUSE
-          bset       #CIAB_COMRTS,(a0)
-          PAUSE
-          WT
-          dbra       d6,SENDLOOP
+                          PAUSE
+                          bset       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          WT
+                          dbra       d6,SENDLOOP
 
-          bclr       #CIAB_COMDTR,(a0)
-          bclr       #CIAB_COMRTS,(a0)
+                          bclr       #CIAB_COMDTR,(a0)
+                          bclr       #CIAB_COMRTS,(a0)
 
 balls:
-          btst       #CIAB_COMDSR,(a0)
-          beq.s      balls
+                          btst       #CIAB_COMDSR,(a0)
+                          beq.s      balls
 
-          rts
+                          rts
 
 *********************************************************************************************
 
 SENDLAST:
 
-          bset       #CIAB_COMRTS,(a0)
-          PAUSE
-          WT
-          move.w     d7,d6
+                          bset       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          WT
+                          move.w     d7,d6
 
 SENDLOOPLAST:
-          add.l      d0,d0
-          bcc.s      SENDZEROLAST
-          bset       #CIAB_COMDTR,(a0)
-          bra.s      SEND1LAST
+                          add.l      d0,d0
+                          bcc.s      SENDZEROLAST
+                          bset       #CIAB_COMDTR,(a0)
+                          bra.s      SEND1LAST
 
 SENDZEROLAST:
-          bclr       #CIAB_COMDTR,(a0)
+                          bclr       #CIAB_COMDTR,(a0)
 
 SEND1LAST:
-          PAUSE
-          bclr       #CIAB_COMRTS,(a0)
-          PAUSE
-          WTNOT
+                          PAUSE
+                          bclr       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          WTNOT
 
-          add.l      d0,d0
-          bcc.s      SENDZERO2LAST
-          bset       #CIAB_COMDTR,(a0)
-          bra.s      SEND12LAST
+                          add.l      d0,d0
+                          bcc.s      SENDZERO2LAST
+                          bset       #CIAB_COMDTR,(a0)
+                          bra.s      SEND12LAST
 
 SENDZERO2LAST:
-          bclr       #CIAB_COMDTR,(a0)
+                          bclr       #CIAB_COMDTR,(a0)
 
 SEND12LAST:
-          PAUSE
-          bset       #CIAB_COMRTS,(a0)
-          PAUSE
-          WT
-          dbra       d6,SENDLOOPLAST
+                          PAUSE
+                          bset       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          WT
+                          dbra       d6,SENDLOOPLAST
 
-          bset       #CIAB_COMDTR,(a0)
-          PAUSE
-          bclr       #CIAB_COMRTS,(a0)
-          PAUSE
+                          bset       #CIAB_COMDTR,(a0)
+                          PAUSE
+                          bclr       #CIAB_COMRTS,(a0)
+                          PAUSE
 
 ballsLAST:
-          btst       #CIAB_COMDSR,(a0)
-          beq.s      ballsLAST
+                          btst       #CIAB_COMDSR,(a0)
+                          beq.s      ballsLAST
 
-          rts
+                          rts
 
 *********************************************************************************************
 
 INITREC:
 
-          move.l     #$bfd000,a0
-          move.l     #BUFFER,a1
-          move.w     #15,d7
-          move.l     #$bfe001,a3
-          rts
+                          move.l     #$bfd000,a0
+                          move.l     #BUFFER,a1
+                          move.w     #15,d7
+                          move.l     #$bfe001,a3
+                          rts
 
 *********************************************************************************************
 
 BACKRECEIVE:
 
-          PAUSE
-          bclr       #CIAB_COMRTS,(a0)
-          PAUSE
-          bset       #CIAB_COMDTR,(a0)
-          move.l     d0,(a1)+
+                          PAUSE
+                          bclr       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          bset       #CIAB_COMDTR,(a0)
+                          move.l     d0,(a1)+
  
 RECEIVE:
 ; d0.l = data
 
-          PAUSE
-          WT
-          bclr.b     #CIAB_COMDTR,(a0)
-          move.w     d7,d6
+                          PAUSE
+                          WT
+                          bclr.b     #CIAB_COMDTR,(a0)
+                          move.w     d7,d6
 
 RECIEVELOOP:
-          bset       #CIAB_COMRTS,(a0)
-          PAUSE
-          WTNOT
-          add.l      d0,d0
-          btst       #CIAB_COMDSR,(a0)
-          beq.s      noadd1
-          addq       #1,d0
+                          bset       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          WTNOT
+                          add.l      d0,d0
+                          btst       #CIAB_COMDSR,(a0)
+                          beq.s      noadd1
+                          addq       #1,d0
 
 noadd1:
-          PAUSE
-          bclr       #CIAB_COMRTS,(a0)
-          PAUSE
-          WT
-          PAUSE
-          add.l      d0,d0
-          btst       #CIAB_COMDSR,(a0)
-          beq.s      noadd2
-          addq       #1,d0
+                          PAUSE
+                          bclr       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          WT
+                          PAUSE
+                          add.l      d0,d0
+                          btst       #CIAB_COMDSR,(a0)
+                          beq.s      noadd2
+                          addq       #1,d0
 
 noadd2:
-          dbra       d6,RECIEVELOOP
-          PAUSE
-          bset       #CIAB_COMRTS,(a0)
-          PAUSE
-          WTNOT
-          PAUSE
-          btst       #CIAB_COMDSR,(a0)
-          beq        BACKRECEIVE
-          PAUSE
-          bset       #CIAB_COMDTR,(a0)
-          bclr       #CIAB_COMRTS,(a0)
-          move.l     d0,(a1)+
+                          dbra       d6,RECIEVELOOP
+                          PAUSE
+                          bset       #CIAB_COMRTS,(a0)
+                          PAUSE
+                          WTNOT
+                          PAUSE
+                          btst       #CIAB_COMDSR,(a0)
+                          beq        BACKRECEIVE
+                          PAUSE
+                          bset       #CIAB_COMDTR,(a0)
+                          bclr       #CIAB_COMRTS,(a0)
+                          move.l     d0,(a1)+
 
-          rts
-
-*********************************************************************************************
-
-BUFFER:   ds.l       2000
+                          rts
 
 *********************************************************************************************
 
-tstchip:  dc.l       0
+BUFFER:                   ds.l       2000
+
+*********************************************************************************************
+
+tstchip:                  dc.l       0
 
 *********************************************************************************************

@@ -1,13 +1,12 @@
 	IFND	DEVICES_INPUTEVENT_I
 DEVICES_INPUTEVENT_I	SET	1
 **
-**	$VER: inputevent.i 36.8 (22.4.1992)
-**	Includes Release 45.1
+**	$VER: inputevent.i 47.1 (28.6.2019)
 **
 **	input event definitions
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	 DEVICES_TIMER_I

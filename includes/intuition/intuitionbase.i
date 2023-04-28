@@ -1,13 +1,12 @@
 	IFND  INTUITION_INTUITIONBASE_I
 INTUITION_INTUITIONBASE_I SET  1
 **
-** $VER: intuitionbase.i 38.0 (12.6.1991)
-** Includes Release 45.1
+**	$VER: intuitionbase.h 47.1 (1.8.2019)
 **
-** The public part of  IntuitionBase structure and supporting structures
+**	Public part of IntuitionBase structure and supporting structures
 **
-**  (C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND EXEC_TYPES_I

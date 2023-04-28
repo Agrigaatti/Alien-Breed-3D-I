@@ -2,13 +2,12 @@
 DISKFONT_GLYPH_I	EQU	1
 
 **
-**	$VER: glyph.i 9.1 (19.6.1992)
-**	Includes Release 45.1
+**	$VER: glyph.i 47.1 (29.7.2019)
 **
-**	glyph.i -- structures for glyph libraries
+**	structures for glyph libraries
 **
-**	(C) Copyright 1991-1992 Robert R. Burns
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I
@@ -36,7 +35,7 @@ DISKFONT_GLYPH_I	EQU	1
     UWORD   glm_BlackTop	; # of blank rows at top
     UWORD   glm_BlackWidth	; span of contiguous non-blank columns
     UWORD   glm_BlackHeight	; span of contiguous non-blank rows
-    ; the following five ULONGs are FIXED:
+    ; the following five ULONGs are FIXED: 
     ULONG   glm_XOrigin		; distance from upper left corner of bitmap
     ULONG   glm_YOrigin		;   to initial CP, in fractional pixels
     WORD    glm_X0		; approximation of XOrigin in whole pixels
@@ -53,5 +52,17 @@ DISKFONT_GLYPH_I	EQU	1
     ; the following ULONG is FIXED: 
     ULONG   gwe_Width		; character advance, as fraction of em width
     LABEL   GlyphWidthEntry_SIZEOF
+
+; Structure returned when asking for OT_WidthList32,
+; the original GlyphWidthEntry structure is limited to
+; 16 bit glyph code (UWORD gwe_Code).
+
+ STRUCTURE	GlyphWidthEntry32,0
+    STRUCT  gwe32_Node,MLN_SIZE	; on list returned by OT_WidthList inquiry
+    UWORD   gwe32_reserved	; for alignment and backwards compatibility
+    ; the following ULONG is FIXED: 
+    ULONG   gwe32_Width		; character advance, as fraction of em width
+    ULONG   gwe32_Code;		; entry's character code value
+    LABEL   GlyphWidthEntry32_SIZEOF
 
 	ENDC	; DISKFONT_GLYPH_I

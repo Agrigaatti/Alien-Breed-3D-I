@@ -1,13 +1,12 @@
 	IFND	DOS_NOTIFY_I
 DOS_NOTIFY_I	SET	1
 **
-**	$VER: notify.i 36.5 (29.8.1990)
-**	Includes Release 45.1
+**	$VER: notify.i 47.1 (29.7.2019)
 **
 **	dos notification definitions
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_PORTS_I

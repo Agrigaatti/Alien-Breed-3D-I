@@ -1,14 +1,12 @@
 	 IFND	  REXX_REXXIO_I
 REXX_REXXIO_I SET      1
 **
-**	$VER: rexxio.i 36.8 (8.11.1991)
-**	Includes Release 45.1
+**	$VER: rexxio.i 47.1 (3.8.2019)
 **
-**	Include file for Input/Output related structures
+**	Header file for ARexx Input/Output related structures
 **
-**	(C) Copyright 1986,1987,1988,1989,1990 William S. Hawes.
-**	(C) Copyright 1990-2001 Amiga, Inc.
-**		All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	 IFND	  REXX_STORAGE_I

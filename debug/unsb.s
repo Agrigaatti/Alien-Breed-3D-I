@@ -16,10 +16,11 @@ DefUnpackedSize EQU 1024*64
 *********************************************************************************************
 
              incdir      "includes"
+             include     "AB3DI.i"
+             include     "macros.i"
+
              include     "exec/memory.i"
              include     "dos/dos.i"
-             include     "macros.i"
-             include     "AB3DI.i"
 
 *********************************************************************************************
 

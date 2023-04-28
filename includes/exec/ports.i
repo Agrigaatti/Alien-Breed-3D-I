@@ -1,13 +1,12 @@
 	IFND	EXEC_PORTS_I
 EXEC_PORTS_I	SET	1
 **
-**	$VER: ports.i 39.0 (15.10.1991)
-**	Includes Release 45.1
+**	$VER: ports.i 47.1 (28.6.2019)
 **
 **	Message ports and Messages.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND EXEC_NODES_I

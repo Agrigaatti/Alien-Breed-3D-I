@@ -1,13 +1,12 @@
 	IFND DOS_DOSASL_I
 DOS_DOSASL_I	SET	1
 **
-**	$VER: dosasl.i 36.19 (2.5.1991)
-**	Includes Release 45.1
+**	$VER: dosasl.i 47.1 (29.7.2019)
 **
-**	pattern-matching structure definitions
+**	Pattern-matching structure definitions
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND EXEC_LIBRARIES_I

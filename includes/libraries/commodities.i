@@ -1,12 +1,12 @@
        IFND LIBRARIES_COMMODITIES_I
 LIBRARIES_COMMODITIES_I SET 1
-**	$VER: commodities.i 38.5 (20.10.1992)
-**	Includes Release 45.1
+**
+**	$VER: commodities.h 47.1 (28.7.2019)
 **
 **	Commodities definitions
 **
-**	(C) Copyright 1990-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

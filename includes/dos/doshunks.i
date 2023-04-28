@@ -1,17 +1,15 @@
 	IFND	DOS_DOSHUNKS_I
 DOS_DOSHUNKS_I	SET	1
 **
-**	$VER: doshunks.i 36.13 (12.8.1993)
-**	Includes Release 45.1
+**	$VER: doshunks.i 47.1 (29.7.2019)
 **
 **	Hunk definitions for object and load modules.
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
-	IFND	EXEC_TYPES_I
+
 	INCLUDE	"exec/types.i"
-	ENDC
 
 * hunk types
 
@@ -55,7 +53,7 @@ HUNK_ABSRELOC16	EQU	1022
 *
 * Any hunks that have the HUNKB_ADVISORY bit set will be ignored if they
 * aren't understood.  When ignored, they're treated like HUNK_DEBUG hunks.
-* NOTE: this handling of HUNKB_ADVISORY started as of V39 dos.library!	If
+* NOTE: this handling of HUNKB_ADVISORY started as of V39 dos.library!  If
 * lading such executables is attempted under <V39 dos, it will fail with a
 * bad hunk type.
 *

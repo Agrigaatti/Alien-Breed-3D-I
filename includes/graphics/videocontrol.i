@@ -1,13 +1,12 @@
     IFND    GRAPHICS_VIDEOCONTROL_I
 GRAPHICS_VIDEOCONTROL_I SET 1
 **
-**	$VER: videocontrol.i 37.9 (31.5.1993)
-**	Includes Release 45.1
+**	$VER: text.i 47.1 (31.7.2019)
 **
-**	graphics videocontrol definitions
+**	include define file for videocontrol commands
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND    EXEC_TYPES_I

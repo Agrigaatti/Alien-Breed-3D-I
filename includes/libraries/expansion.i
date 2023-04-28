@@ -1,13 +1,12 @@
 	IFND	LIBRARIES_EXPANSION_I
 LIBRARIES_EXPANSION_I	SET	1
 **
-**	$VER: expansion.i 36.6 (5.11.1990)
-**	Includes Release 45.1
+**	$VER: expansion.i 47.1 (8.11.2021)
 **
 **	External definitions for expansion.library
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019-2022 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I

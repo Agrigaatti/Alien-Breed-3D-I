@@ -1,13 +1,12 @@
 	IFND	GRAPHICS_DISPLAY_I
 GRAPHICS_DISPLAY_I	SET	1
 **
-**	$VER: display.i 39.0 (21.8.1991)
-**	Includes Release 45.1
+**	$VER: display.i 47.1 (30.7.2019)
 **
 **	include define file for display control registers
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 * bplcon0 defines

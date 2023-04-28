@@ -1,13 +1,12 @@
     IFND INTUITION_POINTERCLASS_I
 INTUITION_POINTERCLASS_I SET 1
 **
-** $VER: pointerclass.i 39.5 (15.2.1993)
-** Includes Release 45.1
+**	$VER: pointerclass.i 47.1 (1.8.2019)
 **
-**  'boopsi' pointer class interface
+**	'boopsi' pointer class interface
 **
-**  (C) Copyright 1992-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND EXEC_TYPES_I

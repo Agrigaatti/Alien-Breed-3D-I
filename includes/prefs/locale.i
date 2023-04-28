@@ -1,13 +1,12 @@
 	IFND	PREFS_LOCALE_I
 PREFS_LOCALE_I	SET	1
 **
-**	$VER: locale.i 38.4 (5.12.1991)
-**	Includes Release 45.1
+**	$VER: locale.i 47.1 (2.8.2019)
 **
 **	File format for locale preferences
 **
-**	(C) Copyright 1991-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------
@@ -39,10 +38,10 @@ ID_CTRY equ "CTRY"
 
 	; for numeric values
 	STRUCT	cp_DecimalPoint,10
-	STRUCT	cp_GroupSeparator,10
-	STRUCT	cp_FracGroupSeparator,10
+    	STRUCT	cp_GroupSeparator,10
+    	STRUCT	cp_FracGroupSeparator,10
 	STRUCT	cp_Grouping,10
-	STRUCT	cp_FracGrouping,10
+    	STRUCT	cp_FracGrouping,10
 
 	; for monetary values
 	STRUCT	cp_MonDecimalPoint,10

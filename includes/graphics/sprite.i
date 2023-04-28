@@ -1,11 +1,12 @@
 	IFND	GRAPHICS_SPRITE_I
 GRAPHICS_SPRITE_I	SET	1
 **
-**	$VER: sprite.i 39.7 (11.8.1993)
-**	Includes Release 45.1
+**	$VER: sprite.i 47.1 (31.7.2019)
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	SimpleSprite management
+**
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND    EXEC_TYPES_I

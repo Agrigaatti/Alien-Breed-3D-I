@@ -1,13 +1,12 @@
 	IFND	DOS_DOSEXTENS_I
 DOS_DOSEXTENS_I	SET	1
 **
-**	$VER: dosextens.i 36.39 (14.5.1992)
-**	Includes Release 45.1
+**	$VER: dosextens.i 47.1 (29.7.2019)
 **
-**	DOS structures not needed for the casual AmigaDOS user
+**	DOS structures not needed for the casual AmigaDOS user 
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
      IFND  EXEC_TYPES_I
@@ -59,7 +58,7 @@ DOS_DOSEXTENS_I	SET	1
     APTR    pr_WindowPtr	* Window pointer for errors
 
 * following definitions are new with 2.0
-    BPTR    pr_HomeDir		* Home directory of executing program
+    BPTR    pr_HomeDir          * Home directory of executing program
     LONG    pr_Flags		* flags telling dos about process
     APTR    pr_ExitCode		* code to call on exit of program or NULL
     LONG    pr_ExitData		* Passed as an argument to pr_ExitCode
@@ -78,6 +77,7 @@ DOS_DOSEXTENS_I	SET	1
 	BITDEF PR,CLOSEINPUT,3
 	BITDEF PR,CLOSEOUTPUT,4
 	BITDEF PR,FREEARGS,5
+	BITDEF PR,CLOSEERROR,6  * new in V47
 
 * The long word address (BPTR) of this STRUCTure is returned by
 * Open() and other routines that return a file.	 You need only worry
@@ -85,7 +85,7 @@ DOS_DOSEXTENS_I	SET	1
 * standard file system calls
 
  STRUCTURE FileHandle,0
-   APTR	  fh_Link		* pointer to EXEC message
+   APTR	  fh_Link		* private use, not really a message
    APTR	  fh_Interactive	* Boolean; TRUE if interactive handle
    APTR	  fh_Type		* Port to do PutMsg() to
    LONG	  fh_Buf
@@ -169,7 +169,7 @@ ACTION_INHIBIT		EQU	31
 ACTION_DISK_TYPE	EQU	32
 ACTION_DISK_CHANGE	EQU	33
 ACTION_SET_DATE		EQU	34
-
+ACTION_UNDISK_INFO      EQU     513
 ACTION_SCREEN_MODE	EQU	994
 
 ACTION_READ_RETURN	EQU	1001
@@ -252,7 +252,7 @@ ACTION_SERIALIZE_DISK	EQU	4200
     STRUCT  rn_Time,ds_SIZEOF  * Current time
     LONG    rn_RestartSeg      * SegList for the disk validator process
     BPTR    rn_Info	       * Pointer to the Info structure
-    BPTR    rn_FileHandlerSegment * code for file handler
+    BPTR    rn_FileHandlerSegment * code for file handler 
     STRUCT  rn_CliList,MLH_SIZE * new list of all CLI processes
 *			       * the first cpl_Array is also rn_TaskArray
     APTR    rn_BootProc	       * private! ptr to msgport of boot fs

@@ -1,13 +1,13 @@
 	IFND	LIBRARIES_FILEHANDLER_I
 LIBRARIES_FILEHANDLER_I SET	1
 **
-**	$VER: filehandler.i 36.2 (12.7.1990)
-**	Includes Release 45.1
+**	$VER: filehandler.h 47.1 (29.7.2019)
 **
-**	device and file handler specific code for AmigaDOS
+**	device and file handler specific code for AmigaDOS 
+**	Obsolete - see dos/filehandler.i
 **
-**	(C) Copyright 1986-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	DOS_FILEHANDLER_I

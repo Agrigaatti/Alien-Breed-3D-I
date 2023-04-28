@@ -1,13 +1,11 @@
 	IFND	LIBRARIES_TRANSLATOR_I
 LIBRARIES_TRANSLATOR_I	SET	1
 **
-**	$VER: translator.i 36.1 (13.12.1990)
-**	Includes Release 45.1
+**	$VER: translator.i 47.1 (29.7.2019)
 **
 **	Useful definitions for translator.library
 **
-**	(C) Copyright 1988-2001 Amiga, Inc. and
-**	Joseph Katz/Mark Barton.  All rights reserved.
+**	(C) Joseph Katz/Mark Barton.  All rights reserved.
 **
 
 

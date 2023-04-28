@@ -1,13 +1,12 @@
 	IFND	RESOURCES_MISC_I
 RESOURCES_MISC_I	SET	1
 **
-**	$VER: misc.i 36.12 (6.5.1990)
-**	Includes Release 45.1
+**	$VER: misc.i 47.1 (3.8.2019)
 **
 **	Unit number definitions for "misc.resource"
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I

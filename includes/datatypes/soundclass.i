@@ -1,13 +1,12 @@
 	IFND	DATATYPES_SOUNDCLASS_I
 DATATYPES_SOUNDCLASS_I	SET	1
 **
-**	$VER: soundclass.i 44.7 (6.6.1999)
+**	$VER: soundclass.i 47.1 (5.4.2021)
 **
-**	Interface definitions for DataType sound objects.
-**	Includes Release 45.1
+**  Interface definitions for DataType sound objects.
 **
-**	Copyright © 1992-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND	UTILITY_TAGITEM_I
@@ -40,7 +39,7 @@ SDTA_VoiceHeader	equ	(SDTA_Dummy+1)
 ; (BYTE *) Sample data
 SDTA_Sample		equ	(SDTA_Dummy+2)
 
-; (ULONG) Length of the sample data in UBYTEs
+; (ULONG) Length of the sample data (per channel) in UBYTEs
 SDTA_SampleLength	equ	(SDTA_Dummy+3)
 
 ; (UWORD) Period
@@ -78,7 +77,7 @@ SDTA_SignalBitNumber	equ	(SDTA_Dummy+10)
 ; (UWORD) Samples per second
 SDTA_SamplesPerSec	equ	(SDTA_Dummy+11)
 
-; (struct timeval *) Sample replay period
+; (TimeVal_Type *) Sample replay period
 SDTA_ReplayPeriod	equ	(SDTA_Dummy+12)
 
 ; (BYTE *) Sample data
@@ -99,8 +98,11 @@ SDTA_SyncSampleChange	equ	(SDTA_Dummy+17)
 
     STRUCTURE VoiceHeader,0
 	ULONG	vh_OneShotHiSamples	; # samples in the high octave 1-shot part
+								; (per channel)
 	ULONG	vh_RepeatHiSamples	; # samples in the high octave repeat part
-	ULONG	vh_SamplesPerHiCycle	; # samples/cycle in high octave, else 0
+								; (per channel)
+	ULONG	vh_SamplesPerHiCycle	; # samples/cycle in high octave
+									; (per channel), else 0
 	UWORD	vh_SamplesPerSec	; data sampling rate
 	UBYTE	vh_Octaves		; # of octaves of waveforms
 	UBYTE	vh_Compression		; data compression technique used

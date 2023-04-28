@@ -1,13 +1,12 @@
     IFND INTUITION_CLASSUSR_I
 INTUITION_CLASSUSR_I SET 1
 **
-** $VER: classusr.i 38.1 (11.11.1991)
-** Includes Release 45.1
+**	$VER: classusr.i 47.1 (1.8.2019)
 **
-** For application users of Intuition object classes
+**	For application users of Intuition object classes
 **
-**  (C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 

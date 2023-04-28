@@ -1,13 +1,12 @@
 	IFND DOS_RECORD_I
 DOS_RECORD_I SET 1
 **
-**	$VER: record.i 36.5 (12.7.1990)
-**	Includes Release 45.1
+**	$VER: record.i 47.1 (29.7.2019)
 **
 **	include file for record locking
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
      IFND  DOS_DOS_I

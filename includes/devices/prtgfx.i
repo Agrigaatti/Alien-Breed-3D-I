@@ -1,19 +1,18 @@
 	IFND	DEVICES_PRTGFX_I
 DEVICES_PRTGFX_I	SET	1
 **
-**	$VER: prtgfx.i 44.1 (19.10.1999)
-**	Includes Release 45.1
+**	$VER: prtgfx.i 47.1 (28.6.2019)
 **
-**	printer.device structure definitions
+**	printer.device base structure definitions
 **
-**	(C) Copyright 1987-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND  EXEC_TYPES_I
     INCLUDE  "exec/types.i"
     ENDC
-
+	 
 PCMYELLOW	EQU	0		; byte index for yellow
 PCMMAGENTA	EQU	1		; byte index for magenta
 PCMCYAN		EQU	2		; byte index for cyan
@@ -28,7 +27,7 @@ PCMWHITE	EQU	PCMBLACK	; byte index for white
 		LABEL	colorSByte	; 1 entry for each of YMCB
 		STRUCT	colorByte,4	; ditto (except signed)
 		LABEL	ce_SIZEOF
-
+		
 	STRUCTURE	PrtInfo,0
 		APTR	pi_render	; PRIVATE - DO NOT USE!
 		APTR	pi_rp		; PRIVATE - DO NOT USE!

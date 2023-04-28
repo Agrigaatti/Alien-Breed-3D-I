@@ -1,13 +1,12 @@
 	IFND	DEVICES_INPUT_I
 DEVICES_INPUT_I SET	1
 **
-**	$VER: input.i 36.0 (1.5.1990)
-**	Includes Release 45.1
+**	$VER: input.i 47.1 (28.6.2019)
 **
-**	input device command definitions
+**	input device command definitions 
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
    IFND	    EXEC_IO_I
@@ -24,5 +23,7 @@ DEVICES_INPUT_I SET	1
    DEVCMD	IND_SETMPORT
    DEVCMD	IND_SETMTYPE
    DEVCMD	IND_SETMTRIG
+
+IND_ADDEVENT	EQU 24	; V47 similar to WRITEEVNT, but includes keyboard repeat functions 
 
 	ENDC	; DEVICES_INPUT_I

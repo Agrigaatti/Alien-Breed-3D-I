@@ -1,15 +1,13 @@
 	IFND	LIBRARIES_DISKFONT_I
 LIBRARIES_DISKFONT_I	SET	1
 **
-**	$VER: diskfont.i 36.3 (22.10.1990)
-**	Includes Release 45.1
+**	$VER: diskfont.i 47.1 (29.7.2019)
 **
 **	diskfont library definitions
-**
 **	Obsolete - see diskfont/diskfont.i
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	DISKFONT_DISKFONT_I

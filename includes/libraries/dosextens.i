@@ -1,13 +1,13 @@
 	IFND	LIBRARIES_DOSEXTENS_I
 LIBRARIES_DOSEXTENS_I SET	1
 **
-**	$VER: dosextens.i 36.2 (12.7.1990)
-**	Includes Release 45.1
+**	$VER: dosextens.i 47.1 (29.7.2019)
 **
-**	DOS structures not needed for the casual AmigaDOS user
+**	DOS structures not needed for the casual AmigaDOS user 
+**	Obsolete - see dos/dosextens.i
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	DOS_DOSEXTENS_I

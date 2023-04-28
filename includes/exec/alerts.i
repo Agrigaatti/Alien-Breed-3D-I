@@ -1,13 +1,12 @@
     IFND EXEC_ALERTS_I
 EXEC_ALERTS_I SET 1
 **
-**	$VER: alerts.i 39.4 (13.11.1992)
-**	Includes Release 45.1
+**	$VER: alerts.i 47.1 (28.7.2019)
 **
 **	Alert numbers, as displayed by system crashes.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 **********************************************************************
@@ -15,9 +14,9 @@ EXEC_ALERTS_I SET 1
 *  Format of the alert error number:
 *
 *    +---------------+----------------+--------------------------------+
-*    |D|  SubSysId   |	General Error |    SubSystem Specific Error    |
+*    |D|  SubSysId   |  General Error |    SubSystem Specific Error    |
 *    +---------------+----------------+--------------------------------+
-*     1    7 bits	   8 bits		   16 bits
+*     1    7 bits          8 bits                  16 bits
 *
 *		     D:  DeadEnd alert
 *	      SubSysId:  indicates ROM subsystem number.
@@ -27,7 +26,7 @@ EXEC_ALERTS_I SET 1
 
 *
 *  Use this macro for causing an alert.  It is very sensitive to memory
-*  corruption.... like stepping on location 4!	After the alert, it
+*  corruption.... like stepping on location 4!  After the alert, it
 *  will return.
 *
 *	A0/A1 and D0/D1 are destroyed
@@ -39,7 +38,7 @@ ALERT		MACRO	(alertNumber, [paramArray])
 		IFNC	'\2',''
 		  lea.l	\2,a5
 		ENDC
-		move.l	4,a6
+		move.l  4,a6
 		jsr	_LVOAlert(a6)
 		movem.l	(sp)+,d7/a5/a6
 		ENDM
@@ -51,14 +50,14 @@ DEADALERT	MACRO	(alertNumber, [paramArray])
 		IFNC	'\2',''
 		  lea.l \2,a5
 		ENDC
-		move.l	4,a6
+		move.l  4,a6
 		jsr	_LVOAlert(a6)	; never returns
 		ENDM
 
 **********************************************************************
 *
 *  Hardware/CPU specific alerts:  They may show without the 8 at the
-*  front of the number.  These are CPU/68000 specific.	See 680x0
+*  front of the number.  These are CPU/68000 specific.  See 680x0
 *  programmer's manuals for more details.
 *
 **********************************************************************
@@ -174,6 +173,8 @@ AN_BadSemaphore	equ $01000010	; An attempt was made to use the old
 				; message semaphores.
 AN_BadQuickInt	equ $810000FF	; A quick interrupt has happened to an
 				; uninitialized vector.
+AN_AVLNotImpl   equ $01000011   ; AVL functions no longer implemented 
+AN_TreeNotImpl  equ $01000012   ; task trees no longer implemented
 
 ;------ graphics.library
 AN_GraphicsLib	equ $02000000
@@ -216,6 +217,7 @@ AN_WeirdEcho	equ $8400000E	; Weird echo causing incomprehension
 AN_NoConsole	equ $8400000F	; couldn't open the Console Device
 AN_NoISem	equ $04000010	; Intuition skipped obtaining a sem
 AN_ISemOrder	equ $04000011	; Intuition obtained a sem in bad order
+AN_DeadIntui    equ $04000012   ; someone called the removed copy of intuition
 
 ;------ math.library
 AN_MathLib	equ $05000000
@@ -236,6 +238,7 @@ AN_KeyRange	equ $0700000B	; Key out of range
 AN_BadOverlay	equ $0700000C	; Bad overlay
 AN_BadInitFunc	equ $0700000D	; Invalid init packet for cli/shell
 AN_FileReclosed equ $0700000E	; A filehandle was closed more than once
+AN_CLIObsolete  equ $0700000F   ; An obsolete shell init function call was made
 
 ;------ ramlib.library
 AN_RAMLib	equ $08000000
@@ -278,7 +281,7 @@ AN_TMBadSupply	equ $15000002	; power supply -- no 50/60hz ticks
 AN_CIARsrc	equ $20000000
 
 ;------	disk.resource
-AN_DiskRsrc	equ $21000000
+AN_DiskRsrc 	equ $21000000
 AN_DRHasDisk	equ $21000001	; get unit: already has disk
 AN_DRIntNoAct	equ $21000002	; interrupt: no active unit
 
@@ -286,7 +289,7 @@ AN_DRIntNoAct	equ $21000002	; interrupt: no active unit
 AN_MiscRsrc	equ $22000000
 
 ;------ bootstrap
-AN_BootStrap	equ $30000000
+AN_BootStrap    equ $30000000
 AN_BootError	equ $30000001	; boot code returned an error
 
 ;------ workbench

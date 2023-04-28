@@ -1,13 +1,12 @@
 	IFND UTILITY_DATE_I
 UTILITY_DATE_I	SET	1
 **
-**	$VER: date.i 39.1 (20.1.1992)
-**	Includes Release 45.1
+**	$VER: date.i 47.1 (3.8.2019)
 **
 **	Date conversion routines ClockData definition.
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

@@ -2,13 +2,12 @@
 DEVICES_TRACKDISK_I	SET	1
 
 **
-**	$VER: trackdisk.i 33.12 (28.11.1990)
-**	Includes Release 45.1
+**	$VER: trackdisk.i 47.3 (24.8.2020)
 **
 **	trackdisk device structure and value definitions
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019-2020 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_IO_I
@@ -25,15 +24,6 @@ DEVICES_TRACKDISK_I	SET	1
 *
 *--------------------------------------------------------------------
 
-
-* OBSOLETE -- only valid for 3 1/4" drives.  Use the TD_GETNUMTRACKS command!
-*
-*NUMCYLS		EQU	80		; normal # of cylinders
-*MAXCYLS		EQU	NUMCYLS+20	; max # of cyls to look for
-*						;	during a calibrate
-*NUMHEADS	EQU	2
-*NUMTRACKS	EQU	NUMCYLS*NUMHEADS
-
 NUMSECS		EQU	11
 NUMUNITS	EQU	4
 
@@ -43,12 +33,9 @@ NUMUNITS	EQU	4
 *
 *--------------------------------------------------------------------
 
-
 *-- sizes before mfm encoding
 TD_SECTOR	EQU	512
 TD_SECSHIFT	EQU	9			; log TD_SECTOR
-*						;    2
-
 
 *--------------------------------------------------------------------
 *
@@ -90,6 +77,14 @@ TD_NAME:	MACRO
 	DEVCMD	TD_EJECT		; for those drives that support it
 	DEVCMD	TD_LASTCOMM		; dummy placeholder for end of list
 
+*
+* Some devices also support 64-bit wide commands. The higher 32 bit are then
+* in io_Actual. The trackdisk itself does not support these commands
+* for obvious reasons...
+TD_READ64     EQU	24
+TD_WRITE64    EQU	25
+TD_SEEK64     EQU	26
+TD_FORMAT64   EQU	27
 
 *
 *
@@ -106,16 +101,14 @@ ETD_CLEAR	EQU	(CMD_CLEAR!TDF_EXTCOM)
 ETD_RAWREAD	EQU	(TD_RAWREAD!TDF_EXTCOM)
 ETD_RAWWRITE	EQU	(TD_RAWWRITE!TDF_EXTCOM)
 
-
 *
 * extended IO has a larger than normal io request block.
 *
 
  STRUCTURE IOEXTTD,IOSTD_SIZE
 	ULONG	IOTD_COUNT	; removal/insertion count
-	ULONG	IOTD_SECLABEL	; sector label data region
+	APTR	IOTD_SECLABEL	; sector label data region
 	LABEL	IOTD_SIZE
-
 
 *
 *  This is the structure returned by TD_DRIVEGEOMETRY
@@ -160,7 +153,6 @@ DG_UNKNOWN		EQU	31
 * flags
  BITDEF DG,REMOVABLE,0
 
-
 *
 * raw read and write can be synced with the index pulse.  This flag
 * in io request's IO_FLAGS field tells the driver that you want this.
@@ -202,12 +194,12 @@ DRIVE3_5_150RPM	EQU	3
 
 TDERR_NotSpecified	EQU	20	; general catchall
 TDERR_NoSecHdr		EQU	21	; couldn't even find a sector
-TDERR_BadSecPreamble	EQU	22	; sector looked wrong
-TDERR_BadSecID		EQU	23	; ditto
+TDERR_BadSecPreamble	EQU	22	; out of bounds sector number/offset
+TDERR_BadSecID		EQU	23	; incorrect sector type
 TDERR_BadHdrSum		EQU	24	; header had incorrect checksum
 TDERR_BadSecSum		EQU	25	; data had incorrect checksum
 TDERR_TooFewSecs	EQU	26	; couldn't find enough sectors
-TDERR_BadSecHdr		EQU	27	; another "sector looked wrong"
+TDERR_BadSecHdr		EQU	27	; incorrect sector track number
 TDERR_WriteProt		EQU	28	; can't write to a protected disk
 TDERR_DiskChanged	EQU	29	; no disk in the drive
 TDERR_SeekError		EQU	30	; couldn't find track 0
@@ -237,8 +229,10 @@ TDERR_PostReset		EQU	35	; user hit reset; awaiting doom
 					; for recalibrate
 	ULONG	TDU_COUNTER		; counter for disk changes
 					;  (ONLY ACCESS WHILE UNIT IS STOPPED!)
-	LABEL	TDU_PUBLICUNITSIZE
+	ULONG   TDU_POSTWRITEDELAY	; time to wait after a write
+	ULONG   TDU_SIDESELECTDELAY	; time to wait after head select
 
+	LABEL	TDU_PUBLICUNITSIZE
 
 *
 * Flags for TDU_PUBFLAGS:
@@ -246,3 +240,4 @@ TDERR_PostReset		EQU	35	; user hit reset; awaiting doom
 	BITDEF	TDP,NOCLICK,0		; set to enable noclickstart
 
 	ENDC	; DEVICE_TRACKDISK_I
+

@@ -1,13 +1,12 @@
 	IFND	RESOURCES_BATTCLOCK_I
 RESOURCES_BATTCLOCK_I	SET	1
 **
-**	$VER: battclock.i 36.3 (1.5.1990)
-**	Includes Release 45.1
+**	$VER: battclock.i 47.1 (3.8.2019)
 **
 **	BattClock resource name strings.
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**		All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 BATTCLOCKNAME	MACRO

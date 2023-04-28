@@ -1,13 +1,12 @@
 	IFND	WORKBENCH_ICON_I
 WORKBENCH_ICON_I	SET	1
 **
-**	$VER: icon.i 45.1 (8.2.2001)
-**	Includes Release 45.1
+**	$VER: icon.i 47.3 (6.1.2022)
 **
 **	External declarations for icon.library
 **
-**	Copyright © 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2020 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	GRAPHICS_VIEW_I
@@ -189,6 +188,28 @@ ICONGETA_Label				equ (ICONA_Dummy+52)
 ; Screen to remap the icon to (struct Screen *).
 ICONGETA_Screen				equ (ICONA_Dummy+69)
 
+; Request the type of the actual file whose icon is being loaded
+; by GetIconTagList(), as determined by the global identification
+; hook. If this tag is passed, the file is identified even if it
+; has a real icon. The value of this tag must be a pointer to a
+; text buffer of at least 256 bytes, or NULL (which is ignored).
+; This tag only works with actual files (tools and projects), not
+; volumes, directories or trashcans.
+; If the file cannot get identified, the supplied buffer will
+; contain an empty string (a single NUL byte) on the function's
+; return. Defaults to NULL (STRPTR). (V47)
+ICONGETA_IdentifyBuffer			equ (ICONA_Dummy+122)
+
+; When using ICONGETA_IdentifyBuffer, you can ask not to actually
+; load an icon, but just identify the file with the specified name
+; (which is quicker if all you need is the file type, and doesn't
+; require you to free an icon afterwards). If you pass this tag
+; with a TRUE value, GetIconTagList() will return NULL with a zero
+; error code in ICONA_ErrorCode. Note: this tag will be ignored if
+; a valid buffer is not also passed with ICONGETA_IdentifyBuffer.
+; Defaults to FALSE (BOOL). (V47)
+ICONGETA_IdentifyOnly			equ (ICONA_Dummy+123)
+
 ;------------------------------------------------------------------------------
 
 ; Tags for use with PutIconTagList()
@@ -299,6 +320,12 @@ ICONDRAWA_Borderless		equ (ICONA_Dummy+83)
 
 ; The icon to be drawn refers to a linked object (BOOL).
 ICONDRAWA_IsLink		equ (ICONA_Dummy+89)
+
+; Draw the icon label with shadow (BOOL). V47.
+ICONDRAWA_LabelShadow	equ (ICONA_Dummy+93)
+
+; Draw the icon label with outline (BOOL). V47.
+ICONDRAWA_LabelOutline	equ (ICONA_Dummy+94)
 
 ;------------------------------------------------------------------------------
 

@@ -1,13 +1,12 @@
 	IFND	LIBRARIES_LOCALE_I
 LIBRARIES_LOCALE_I	SET	1
 **
-**	$VER: locale.i 38.10 (22.12.1992)
-**	Includes Release 45.1
+**	$VER: locale.i 47.1 (29.7.2019)
 **
 **	locale.library interface structures and definitions
 **
-**	(C) Copyright 1991-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------
@@ -94,7 +93,28 @@ TODAYSTR     equ 48	  ; Today
 TOMORROWSTR  equ 49	  ; Tomorrow
 FUTURESTR    equ 50	  ; Future
 
-MAXSTRMSG    equ 51	  ; current number of defined strings
+ALTDAY_1     equ 52   ; Sunday
+ALTDAY_2     equ 53   ; Monday
+ALTDAY_3     equ 54   ; Tuesday
+ALTDAY_4     equ 55   ; Wednesday
+ALTDAY_5     equ 56   ; Thursday
+ALTDAY_6     equ 57   ; Friday
+ALTDAY_7     equ 58   ; Saturday
+
+ALTMON_1     equ 59   ; January
+ALTMON_2     equ 60   ; February
+ALTMON_3     equ 61   ; March
+ALTMON_4     equ 62   ; April
+ALTMON_5     equ 63   ; May
+ALTMON_6     equ 64   ; June
+ALTMON_7     equ 65   ; July
+ALTMON_8     equ 66   ; August
+ALTMON_9     equ 67   ; September
+ALTMON_10    equ 68   ; October
+ALTMON_11    equ 69   ; November
+ALTMON_12    equ 70   ; December
+
+MAXSTRMSG    equ 71	  ; current number of defined strings
 
 ;---------------------------------------------------------------------------
 

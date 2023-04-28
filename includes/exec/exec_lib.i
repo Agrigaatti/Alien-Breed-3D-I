@@ -1,21 +1,21 @@
 	IFND	EXEC_LIB_I
 EXEC_LIB_I	SET	1
 **
-**	$VER: exec_lib.i 45.2 (25.2.2001)
+**	$VER: exec_lib.i 47.1 (8.11.2021)
 **
 **	Library vector table
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019-2022 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	FUNCDEF	Supervisor
-	FUNCDEF	execPrivate1
-	FUNCDEF	execPrivate2
-	FUNCDEF	execPrivate3
-	FUNCDEF	execPrivate4
-	FUNCDEF	execPrivate5
-	FUNCDEF	execPrivate6
+	FUNCDEF	ExitIntr
+	FUNCDEF	Schedule
+	FUNCDEF	Reschedule
+	FUNCDEF	Switch
+	FUNCDEF	Dispatch
+	FUNCDEF	Exception
 	FUNCDEF	InitCode
 	FUNCDEF	InitStruct
 	FUNCDEF	MakeLibrary
@@ -88,9 +88,9 @@ EXEC_LIB_I	SET	1
 	FUNCDEF	AddResource
 	FUNCDEF	RemResource
 	FUNCDEF	OpenResource
-	FUNCDEF	execPrivate7
-	FUNCDEF	execPrivate8
-	FUNCDEF	execPrivate9
+	FUNCDEF	RawIOInit
+	FUNCDEF	RawMayGetChar
+	FUNCDEF	RawPutChar
 	FUNCDEF	RawDoFmt
 	FUNCDEF	GetCC
 	FUNCDEF	TypeOfMem
@@ -136,25 +136,25 @@ EXEC_LIB_I	SET	1
 	FUNCDEF	AddMemHandler
 	FUNCDEF	RemMemHandler
 	FUNCDEF	ObtainQuickVector
-	FUNCDEF	execPrivate10
-	FUNCDEF	execPrivate11
-	FUNCDEF	execPrivate12
-	FUNCDEF	execPrivate13
-	FUNCDEF	execPrivate14
-	FUNCDEF	execPrivate15
+	FUNCDEF	ExecReserved04
+	FUNCDEF	ExecReserved05
+	FUNCDEF	ExecReserved06
+	FUNCDEF	TaggedOpenLibrary
+	FUNCDEF	ReadGayle
+	FUNCDEF	ExecReserved08
 	FUNCDEF	NewMinList
 	FUNCDEF	ExecReserved10
 	FUNCDEF	ExecReserved11
 	FUNCDEF	ExecReserved12
-	FUNCDEF	AVL_AddNode
-	FUNCDEF	AVL_RemNodeByAddress
-	FUNCDEF	AVL_RemNodeByKey
-	FUNCDEF	AVL_FindNode
-	FUNCDEF	AVL_FindPrevNodeByAddress
-	FUNCDEF	AVL_FindPrevNodeByKey
-	FUNCDEF	AVL_FindNextNodeByAddress
-	FUNCDEF	AVL_FindNextNodeByKey
-	FUNCDEF	AVL_FindFirstNode
-	FUNCDEF	AVL_FindLastNode
+	FUNCDEF	AVL_Reserved1
+	FUNCDEF	AVL_Reserved2
+	FUNCDEF	AVL_Reserved3
+	FUNCDEF	AVL_Reserved4
+	FUNCDEF	AVL_Reserved5
+	FUNCDEF	AVL_Reserved6
+	FUNCDEF	AVL_Reserved7
+	FUNCDEF	AVL_Reserved8
+	FUNCDEF	AVL_Reserved9
+	FUNCDEF	AVL_Reserved10
 
 	ENDC	; EXEC_LIB_I

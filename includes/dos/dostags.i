@@ -1,13 +1,12 @@
 	IFND	DOS_DOSTAGS_I
 DOS_DOSTAGS_I SET	1
 **
-**	$VER: dostags.i 36.13 (29.4.1991)
-**	Includes Release 45.1
+**	$VER: dostags.i 47.1 (29.7.2019)
 **
 **	Tag definitions for all Dos routines using tags
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 
@@ -18,34 +17,45 @@ DOS_DOSTAGS_I SET	1
 *****************************************************************************
 * definitions for the System() call
 
-SYS_Dummy	EQU	TAG_USER+32
+SYS_Dummy 	EQU	TAG_USER+32
 SYS_Input	EQU	SYS_Dummy+1	; specifies the input filehandle
 SYS_Output	EQU	SYS_Dummy+2	; specifies the output filehandle
 SYS_Asynch	EQU	SYS_Dummy+3	; run asynch, close input/output(!)
-SYS_UserShell	EQU	SYS_Dummy+4   ; send to user shell instead of boot shell
-SYS_CustomShell	EQU	SYS_Dummy+5   ; send to a specific shell (data is name)
-*SYS_Error	EQU	SYS_Dummy+?
-
+SYS_UserShell	EQU	SYS_Dummy+4	; send to user shell instead of boot shell
+SYS_CustomShell	EQU	SYS_Dummy+5	; send to a specific shell (data is name)
+SYS_Error	EQU	SYS_Dummy+6	; (BPTR) - specifies the error output filehandle (New for V50, not in V47)
+SYS_ExecuteInputStream	EQU		SYS_Dummy + 7
+					;(BOOLEAN) - instead of reading the 'command' string parameter,
+					;reads commands from the input filehandle instead. (V53.45)
+					;not present in V47.
+SYS_CmdStream	EQU	SYS_Dummy+8	; (BPTR) command input stream, closed on exit (V47)					
 
 *****************************************************************************
 * definitions for the CreateNewProc() call
 * you MUST specify one of NP_Seglist or NP_Entry.  All else is optional.
 
+
+* Note that V40 DID NOT, unlike claimed, support NP_Error and
+* NP_CloseError. To stay compatible with V40, the default for
+* NP_Error is NULL (do not supply an error channel) and the
+* default for NP_CloseError is FALSE (unlike documented in V40)
+* again to stay compatible with V40. Bummer!
+
 NP_Dummy	EQU TAG_USER+1000
-NP_Seglist	EQU NP_Dummy+1	 ; seglist of code to run for the process
+NP_Seglist	EQU NP_Dummy+1	 ; seglist of code to run for the process  
 NP_FreeSeglist	EQU NP_Dummy+2	 ; free seglist on exit - only valid for
 				 ; for NP_Seglist.  Default is TRUE.
-NP_Entry	EQU NP_Dummy+3	 ; entry point to run - mutually exclusive
-				 ; with NP_Seglist.
-NP_Input	EQU NP_Dummy+4	 ; filehandle - default is Open("NIL:"...)
-NP_Output	EQU NP_Dummy+5	 ; filehandle - default is Open("NIL:"...)
+NP_Entry	EQU NP_Dummy+3	 ; entry point to run - mutually exclusive 
+				 ; with NP_Seglist. 
+NP_Input	EQU NP_Dummy+4	 ; filehandle - default is Open("NIL:"...) 
+NP_Output	EQU NP_Dummy+5	 ; filehandle - default is Open("NIL:"...) 
 NP_CloseInput	EQU NP_Dummy+6	 ; close input filehandle on exit
 				 ; default TRUE
 NP_CloseOutput	EQU NP_Dummy+7	 ; close output filehandle on exit
 				 ; default TRUE
-NP_Error	EQU NP_Dummy+8	 ; filehandle - default is Open("NIL:"...)
+NP_Error	EQU NP_Dummy+8	 ; filehandle - default is NULL 
 NP_CloseError	EQU NP_Dummy+9	 ; close error filehandle on exit
-				 ; default TRUE
+				 ; default FALSE
 NP_CurrentDir	EQU NP_Dummy+10	 ; lock - default is parent's current dir  
 NP_StackSize	EQU NP_Dummy+11	 ; stacksize for process - default 4000    
 NP_Name		EQU NP_Dummy+12	 ; name for process - default "New Process"
@@ -67,17 +77,17 @@ NP_Arguments	EQU NP_Dummy+21
 
 NP_NotifyOnDeath EQU NP_Dummy+22 ; notify parent on death - default FALSE
 				 ; Not functional yet.
-NP_Synchronous	EQU NP_Dummy+23	 ; don't return until process finishes -
+NP_Synchronous	EQU NP_Dummy+23	 ; don't return until process finishes -   
 				 ; default FALSE.
 				 ; Not functional yet.
-NP_ExitCode	EQU NP_Dummy+24	 ; code to be called on process exit
-NP_ExitData	EQU NP_Dummy+25	 ; optional argument for NP_EndCode rtn -
+NP_ExitCode	EQU NP_Dummy+24	 ; code to be called on process exit       
+NP_ExitData	EQU NP_Dummy+25	 ; optional argument for NP_EndCode rtn -  
 				 ; default NULL
 
 *****************************************************************************
 * tags for AllocDosObject
 ADO_Dummy	EQU	TAG_USER+2000
-ADO_FH_Mode	EQU	ADO_Dummy+1	; for type DOS_FILEHANDLE only
+ADO_FH_Mode	EQU	ADO_Dummy+1 	; for type DOS_FILEHANDLE only
 				; sets up FH for the type of open being done
 				; This can make a big difference for buffered
 				; files.

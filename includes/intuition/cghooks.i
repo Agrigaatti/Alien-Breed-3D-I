@@ -1,13 +1,12 @@
     IFND INTUITION_CGHOOKS_I
 INTUITION_CGHOOKS_I SET 1
 **
-** $VER: cghooks.i 38.1 (11.11.1991)
-** Includes Release 45.1
+**	$VER: cghooks.h 47.1 (1.8.2019)
 **
-**  Custom gadget processing
+**	Custom Gadget processing
 **
-**  (C) Copyright 1988-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND EXEC_TYPES_I

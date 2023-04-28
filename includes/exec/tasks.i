@@ -1,13 +1,12 @@
 	IFND	EXEC_TASKS_I
 EXEC_TASKS_I	SET	1
 **
-**	$VER: tasks.i 39.1 (18.9.1992)
-**	Includes Release 45.1
+**	$VER: tasks.i 47.1 (28.6.2019)
 **
 **	Task Control Block, Signals, and Task flags.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND EXEC_NODES_I
@@ -37,22 +36,16 @@ EXEC_TASKS_I	SET	1
     UBYTE   TC_STATE
     BYTE    TC_IDNESTCNT	    ; intr disabled nesting
     BYTE    TC_TDNESTCNT	    ; task disabled nesting
-    ULONG   TC_SIGALLOC	    ; sigs allocated
+    ULONG   TC_SIGALLOC	    	    ; sigs allocated
     ULONG   TC_SIGWAIT		    ; sigs we are waiting for
-    ULONG   TC_SIGRECVD	    ; sigs we have received
+    ULONG   TC_SIGRECVD	    	    ; sigs we have received
     ULONG   TC_SIGEXCEPT	    ; sigs we take as exceptions
-    ;* Pointer to an extended task structure.  This structure is allocated
-    ;* by V36 Exec if the proper flags in tc_ETaskFlags are set.  This
-    ;* field was formerly defined as:
-    ;*		UWORD	TC_TRAPALLOC	    ; traps allocated
-    ;*		UWORD	TC_TRAPABLE	    ; traps enabled
-    ;* Please see the Exec AllocTrap() and FreeTrap() calls.
-    ;*
-    APTR    tc_ETask		    ; pointer to extended task structure
+    UWORD   TC_TRAPALLOC	    ; traps allocated
+    UWORD   TC_TRAPABLE	    	    ; traps enabled
     APTR    TC_EXCEPTDATA	    ; data for except proc
     APTR    TC_EXCEPTCODE	    ; exception procedure
-    APTR    TC_TRAPDATA	    ; data for proc trap proc
-    APTR    TC_TRAPCODE	    ; proc trap procedure
+    APTR    TC_TRAPDATA	    	    ; data for proc trap proc
+    APTR    TC_TRAPCODE	    	    ; proc trap procedure
     APTR    TC_SPREG		    ; stack pointer
     APTR    TC_SPLOWER		    ; stack lower bound
     APTR    TC_SPUPPER		    ; stack upper bound + 2
@@ -62,25 +55,7 @@ EXEC_TASKS_I	SET	1
     APTR    TC_Userdata		    ; For use by the task; no restrictions!
     LABEL   TC_SIZE
 
-
-;Don't even _think_ about allocating one of these yourself.
- STRUCTURE	ETask,MN_SIZE
-		APTR	et_Parent		;Pointer to task (TC)
-		ULONG	et_UniqueID		;ID unique to this task
-		STRUCT	et_Children,MLH_SIZE	;List of children
-		UWORD	et_TRAPALLOC
-		UWORD	et_TRAPABLE
-		ULONG	et_Result1		;First result
-		APTR	et_Result2		;Result data pointer (AllocVec)
-		STRUCT	et_TaskMsgPort,MP_SIZE
-		LABEL	ETask_SIZEOF	;_never_ depend on this size!
-
-
-CHILD_NOTNEW	EQU	1	;function not called from a new style task
-CHILD_NOTFOUND	EQU	2	;child not found
-CHILD_EXITED	EQU	3	;child has exited
-CHILD_ACTIVE	EQU	4	;child has exited
-
+;the ETask structure is gone for good.
 
 ;Stack swap structure as passed to StackSwap()
 ;
@@ -94,7 +69,7 @@ CHILD_ACTIVE	EQU	4	;child has exited
 ;------ TC_FLAGS Bits:
 
     BITDEF  T,PROCTIME,0
-    BITDEF  T,ETASK,3
+    BITDEF  T,ETASK,3           ;obsolete
     BITDEF  T,STACKCHK,4
     BITDEF  T,EXCEPT,5
     BITDEF  T,SWITCH,6		;Enable TC_SWITCH point

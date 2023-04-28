@@ -1,11 +1,12 @@
 	IFND DATATYPES_DATATYPESCLASS_I
 DATATYPES_DATATYPESCLASS_I	SET	1
 **
-**	$VER: datatypesclass.i 44.1 (17.4.1999)
-**	Includes Release 45.1
+**	$VER: datatypesclass.i 47.1 (28.6.2019)
 **
-**	Copyright © 1992-2001 Amiga, Inc.
-**	    All Rights Reserved
+**  Interface definitions for DataType objects.
+**
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;------------------------------------------------------------------------------
@@ -131,6 +132,12 @@ DTA_SourceSize		equ	(DTA_Dummy+40)
 ; Reserved tag; DO NOT USE (V44)
 DTA_Reserved		equ	(DTA_Dummy+41)
 
+; New for V45.3. (struct IClass *) Use this class when creating
+; new objects using NewDTObjectA. Useful when creating private
+; subclasses inside applications (e.g. when a subclass is needed
+; to superset some methods (see "DTConvert" example)).
+DTA_Class		equ	(DTA_Dummy+62)
+
 ; DTObject attributes
 DTA_Name		equ	(DTA_Dummy+100)
 DTA_SourceType		equ	(DTA_Dummy+101)
@@ -221,8 +228,6 @@ DTST_MEMORY		equ	5	; New for V44
 
 ;------------------------------------------------------------------------------
 ; Methods
-
-DTM_Dummy		equ	$600
 
 ; Inquire what environment an object requires
 DTM_FRAMEBOX		equ	$0601
@@ -326,6 +331,36 @@ STM_PREV_FIELD		equ	9
 STM_ACTIVATE_FIELD	equ	10
 STM_COMMAND		equ	11
 
+; New for V40
+STM_REWIND		equ	12
+STM_FASTFORWARD		equ	13
+STM_STOP		equ	14
+STM_RESUME		equ	15
+STM_LOCATE		equ	16
+
+; New for V45
+STM_HELP		equ	17
+STM_SEARCH		equ	18
+STM_SEARCH_NEXT		equ	19
+STM_SEARCH_PREV		equ	20
+
+; New for V47
+STM_UNRETRACE		equ	21
+
+; New for V45: Custom trigger methods starts here; but must be within
+; STMF_METHOD_MASKs value
+;
+STM_USER            equ	100
+
+STMF_METHOD_MASK    equ 0x0000ffff
+STMF_DATA_MASK      equ	0x00ff0000
+STMF_RESERVED_MASK  equ	0xff000000
+
+STMD_VOID           equ	0x00010000
+STMD_ULONG          equ	0x00020000
+STMD_STRPTR         equ	0x00030000
+STMD_TAGLIST        equ	0x00040000
+	
 ; DTM_DRAW
     STRUCTURE dtDraw,4
 	; ULONG		MethodID

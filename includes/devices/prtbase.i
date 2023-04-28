@@ -1,13 +1,12 @@
    IFND  DEVICES_PRTBASE_I
-DEVICES_PRTBASE_I EQU	1
+DEVICES_PRTBASE_I EQU   1
 **
-**	$VER: prtbase.i 44.1 (19.10.1999)
-**	Includes Release 45.1
+**	$VER: prtbase.i 47.1 (28.6.2019)
 **
 **	printer.device base structure definitions
 **
-**	(C) Copyright 1987-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
    IFND  EXEC_TYPES_I
@@ -47,10 +46,10 @@ DEVICES_PRTBASE_I EQU	1
 
 
  STRUCTURE  DeviceData,LIB_SIZE
-    APTR dd_Segment	      ; A0 when initialized
-    APTR dd_ExecBase	      ; A6 for exec
-    APTR dd_CmdVectors	      ; command table for device commands
-    APTR dd_CmdBytes	      ; bytes describing which command queue
+    APTR dd_Segment           ; A0 when initialized
+    APTR dd_ExecBase          ; A6 for exec
+    APTR dd_CmdVectors        ; command table for device commands
+    APTR dd_CmdBytes          ; bytes describing which command queue
     UWORD   dd_NumCommands    ; the number of commands supported
     LABEL   dd_SIZEOF
 
@@ -58,13 +57,13 @@ DEVICES_PRTBASE_I EQU	1
 *------
 *------ device driver private variables ------------------------------
 *------
-du_Flags EQU   LN_PRI	      ; various unit flags
+du_Flags EQU   LN_PRI         ; various unit flags
 
 ;------ IO_FLAGS
     BITDEF  IO,QUEUED,4       ; command is queued to be performed
     BITDEF  IO,CURRENT,5      ; command is being performed
     BITDEF  IO,SERVICING,6    ; command is being actively performed
-    BITDEF  IO,DONE,7	      ; command is done
+    BITDEF  IO,DONE,7         ; command is done
 
 ;------ du_Flags
     BITDEF  DU,STOPPED,0      ; commands are not to be performed
@@ -78,9 +77,8 @@ P_BUFSIZE	EQU	256	; size of internal buffers for text i/o
 P_SAFESIZE	EQU	128	; safety margin for text output buffer
 
 *------ pd_Flags ------
-   BITDEF   P,IOR0,0	      ; IOR0 is in use
-   BITDEF   P,IOR1,1	      ; IOR1 is in use
-   BITDEF   P,IOOPENED,2      ; PRIVATE
+   BITDEF   P,IOR0,0          ; IOR0 is in use
+   BITDEF   P,IOR1,1          ; IOR1 is in use
    BITDEF   P,EXPUNGED,7      ; device to be expunged when all closed
 
  STRUCTURE  PrinterData,dd_SIZEOF
@@ -88,9 +86,9 @@ P_SAFESIZE	EQU	128	; safety margin for text output buffer
     BPTR pd_PrinterSegment    ; the printer specific segment
     UWORD   pd_PrinterType    ; the segment printer type
     APTR pd_SegmentData       ; the segment data structure
-    APTR pd_PrintBuf	      ; the raster print buffer
-    APTR pd_PWrite	      ; the parallel write function
-    APTR pd_PBothReady	      ; the parallel write function's done
+    APTR pd_PrintBuf          ; the raster print buffer
+    APTR pd_PWrite            ; the parallel write function
+    APTR pd_PBothReady        ; the parallel write function's done
 
     IFGT IOEXTPar_SIZE-IOEXTSER_SIZE
     STRUCT  pd_IOR0,IOEXTPar_SIZE   ; port I/O request 0
@@ -210,12 +208,5 @@ PRTA_Preferences	EQU	PRTA_Dummy + 40
     UWORD   ps_Version        ; segment version
     UWORD   ps_Revision       ; segment revision
     LABEL   ps_PED            ; printer extended data
-
- STRUCTURE  PrtDriverPreferences,0
-    UWORD   pdp_Version
-    STRUCT  pdp_PrinterID,32
-    UBYTE   pdp_PrefName,FILENAME_SIZE-16
-    ULONG   pdp_Length
-    LABEL   pdp_SIZEOF
 
    ENDC

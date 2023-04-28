@@ -1,13 +1,12 @@
 	IFND UTILITY_NAME_I
 UTILITY_NAME_I	EQU	1
 **
-**	$VER: name.i 39.3 (10.2.1993)
-**	Includes Release 45.1
+**	$VER: name.i 47.1 (3.8.2019)
 **
 **	Namespace definitions
 **
-**	(C) Copyright 1992-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

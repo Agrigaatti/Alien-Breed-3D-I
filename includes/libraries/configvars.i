@@ -1,13 +1,12 @@
 	IFND	LIBRARIES_CONFIGVARS_I
 LIBRARIES_CONFIGVARS_I	SET	1
 **
-**	$VER: configvars.i 36.7 (9.4.1991)
-**	Includes Release 45.1
+**	$VER: configvars.i 47.1 (29.7.2019)
 **
 **	Software structures used by AutoConfig (tm) boards
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_NODES_I

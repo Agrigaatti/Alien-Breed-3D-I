@@ -1,13 +1,12 @@
 	IFND	DEVICES_BOOTBLOCK_I
 DEVICES_BOOTBLOCK_I	SET	1
 **
-**	$VER: bootblock.i 36.6 (5.11.1990)
-**	Includes Release 45.1
+**	$VER: bootblock.i 47.1 (28.6.2019)
 **
 **	floppy BootBlock definition
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I

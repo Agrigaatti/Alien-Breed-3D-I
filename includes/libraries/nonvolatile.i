@@ -1,13 +1,12 @@
 	IFND LIBRARIES_NONVOLATILE_I
 LIBRARIES_NONVOLATILE_I SET 1
 **
-**	$VER: nonvolatile.i 40.10 (3.8.1993)
-**	Includes Release 45.1
+**	$VER: nonvolatile.i 47.1 (29.7.2019)
 **
-**	nonvolatile.library interface structures and definitions.
+**	nonvolatile.library interface structures and defintions.
 **
-**	(C) Copyright 1992-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

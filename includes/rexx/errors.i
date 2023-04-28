@@ -1,14 +1,12 @@
 	 IFND	  REXX_ERRORS_I
 REXX_ERRORS_I SET      1
 **
-**	$VER: errors.i 36.6 (8.11.1991)
-**	Includes Release 45.1
+**	$VER: errors.i 47.1 (3.8.2019)
 **
 **	Definitions for ARexx error codes
 **
-**	(C) Copyright 1986,1987,1988,1989,1990 William S. Hawes.
-**	(C) Copyright 1990-2001 Amiga, Inc.
-**		All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ERRC_MSG    EQU   0		    ; error code offset

@@ -1,12 +1,11 @@
 	IFND GRAPHICS_COERCE_I
 **
-**	$VER: coerce.i 39.3 (15.2.1993)
-**	Includes Release 45.1
+**	$VER: coerce.i 47.1 (30.7.2019)
 **
 **	mode coercion definitions
 **
-**	(C) Copyright 1992-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 GRAPHICS_COERCE_I SET 1

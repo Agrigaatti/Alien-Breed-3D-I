@@ -1,13 +1,12 @@
 	IFND	LIBRARIES_EXPANSIONBASE_I
 LIBRARIES_EXPANSIONBASE_I	SET	1
 **
-**	$VER: expansionbase.i 36.18 (21.10.1991)
-**	Includes Release 45.1
+**	$VER: expansionbase.i 47.1 (29.7.2019)
 **
 **	Definitions for the expansion library base
 **
-**	(C) Copyright 1987-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 	IFND	EXEC_TYPES_I
 	INCLUDE "exec/types.i"

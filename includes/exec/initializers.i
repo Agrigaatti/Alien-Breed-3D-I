@@ -1,17 +1,16 @@
 	IFND	EXEC_INITIALIZERS_I
 EXEC_INITIALIZERS_I	SET	1
 **
-**	$VER: initializers.i 39.0 (15.10.1991)
-**	Includes Release 45.1
+**	$VER: initializers.i 47.1 (28.6.2019)
 **
-**	Macros for creating InitStruct() tables
+**	Macros for use with the InitStruct() function.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 INITBYTE	MACRO	; &offset,&value
-		IFLE	(\1)-255	;If offset <=255
+		IFLE	(\1)-255        ;If offset <=255
 		DC.B	$a0,\1		;use byte offset
 		DC.B	\2,0
 		MEXIT			;exit early
@@ -22,7 +21,7 @@ INITBYTE	MACRO	; &offset,&value
 		ENDM
 
 INITWORD	MACRO	; &offset,&value
-		IFLE	(\1)-255	;If offset <=255
+		IFLE	(\1)-255        ;If offset <=255
 		DC.B	$90,\1		;use byte offset
 		DC.W	\2
 		MEXIT			;exit early
@@ -33,7 +32,7 @@ INITWORD	MACRO	; &offset,&value
 		ENDM
 
 INITLONG	MACRO	; &offset,&value
-		IFLE	(\1)-255	;If offset <=255
+		IFLE	(\1)-255        ;If offset <=255
 		DC.B	$80,\1		;use byte offset
 		DC.L	\2
 		MEXIT			;exit early
@@ -51,13 +50,13 @@ INITLONG	MACRO	; &offset,&value
 INITSTRUCT	MACRO	; &size,&offset,&value,&count
 		DS.W	0
 		IFC	'\4',''
-COUNT\@	SET	0
+COUNT\@ 	SET	0
 		ENDC
 		IFNC	'\4',''
-COUNT\@	SET	\4
+COUNT\@ 	SET	\4
 		ENDC
 CMD\@		SET	(((\1)<<4)!COUNT\@)
-		IFLE	(\2)-255	;byte offset large enough?
+		IFLE	(\2)-255        ;byte offset large enough?
 		DC.B	(CMD\@)!$80
 		DC.B	\2
 		MEXIT

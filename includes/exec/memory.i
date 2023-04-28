@@ -1,13 +1,12 @@
 	IFND	EXEC_MEMORY_I
 EXEC_MEMORY_I	SET	1
 **
-**	$VER: memory.i 39.3 (20.5.1992)
-**	Includes Release 45.1
+**	$VER: memory.h 47.1 (28.6.2019)
 **
 **	Definitions and structures used by the memory allocation system
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND EXEC_NODES_I

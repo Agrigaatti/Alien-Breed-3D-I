@@ -1,11 +1,11 @@
 *********************************************************************************************
 
-                      opt                P=68020
+                          opt                P=68020
 
 *********************************************************************************************
 
-                      incdir             "includes"
-                      include            "macros.i"
+                          incdir             "includes"
+                          include            "macros.i"
 
 *********************************************************************************************
 ; Options:
@@ -14,365 +14,365 @@
 ;
 ; FIRST HALVE SCREEN BRIGHTNESS
 
-                      lea                $dff000,a6 
+                          lea                $dff000,a6 
 
-                      move.l             drawPt,a3
-                      adda.w             #10,a3   
-                      move.l             a3,pausePt
+                          move.l             drawPt,a3
+                          adda.w             #10,a3   
+                          move.l             a3,pausePt
 
-                      move.l             oldDrawPt,d3
-                      add.l              #10,d3
-                      move.l             d3,pBuffPt
+                          move.l             oldDrawPt,d3
+                          add.l              #10,d3
+                          move.l             d3,pBuffPt
 
-                      bsr                DRAWPAUSESCRN
+                          bsr                DRAWPAUSESCRN
 
-                      move.l             drawPt,d0
-                      move.l             oldDrawPt,drawPt
-                      move.l             d0,oldDrawPt
-                      move.l             d0,cop2lch(a6)	
-                      move.l             drawPt,a3
+                          move.l             drawPt,d0
+                          move.l             oldDrawPt,drawPt
+                          move.l             d0,oldDrawPt
+                          move.l             d0,cop2lch(a6)	
+                          move.l             drawPt,a3
 
-                      tst.l              USECOPBUFFER
-                      bpl.s              noFastBuffer  
+                          tst.l              USECOPBUFFER
+                          bpl.s              noFastBuffer  
                        
-                      move.l             copScrnBuff,a3
+                          move.l             copScrnBuff,a3
 
 noFastBuffer:                      
-                      lea                fromPtOffset(a3),a3
-                      move.l             a3,fromPt                               ; Copper chunky
+                          lea                fromPtOffset(a3),a3
+                          move.l             a3,fromPt                               ; Copper chunky
 
-                      lea                midOffset(a3),a3
-                      move.l             a3,midpt
+                          lea                midOffset(a3),a3
+                          move.l             a3,midpt
 
-                      WAITFORVERTBREQ                                            
+                          WAITFORVERTBREQ                                            
 
 .waitpress:
-                      bsr                CHANGEPOPTS
+                          bsr                CHANGEPOPTS
 
-                      tst.b              $19(a5)                                 ; 'p' Pause key
-                      bne.s              .unp
+                          tst.b              $19(a5)                                 ; 'p' Pause key
+                          bne.s              .unp
 
-                      btst               #7,$bfe001                              ; LMB port 2
-                      bne.s              .waitpress
+                          btst               #7,$bfe001                              ; LMB port 2
+                          bne.s              .waitpress
 
 .unp:
 .wr2:
-                      tst.b              $19(a5)                                 ; 'p' Pause key
-                      bne.s              .wr2
+                          tst.b              $19(a5)                                 ; 'p' Pause key
+                          bne.s              .wr2
 
-                      btst               #7,$bfe001                              ; LMB port 2
-                      beq.s              .wr2
+                          btst               #7,$bfe001                              ; LMB port 2
+                          beq.s              .wr2
 
-                      rts
+                          rts
 
 *********************************************************************************************
 
 CHECKUPDOWN:
-                      btst               #1,$dff00c
-                      sne                d0
-                      btst               #1,$dff00d
-                      sne                d1
-                      btst               #0,$dff00c
-                      sne                d2
-                      btst               #0,$dff00d
-                      sne                d3
-                      eor.b              d0,d2
-                      eor.b              d1,d3
+                          btst               #1,$dff00c
+                          sne                d0
+                          btst               #1,$dff00d
+                          sne                d1
+                          btst               #0,$dff00c
+                          sne                d2
+                          btst               #0,$dff00d
+                          sne                d3
+                          eor.b              d0,d2
+                          eor.b              d1,d3
  
-                      moveq              #0,d6
-                      move.l             #KeyMap,a5
-                      move.b             forward_key,d6
-                      tst.b              (a5,d6.w)
-                      sne                d0
-                      or.b               d0,d2
-                      move.b             backward_key,d6
-                      tst.b              (a5,d6.w)
-                      sne                d1
-                      or.b               d1,d3
-                      rts
+                          moveq              #0,d6
+                          move.l             #KeyMap,a5
+                          move.b             forward_key,d6
+                          tst.b              (a5,d6.w)
+                          sne                d0
+                          or.b               d0,d2
+                          move.b             backward_key,d6
+                          tst.b              (a5,d6.w)
+                          sne                d1
+                          or.b               d1,d3
+                          rts
 
 *********************************************************************************************
 
 CHANGEPOPTS:
-                      bsr                CHECKUPDOWN
+                          bsr                CHECKUPDOWN
 
-                      tst.b              d2                                      ; forward_key
-                      beq.s              notopchange
+                          tst.b              d2                                      ; forward_key
+                          beq.s              notopchange
 
-                      move.w             #1,d0
-                      sub.w              TOPPOPT,d0
-                      tst.l              copScrnBuff
-                      bne.s              OKFORFASTBUFFER
-                      clr.w              d0
+                          move.w             #1,d0
+                          sub.w              TOPPOPT,d0
+                          tst.l              copScrnBuff
+                          bne.s              OKFORFASTBUFFER
+                          clr.w              d0
 
 OKFORFASTBUFFER:
-                      move.w             d0,TOPPOPT
-                      tst.w              d0
-                      sne                USECOPBUFFER
-                      muls               #12,d0
-                      add.l              #FBUFFOPTS,d0                           ; OFF / ON
-                      move.l             d0,a0
-                      move.l             #FBUFFOPTLINE,a1
-                      bsr                PUTINPLINE
+                          move.w             d0,TOPPOPT
+                          tst.w              d0
+                          sne                USECOPBUFFER
+                          muls               #12,d0
+                          add.l              #FBUFFOPTS,d0                           ; OFF / ON
+                          move.l             d0,a0
+                          move.l             #FBUFFOPTLINE,a1
+                          bsr                PUTINPLINE
  
-                      bsr                DRAWPAUSESCRN
+                          bsr                DRAWPAUSESCRN
  
 .WWWWWWWW:
-                      bsr                CHECKUPDOWN
-                      tst.b              d2
-                      bne.s              .WWWWWWWW
+                          bsr                CHECKUPDOWN
+                          tst.b              d2
+                          bne.s              .WWWWWWWW
 
 notopchange:
-                      tst.b              d3                                      ; backward_key
-                      beq.s              nobotchange
+                          tst.b              d3                                      ; backward_key
+                          beq.s              nobotchange
  
-                      move.w             BOTPOPT,d0
-                      addq               #1,d0
-                      and.w              #3,d0
-                      move.w             d0,BOTPOPT
+                          move.w             BOTPOPT,d0
+                          addq               #1,d0
+                          and.w              #3,d0
+                          move.w             d0,BOTPOPT
 
-                      clr.b              ANYFLOOR
-                      clr.b              GOURSEL
-                      st                 CLRNOFLOOR
-                      move.l             #SimpleFloorLine,TheFloorLineRoutine    ; AB3DI
+                          clr.b              ANYFLOOR
+                          clr.b              GOURSEL
+                          st                 CLRNOFLOOR
+                          move.l             #SimpleFloorLine,TheFloorLineRoutine    ; AB3DI
 
-                      cmp.w              #2,d0
-                      bgt.s              .nofloor
-                      beq.s              .plainfloor
+                          cmp.w              #2,d0
+                          bgt.s              .nofloor
+                          beq.s              .plainfloor
                
-                      tst.w              d0
-                      bgt.s              .textureonly
-                      st                 GOURSEL
+                          tst.w              d0
+                          bgt.s              .textureonly
+                          st                 GOURSEL
 
 .textureonly:
-                      move.l             #FloorLine,TheFloorLineRoutine          ; AB3DI
+                          move.l             #FloorLine,TheFloorLineRoutine          ; AB3DI
 
 .plainfloor:
-                      st                 ANYFLOOR
-                      clr.b              CLRNOFLOOR                              ; AB3DI
+                          st                 ANYFLOOR
+                          clr.b              CLRNOFLOOR                              ; AB3DI
 
 .nofloor:
-                      muls               #12,d0
-                      add.l              #FLOOROPTS,d0
-                      move.l             d0,a0
-                      move.l             #FLOOROPTLINE,a1
-                      bsr                PUTINPLINE
+                          muls               #12,d0
+                          add.l              #FLOOROPTS,d0
+                          move.l             d0,a0
+                          move.l             #FLOOROPTLINE,a1
+                          bsr                PUTINPLINE
  
-                      bsr                DRAWPAUSESCRN
+                          bsr                DRAWPAUSESCRN
 
 billythe:
-                      bsr                CHECKUPDOWN
-                      tst.b              d3
-                      bne.s              billythe
+                          bsr                CHECKUPDOWN
+                          tst.b              d3
+                          bne.s              billythe
  
 nobotchange:
-                      rts
+                          rts
 
 *********************************************************************************************
 
-TheFloorLineRoutine:  dc.l               FloorLine
+TheFloorLineRoutine:      dc.l               FloorLine
 
-USECOPBUFFER:         dc.w               %1111111111111111                       ; Default: use
-TOPPOPT:              dc.w               1
-BOTPOPT:              dc.w               0
-ANYFLOOR:             dc.w               0
+USECOPBUFFER:             dc.w               %1111111111111111                       ; Default: use
+TOPPOPT:                  dc.w               1
+BOTPOPT:                  dc.w               0
+ANYFLOOR:                 dc.w               0
 
 *********************************************************************************************
 
 PUTINPLINE:
-                      moveq              #11,d7
+                          moveq              #11,d7
 
 .pppp:
-                      move.b             (a0)+,(a1)+
-                      dbra               d7,.pppp
-                      rts
+                          move.b             (a0)+,(a1)+
+                          dbra               d7,.pppp
+                          rts
 
 *********************************************************************************************
 
-pBuffPt:              dc.l               0
-pausePt:              dc.l               0
+pBuffPt:                  dc.l               0
+pausePt:                  dc.l               0
 
 *********************************************************************************************
 
 DRAWPAUSESCRN:
 
-                      move.l             #PAUSEFONT,a0
-                      move.l             #PAUSETXT,a1
-                      move.l             pausePt,a2
-                      move.l             pBuffPt,a3
-                      bsr                DRAWPAUSEBLOCK
-                      add.w              #4,a2
-                      add.w              #4,a3
-                      bsr                DRAWPAUSEBLOCK
-                      add.w              #4,a2
-                      add.w              #4,a3
-                      bsr                DRAWPAUSEBLOCK
-                      rts
+                          move.l             #PAUSEFONT,a0
+                          move.l             #PAUSETXT,a1
+                          move.l             pausePt,a2
+                          move.l             pBuffPt,a3
+                          bsr                DRAWPAUSEBLOCK
+                          add.w              #4,a2
+                          add.w              #4,a3
+                          bsr                DRAWPAUSEBLOCK
+                          add.w              #4,a2
+                          add.w              #4,a3
+                          bsr                DRAWPAUSEBLOCK
+                          rts
 
 DRAWPAUSEBLOCK:
-                      move.w             #3,d0
+                          move.w             #3,d0
 
 .across:
-                      moveq              #0,d1
-                      moveq              #0,d2
-                      moveq              #9,d3
-                      moveq              #0,d5
+                          moveq              #0,d1
+                          moveq              #0,d2
+                          moveq              #9,d3
+                          moveq              #0,d5
 
 .down:
-                      moveq              #0,d4
-                      move.b             (a1,d2.w),d4
-                      add.w              #12,d2
-                      sub.b              #'A',d4
-                      bge                .itsalet
+                          moveq              #0,d4
+                          move.b             (a1,d2.w),d4
+                          add.w              #12,d2
+                          sub.b              #'A',d4
+                          bge                .itsalet
 
-                      moveq              #7,d6
+                          moveq              #7,d6
 
 .dospc:
-                      move.w             (a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
-                      move.w             d1,(a2,d5.l)
-                      move.w             4(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
-                      move.w             d1,4(a2,d5.l)
-                      move.w             8(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
-                      move.w             d1,8(a2,d5.l)
-                      move.w             12(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
-                      move.w             d1,12(a2,d5.l)
-                      move.w             16(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
-                      move.w             d1,16(a2,d5.l)
-                      move.w             20(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
-                      move.w             d1,20(a2,d5.l)
-                      move.w             24(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
-                      move.w             d1,24(a2,d5.l)
-                      move.w             28(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
-                      move.w             d1,28(a2,d5.l)
-                      add.l              #widthOffset,d5
-                      dbra               d6,.dospc
-                      bra                .nolet
+                          move.w             (a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
+                          move.w             d1,(a2,d5.l)
+                          move.w             4(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
+                          move.w             d1,4(a2,d5.l)
+                          move.w             8(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
+                          move.w             d1,8(a2,d5.l)
+                          move.w             12(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
+                          move.w             d1,12(a2,d5.l)
+                          move.w             16(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
+                          move.w             d1,16(a2,d5.l)
+                          move.w             20(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
+                          move.w             d1,20(a2,d5.l)
+                          move.w             24(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
+                          move.w             d1,24(a2,d5.l)
+                          move.w             28(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
+                          move.w             d1,28(a2,d5.l)
+                          add.l              #widthOffset,d5
+                          dbra               d6,.dospc
+                          bra                .nolet
 
 .itsalet:
-                      asl.w              #7,d4
-                      lea                (a0,d4.w),a5
-                      moveq              #7,d6
+                          asl.w              #7,d4
+                          lea                (a0,d4.w),a5
+                          moveq              #7,d6
 
 .dolet: 
-                      move.w             (a5)+,d1
-                      bne.s              .okpix1
-                      move.w             (a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
+                          move.w             (a5)+,d1
+                          bne.s              .okpix1
+                          move.w             (a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
 
 .okpix1:
-                      move.w             d1,(a2,d5.l)
-                      move.w             (a5)+,d1
-                      bne.s              .okpix2
-                      move.w             4(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
+                          move.w             d1,(a2,d5.l)
+                          move.w             (a5)+,d1
+                          bne.s              .okpix2
+                          move.w             4(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
 
 .okpix2:
-                      move.w             d1,4(a2,d5.l)
-                      move.w             (a5)+,d1
-                      bne.s              .okpix3
-                      move.w             8(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
+                          move.w             d1,4(a2,d5.l)
+                          move.w             (a5)+,d1
+                          bne.s              .okpix3
+                          move.w             8(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
 
 .okpix3:
-                      move.w             d1,8(a2,d5.l)
-                      move.w             (a5)+,d1
-                      bne.s              .okpix4
-                      move.w             12(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
+                          move.w             d1,8(a2,d5.l)
+                          move.w             (a5)+,d1
+                          bne.s              .okpix4
+                          move.w             12(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
 
 .okpix4:
-                      move.w             d1,12(a2,d5.l)
-                      move.w             (a5)+,d1
-                      bne.s              .okpix5
-                      move.w             16(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
+                          move.w             d1,12(a2,d5.l)
+                          move.w             (a5)+,d1
+                          bne.s              .okpix5
+                          move.w             16(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
 
 .okpix5:
-                      move.w             d1,16(a2,d5.l)
-                      move.w             (a5)+,d1
-                      bne.s              .okpix6
-                      move.w             20(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
+                          move.w             d1,16(a2,d5.l)
+                          move.w             (a5)+,d1
+                          bne.s              .okpix6
+                          move.w             20(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
 
 .okpix6:
-                      move.w             d1,20(a2,d5.l)
-                      move.w             (a5)+,d1
-                      bne.s              .okpix7
-                      move.w             24(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
+                          move.w             d1,20(a2,d5.l)
+                          move.w             (a5)+,d1
+                          bne.s              .okpix7
+                          move.w             24(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
 
 .okpix7:
-                      move.w             d1,24(a2,d5.l)
-                      move.w             (a5)+,d1
-                      bne.s              .okpix8
-                      move.w             28(a3,d5.l),d1
-                      and.w              #$eee,d1
-                      lsr.w              #1,d1
+                          move.w             d1,24(a2,d5.l)
+                          move.w             (a5)+,d1
+                          bne.s              .okpix8
+                          move.w             28(a3,d5.l),d1
+                          and.w              #$eee,d1
+                          lsr.w              #1,d1
 
 .okpix8:
-                      move.w             d1,28(a2,d5.l)
-                      add.l              #widthOffset,d5
-                      dbra               d6,.dolet
+                          move.w             d1,28(a2,d5.l)
+                          add.l              #widthOffset,d5
+                          dbra               d6,.dolet
 
 .nolet:
-                      dbra               d3,.down
-                      add.w              #4*8,a3
-                      add.w              #4*8,a2
-                      addq               #1,a1
-                      dbra               d0,.across 
+                          dbra               d3,.down
+                          add.w              #4*8,a3
+                          add.w              #4*8,a2
+                          addq               #1,a1
+                          dbra               d0,.across 
  
-                      rts
+                          rts
 
 *********************************************************************************************
 
 PAUSETXT:
 ;      012345678901
-                      dc.b               '            '                          ; 0
-                      dc.b               '            '                          ; 1
-                      dc.b               'FAST  BUFFER'                          ; 2
+                          dc.b               '            '                          ; 0
+                          dc.b               '            '                          ; 1
+                          dc.b               'FAST  BUFFER'                          ; 2
 FBUFFOPTLINE:
-                      dc.b               '    ON      '                          ; 3
-                      dc.b               '            '                          ; 4
-                      dc.b               'FLOOR DETAIL'                          ; 5
+                          dc.b               '    ON      '                          ; 3
+                          dc.b               '            '                          ; 4
+                          dc.b               'FLOOR DETAIL'                          ; 5
 FLOOROPTLINE:
-                      dc.b               '  GOURAUD   '                          ; 6
-                      dc.b               '            '                          ; 7
-                      dc.b               '            '                          ; 8
-                      dc.b               '            '                          ; 9
+                          dc.b               '  GOURAUD   '                          ; 6
+                          dc.b               '            '                          ; 7
+                          dc.b               '            '                          ; 8
+                          dc.b               '            '                          ; 9
 
 FBUFFOPTS:
-                      dc.b               '    OFF     '
-                      dc.b               '    ON      '
+                          dc.b               '    OFF     '
+                          dc.b               '    ON      '
  
 FLOOROPTS:
-                      dc.b               '  GOURAUD   '
-                      dc.b               '  TEXTURED  '
-                      dc.b               'PLAIN SHADED'
-                      dc.b               '    NONE    '
+                          dc.b               '  GOURAUD   '
+                          dc.b               '  TEXTURED  '
+                          dc.b               'PLAIN SHADED'
+                          dc.b               '    NONE    '
 
 *********************************************************************************************
 
-PAUSEFONT:            incbin             "data/fonts/PAUSEFONT"
+PAUSEFONT:                incbin             "data/fonts/PAUSEFONT"

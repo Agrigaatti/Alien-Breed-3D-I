@@ -1,13 +1,12 @@
 	IFND	EXEC_INTERRUPTS_I
 EXEC_INTERRUPTS_I	SET	1
 **
-**	$VER: interrupts.i 39.0 (15.10.1991)
-**	Includes Release 45.1
+**	$VER: interrupts.i 47.1 (28.6.2019)
 **
 **	Callback structures used by hardware & software interrupts
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND EXEC_NODES_I
@@ -24,7 +23,7 @@ EXEC_INTERRUPTS_I	SET	1
 *   Interrupt Structure
 *
 *----------------------------------------------------------------
-
+        
  STRUCTURE  IS,LN_SIZE
     APTR    IS_DATA
     APTR    IS_CODE
@@ -46,8 +45,8 @@ EXEC_INTERRUPTS_I	SET	1
 
 *------ System Flag bits (in SysBase.SysFlags )
 
-    BITDEF  S,SAR,15	    ; scheduling attention required (TOP BIT)
-    BITDEF  S,TQE,14	    ; time quantum expended -- time to resched
+    BITDEF  S,SAR,15        ; scheduling attention required (TOP BIT)
+    BITDEF  S,TQE,14        ; time quantum expended -- time to resched
     BITDEF  S,SINT,13
 
 
@@ -61,10 +60,10 @@ EXEC_INTERRUPTS_I	SET	1
     UWORD   SH_PAD
     LABEL   SH_SIZE
 
-SIH_PRIMASK  EQU	$0F0
-SIH_QUEUES   EQU	5
+SIH_PRIMASK  EQU        $0F0
+SIH_QUEUES   EQU        5
 
 ** this is a fake INT definition, used only for AddIntServer and the like
-	BITDEF	INT,NMI,15
+        BITDEF  INT,NMI,15
 
 	ENDC	; EXEC_INTERRUPTS_I

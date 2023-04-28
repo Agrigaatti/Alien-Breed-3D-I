@@ -1,13 +1,12 @@
 	IFND	EXEC_SEMAPHORES_I
 EXEC_SEMAPHORES_I	SET	1
 **
-**	$VER: semaphores.i 39.1 (7.2.1992)
-**	Includes Release 45.1
+**	$VER: semaphores.i 47.1 (28.6.2019)
 **
 **	Definitions for locking functions.
 **
-**	(C) Copyright 1986-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND EXEC_NODES_I

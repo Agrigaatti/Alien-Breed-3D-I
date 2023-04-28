@@ -1,11 +1,12 @@
 	IFND	GRAPHICS_RASTPORT_I
 GRAPHICS_RASTPORT_I	SET	1
 **
-**	$VER: rastport.i 39.0 (21.8.1991)
-**	Includes Release 45.1
+**	$VER: rastport.h 47.1 (31.7.2019)
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	graphics RastPort and related structures
+**
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND    EXEC_TYPES_I

@@ -1,13 +1,12 @@
 	IFND  INTUITION_SCREENS_I
 INTUITION_SCREENS_I	SET  1
 **
-**	$VER: screens.i 38.25 (15.2.1993)
-**	Includes Release 45.1
+**	$VER: screens.i 47.1 (1.8.2019)
 **
 **	The Screen and NewScreen structures and attributes
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 	IFND EXEC_TYPES_I
 	INCLUDE "exec/types.i"
@@ -376,7 +375,11 @@ PENSHARED	EQU	$0400	; Screen opener set {SA_SharePens,TRUE}
 			; If you use the new graphics VideoControl()
 			; VC_NoColorPaletteLoad tag for your screen's
 			; ViewPort, you should also set this tag.
-
+    EITEM SA_OffScreenDragging ; New for V45
+			; If this tag is set, then windows can be moved
+			; partially out of the screen if layers is
+			; new enough. Defaults to TRUE for the workbench
+			; screen and FALSE to all others.
 
 
 * OpenScreen error codes, which are returned in the (optional) LONG

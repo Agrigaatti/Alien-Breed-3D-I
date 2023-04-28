@@ -6,7 +6,6 @@
 *
 * Original Team 17 sources : https://github.com/videogamepreservation/alienbreed3dii.git
 * RTG sources : https://github.com/mheyer32/ab3d-rtg
-* AmigaOS include files : https://github.com/kusma/amiga-dev
 *
 * Missing files : Vector objects (*ind, pipe, exit) are already copied from the rtg-version
 *                 Copy data ('includes', 'sounds' and 'levels') files from the original game to '\uae\dh0\disk' folder
@@ -17,9 +16,12 @@
 *   01/2023 : Added auto save of level passwords on exit (use 'TAB'-key on main menu to change levels) : Crom / Extend
 *   02/2023 : Added experimental co-op mode for the multiplayer game : Crom / Extend
 *
+* Known issues:
+* - Sometimes, dead monsters get out of sync in the experimental co-operation multiplayer game 
+*
 *********************************************************************************************
 
-VERSION             EQU "1.13"                                                           ; 4 chars
+VERSION             EQU "1.15"                                                           ; 4 chars
 LABEL               EQU "EXTE"                                                           ; 4 chars
 
 *********************************************************************************************
@@ -29,12 +31,12 @@ LABEL               EQU "EXTE"                                                  
 *********************************************************************************************
 
                           incdir             "includes"
-                          include            "exec/memory.i"
-                          include            "hardware/intbits.i"
-                          
                           include            "AB3DI.i"
                           include            "macros.i"
                           include            "defs.i"
+
+                          include            "exec/memory.i"
+                          include            "hardware/intbits.i"
 
 *********************************************************************************************
 
@@ -122,31 +124,8 @@ SetupGame:
 
 *******************************************************************
 
-                          move.l             TEXTSCRN,d0
-                          move.w             d0,TSPTl
-                          swap               d0
-                          move.w             d0,TSPTh
-
-*******************************************************************
-
-                          move.l             #nullspr,d0
-                          move.w             d0,txs0l
-                          move.w             d0,txs1l
-                          move.w             d0,txs2l
-                          move.w             d0,txs3l
-                          move.w             d0,txs4l
-                          move.w             d0,txs5l
-                          move.w             d0,txs6l
-                          move.w             d0,txs7l
-                          swap               d0
-                          move.w             d0,txs0h
-                          move.w             d0,txs1h
-                          move.w             d0,txs2h
-                          move.w             d0,txs3h
-                          move.w             d0,txs4h
-                          move.w             d0,txs5h
-                          move.w             d0,txs6h
-                          move.w             d0,txs7h
+                          jsr                SetupTextScrn
+                          jsr                ClearTextScrnSprites
 
 *******************************************************************
 
@@ -168,6 +147,14 @@ SetupGame:
 
 *******************************************************************
                           
+                          jsr                LoadPrefs
+
+*******************************************************************
+
+                          jsr                SetupMouseSensitivity
+
+*******************************************************************
+
                           move.l             #0,d0
                           rts
 
@@ -223,7 +210,10 @@ TearDownGame:
                           jsr                ReleaseFloorMemory                          ; LoadFromDisks
                           jsr                ReleaseObjectMemory                         ; LoadFromDisks
                           jsr                ReleaseSampleMemory                         ; LoadFromDisks
-                          jsr                ReleaseCopperScrnMemory                     ; LoadFromDisks
+
+*******************************************************************
+
+                          jsr                ReleaseCopperScrnMemory                     ; ScreenSetup
 
 *******************************************************************
 
@@ -235,7 +225,7 @@ TearDownGame:
 
                           rts
 
-*********************************************************************************************
+********************************************************************************************
 
 OpenDosLibrary:
 
@@ -259,6 +249,67 @@ CloseDosLibrary:
                           jsr                _LVOCloseLibrary(a6)
 
 .Exit:
+                          rts
+
+*********************************************************************************************
+
+LoadPrefs:
+
+                          move.l             doslib,a6
+                          move.l             #Prefsname,d1
+                          move.l             #1005,d2
+                          jsr                _LVOOpen(a6)
+                          tst.l              d0
+                          beq                skipPrefs
+                          move.l             d0,Prefshandle
+
+                          move.l             doslib,a6
+                          move.l             d0,d1
+                          move.l             #Prefsfile,d2
+                          move.l             #50,d3
+                          jsr                _LVORead(a6)
+
+                          move.l             doslib,a6
+                          move.l             Prefshandle,d1
+                          jsr                _LVOClose(a6)
+
+skipPrefs:
+                          rts
+
+*********************************************************************************************
+
+SetupTextScrn:
+
+                          move.l             TEXTSCRN,d0
+                          move.w             d0,TSPTl
+                          swap               d0
+                          move.w             d0,TSPTh
+
+                          rts
+
+*********************************************************************************************
+
+ClearTextScrnSprites:
+
+                          move.l             #nullSpr,d0
+                          move.w             d0,txs0l
+                          move.w             d0,txs1l
+                          move.w             d0,txs2l
+                          move.w             d0,txs3l
+                          move.w             d0,txs4l
+                          move.w             d0,txs5l
+                          move.w             d0,txs6l
+                          move.w             d0,txs7l
+                          swap               d0
+                          move.w             d0,txs0h
+                          move.w             d0,txs1h
+                          move.w             d0,txs2h
+                          move.w             d0,txs3h
+                          move.w             d0,txs4h
+                          move.w             d0,txs5h
+                          move.w             d0,txs6h
+                          move.w             d0,txs7h
+
                           rts
 
 *********************************************************************************************
@@ -482,7 +533,9 @@ fdup:
                           dbra               d1,fdup
 
 ********************************************************************
+; Setup copper scrn
 
+                          jsr                AllocCopperScrnMemory
                           jsr                InitCopperScrn
 
 ********************************************************************
@@ -579,28 +632,6 @@ fdup:
 
 ********************************************************************
 
-                          move.l             doslib,a6
-                          move.l             #Prefsname,d1
-                          move.l             #1005,d2
-                          jsr                _LVOOpen(a6)
-                          tst.l              d0
-                          beq                skipPrefs
-                          move.l             d0,Prefshandle
-
-                          move.l             doslib,a6
-                          move.l             d0,d1
-                          move.l             #Prefsfile,d2
-                          move.l             #50,d3
-                          jsr                _LVORead(a6)
-
-                          move.l             doslib,a6
-                          move.l             Prefshandle,d1
-                          jsr                _LVOClose(a6)
-
-skipPrefs:
-
-********************************************************************
-
                           cmp.b              #'s',Prefsfile+2
                           seq                STEREO
 
@@ -658,7 +689,7 @@ Prefsname:                dc.b               'prefs',0
 
 Prefshandle:              dc.l               0
 
-Prefsfile:                dc.b               'k4nx'
+Prefsfile:                dc.b               'k4nxs'
                           ds.b               50
                           cnop               0,32
 
@@ -738,13 +769,13 @@ blag:
                           add.l              a1,a2
                           move.l             a2,ObjectData
 
-*****************************************
+****************************************************************
 ; Just for charles
                           ; sub.w #40,4(a2)             ; objUnknown4 (object y?)
                           ; move.w #$6060,6(a2)         ; objUnknown6
                           ; move.l #$d0000,8(a2)        ; objDeadFrameH
                           ; move.w #45*256+45,14(a2)    ; objUnknown14
-****************************************
+****************************************************************
 
                           move.l             34(a1),a2                                   ; OffsetToPlayerShotData
                           add.l              a1,a2
@@ -881,7 +912,7 @@ nfp:
  
  ****************************************************************
 
-                          move.l             #nullspr,d0
+                          move.l             #nullSpr,d0
                           move.w             d0,s4l
                           move.w             d0,s5l
                           move.w             d0,s6l
@@ -942,7 +973,7 @@ nfp:
                           move.w             d0,p8h
  
 ****************************************************************
-; TIMER SCREEN SETUP
+; Timer screen setup
 
                           IFNE               ENABLETIMER
                           jsr                SetupCopperForTimerTest
@@ -1038,8 +1069,6 @@ nfp:
 ****************************************************************
 
                           jsr                InitPlayer
-
-                          ; bsr                initobjpos
 
 ****************************************************************
  ; Audio
@@ -1151,26 +1180,27 @@ scaledownlop:
                           move.l             #playerheight,PLR2s_targheight
                           move.l             #playerheight,PLR2s_height
 
-*****************************************
+****************************************************************
                           ; cmp.b #'n',mors
                           ; beq.s nohandshake
-                          ;
+                                                
                           ; move.b #%11011000,$bfd200
                           ; move.b #%00010000,$bfd000
+
                           ;waitloop:
                           ; btst.b #4,$bfd000
                           ; bne.s waitloop
                           ; move.b #%11000000,$bfd200
-;                          
+                                                
                           ;wtmouse:
                           ; btst #6,$bfe001 ; LMB port 1
                           ; bne.s wtmouse
-;                          
+                                                
                           ;nohandshake:
-*****************************************
+****************************************************************
  
-                          move.l             COPSCRN1,drawPt
-                          move.l             COPSCRN2,oldDrawPt
+                          move.l             copScrn1,drawPt
+                          move.l             copScrn2,oldDrawPt
 
                           jsr                CLEARKEYBOARD
                           jsr                MAKEBACKROUT
@@ -1490,10 +1520,11 @@ okwat:
 
                           move.w             FramesToDraw,TempFrames
                           cmp.w              #15,TempFrames
-                          blt.s              .okframe
+                          blt.s              .okSingleFrame
+                          
                           move.w             #15,TempFrames
 
-.okframe:
+.okSingleFrame:
                           move.w             #0,FramesToDraw
 
 ****************************************************************
@@ -1569,7 +1600,8 @@ handleMaster:
 
                           move.w             FramesToDraw,TempFrames
                           cmp.w              #15,TempFrames
-                          blt.s              .okMasterFrame
+                          blt.s              .okMasterFrame                              ; skip if lower than 15
+
                           move.w             #15,TempFrames
 
 .okMasterFrame:
@@ -2232,367 +2264,6 @@ ENDZONES:
 
 *********************************************************************************************
 
-PutInSmallScr:
-
-                          move.l             #$1fe0000,statskip
-                          move.l             #$1fe0000,statskip+4
-
-***************************************************************************
-
-                          move.l             #HealthPal,a5
-                          move.l             COPSCRN1,a0                                 ; filled with CopNop
-                          move.l             COPSCRN2,a2
-                          move.w             #scrheight-1,d0                             ; ie. 80-1
-                          moveq              #0,d6
-                          move.w             #0,d3
-                          move.w             #$2bdf,startwait
-                          move.w             #$2d01,endwait
-
-.fillcop:
-                          move.l             a0,a1
-                          move.l             a2,a3
-
-                          move.w             #bplcon4,(a1)+                              ; bplcon4 
-                          move.w             #bplcon4,(a3)+                              ; bplcon4 
-                          move.w             d3,(a1)+          
-                          move.w             d3,(a3)+                                    ; ->4
-                          eor.w              #$8000,d3                                   ; 
-
-                          ; Copper pixel line
-
-                          ; Bank 1
-                          move.w             #bplcon3,(a1)+                              ; bplcon3  
-                          move.w             #bplcon3,(a3)+                              ; bplcon3  
-                          move.w             #$2c42,d5                                   ; %00101100 01000010
-                          or.w               d3,d5
-                          and.w              #$fffe,d5
-                          move.w             d5,(a1)+
-                          move.w             d5,(a3)+                                    ; ->8
-                          bsr                do32                                        ; 32 Color register (32*4=124)
-                                                                                                                   ; <= Note: fromPt ptr is first color value (10)
-                          ; Bank 2
-                          move.w             #bplcon3,(a1)+                              ; bplcon3  
-                          move.w             #bplcon3,(a3)+                              ; bplcon3  
-                          move.w             #$4c42,d5
-                          or.w               d3,d5
-                          and.w              #$fffe,d5
-                          move.w             d5,(a1)+                                                              
-                          move.w             d5,(a3)+                                    ; ->12
-                          bsr                do32                                        ; 32 Color register (32*4=124)
-
-                          ; Bank 3
-                          move.w             #bplcon3,(a1)+                              ; bplcon3
-                          move.w             #bplcon3,(a3)+                              ; bplcon3
-                          move.w             #$6c42,d5
-                          or.w               d3,d5
-                          and.w              #$fffe,d5
-                          move.w             d5,(a1)+
-                          move.w             d5,(a3)+                                    ; ->16
-                          bsr                do32                                        ; 32 Color register (32*4=124)
-                          
-                          ; => 96 color registers
-
-                          move.w             #bplcon3,(a1)+                              ; bplcon3
-                          move.w             #$0c42,(a1)+                                ; 1100 01000010
-                          move.w             #bplcon3,(a3)+                              ; bplcon3
-                          move.w             #$0c42,(a3)+                                ; 1100 01000010
-
-                          move.w             #color15,(a1)+                              
-                          move.w             (a5),(a1)+                                  ; HealthPal
-                          move.w             #color15,(a3)+
-                          move.w             (a5)+,(a3)+                                 ; ->24
-
-                          ; = 124*3+24 => 396
-                          ; skip to "fromPt" = 10 bytes : +(bplcon4.w + value.w + bplcon3.w + value.w + 180.w) -> value.w
-                          ; skip from "fromPt" to "midpt" = CopLineSpace * (height/2) = (104*4)*40 = 16 640 
-                          ; CopLineSpace = 416 bytes (416-396=20 CopNops)
-
-                          ; Next copper pixel line
-                          adda.w             #widthOffset,a0                             ; +416 (
-                          adda.w             #widthOffset,a2                                                            
-                          dbra               d0,.fillcop
-
-***************************************************************************
-
-                          move.w             #$48,fetchstart
-                          move.w             #$88,fetchstop
-                          move.w             #$2cb1,winstart
-                          move.w             #$2c91,winstop
-                          move.w             #-24,modulo
-                          move.w             #-24,modulo+4
-
-***************************************************************************
-
-                          move.l             #nullspr,d0
-                          move.w             d0,s4l
-                          move.w             d0,s5l
-                          move.w             d0,s6l
-                          move.w             d0,s7l
-                          swap               d0
-                          move.w             d0,s4h
-                          move.w             d0,s5h
-                          move.w             d0,s6h
-                          move.w             d0,s7h 
-
-                          move.l             #borders,d0
-                          move.w             d0,s0l
-                          swap               d0
-                          move.w             d0,s0h
-                          move.l             #borders+2592,d0
-                          move.w             d0,s1l
-                          swap               d0
-                          move.w             d0,s1h
-                          move.l             #borders+2592*2,d0
-                          move.w             d0,s2l
-                          swap               d0
-                          move.w             d0,s2h
-                          move.l             #borders+2592*3,d0
-                          move.w             d0,s3l
-                          swap               d0
-                          move.w             d0,s3h
-
-***************************************************************************
-
-                          move.l             #scrn+40,a0
-                          move.l             #scrn+160,a1
-                          move.l             #scrn+280,a2
-                          move.l             #smallScrnTab,a3
-                          move.w             #191,d7                                     ; counter
-                          move.w             #0,d1                                       ; xpos
-
-.plotscrnloop:
-                          move.b             (a3)+,d0
-                          move.w             d1,d2
-                          asr.w              #3,d2
-                          move.b             d1,d3
-                          not.b              d3
-                          bclr.b             d3,-40(a0,d2.w)
-                          bclr.b             d3,(a0,d2.w)
-                          bclr.b             d3,40(a0,d2.w)
-                          bclr.b             d3,-40(a1,d2.w)
-                          bclr.b             d3,(a1,d2.w)
-                          bclr.b             d3,40(a1,d2.w)
-                          bclr.b             d3,-40(a2,d2.w)
-                          btst               #0,d0
-                          beq.s              .nobp1
-                          bset.b             d3,-40(a0,d2.w)
-
-.nobp1:
-                          btst               #1,d0
-                          beq.s              .nobp2
-                          bset.b             d3,(a0,d2.w)
-
-.nobp2:
-                          btst               #2,d0
-                          beq.s              .nobp3
-                          bset.b             d3,40(a0,d2.w)
-
-.nobp3:
-                          btst               #3,d0
-                          beq.s              .nobp4
-                          bset.b             d3,-40(a1,d2.w)
-
-.nobp4:
-                          btst               #4,d0
-                          beq.s              .nobp5
-                          bset.b             d3,(a1,d2.w)
-
-.nobp5:
-                          btst               #5,d0
-                          beq.s              .nobp6
-                          bset.b             d3,40(a1,d2.w)
-
-.nobp6:
-                          btst               #6,d0
-                          beq.s              .nobp7
-                          bset.b             d3,-40(a2,d2.w)
-
-.nobp7:
-                          addq               #1,d1
-                          dbra               d7,.plotscrnloop
-
-***************************************************************************
-
-                          rts
-
-*********************************************************************************************
-
-PutInLargeScr:
-
-                          move.l             #$1000000,statskip
-                          move.l             #$fffffffe,statskip+4
-
-***************************************************************************
-
-                          move.l             #HealthPal,a5
-                          move.l             COPSCRN1,a0
-                          move.l             COPSCRN2,a2
-                          move.w             #scrheight-1,d0                             ; ie. 80
-                          moveq              #0,d6
-                          move.w             #0,d3
-                          move.w             #$29df,startwait
-                          move.w             #$2b01,endwait
-
-.fillcop:
-                          move.l             a0,a1
-                          move.l             a2,a3
-                          move.w             #$10c,(a1)+                                 ; bplcon4     
-                          move.w             #$10c,(a3)+                                 ; bplcon4
-                          move.w             d3,(a1)+
-                          move.w             d3,(a3)+
-                          eor.w              #$8000,d3
-
-                          move.w             #$106,(a1)+                                 ; bplcon3
-                          move.w             #$106,(a3)+                                 ; bplcon3
-                          move.w             #$2c42,d5
-                          or.w               d3,d5
-                          and.w              #$fffe,d5
-                          move.w             d5,(a1)+
-                          move.w             d5,(a3)+
-                          bsr                do32                                        ; 32 Color register (32*8=256)
-
-                          move.w             #$106,(a1)+                                 ; bplcon3
-                          move.w             #$106,(a3)+                                 ; bplcon3
-                          move.w             #$4c42,d5
-                          or.w               d3,d5
-                          and.w              #$fffe,d5
-                          move.w             d5,(a1)+
-                          move.w             d5,(a3)+
-                          bsr                do32                                        ; 32 Color register (32*8=256)
-
-                          move.w             #$106,(a1)+                                 ; bplcon3
-                          move.w             #$106,(a3)+                                 ; bplcon3
-                          move.w             #$6c42,d5
-                          or.w               d3,d5
-                          and.w              #$fffe,d5
-                          move.w             d5,(a1)+
-                          move.w             d5,(a3)+
-                          bsr                do32                                        ; 32 Color register (32*8=256)
- 
-                          move.w             startwait,(a1)+
-                          move.w             #$fffe,(a1)+
-                          move.w             endwait,(a1)+
-                          move.w             #$ff00,(a1)+
-                          move.w             startwait,(a3)+
-                          move.w             #$fffe,(a3)+
-                          move.w             endwait,(a3)+
-                          move.w             #$ff00,(a3)+
-
-                        ; move.l $1fe0000,(a1)+
-                        ; move.l $1fe0000,(a3)+
-                        ; move.l $1fe0000,(a1)+
-                        ; move.l $1fe0000,(a3)+
- 
-                          add.w              #$300,startwait
-                          add.w              #$300,endwait
-
-                        ; move.l #$1060c42,(a1)+
-                        ; move.l #$1060c42,(a3)+
-                        ; move.w #$19e,(a1)+
-                        ; move.w (a5),(a1)+
-                        ; move.w #$19e,(a3)+
-                        ; move.w (a5)+,(a3)+
-
-                          adda.w             #widthOffset,a0
-                          adda.w             #widthOffset,a2
-                          dbra               d0,.fillcop
-
-***************************************************************************
-
-                          move.w             #$38,fetchstart
-                          move.w             #$b8,fetchstop
-                          move.w             #$2c81,winstart
-                          move.w             #$2cc1,winstop
-                          move.w             #-40,modulo
-                          move.w             #-40,modulo+4
-
-***************************************************************************
-
-                          move.l             #nullspr,d0
-                          move.w             d0,s0l
-                          move.w             d0,s1l
-                          move.w             d0,s2l
-                          move.w             d0,s3l
-                          move.w             d0,s4l
-                          move.w             d0,s5l
-                          move.w             d0,s6l
-                          move.w             d0,s7l
-                          swap               d0
-                          move.w             d0,s0h
-                          move.w             d0,s1h
-                          move.w             d0,s2h
-                          move.w             d0,s3h
-                          move.w             d0,s4h
-                          move.w             d0,s5h
-                          move.w             d0,s6h
-                          move.w             d0,s7h 
- 
- ***************************************************************************
-
-                          move.l             #scrn+40,a0
-                          move.l             #scrn+160,a1
-                          move.l             #scrn+280,a2
-                          move.l             #scrnTab,a3
-                          move.w             #319,d7                                     ; counter
-                          move.w             #0,d1                                       ; xpos
-
-.plotscrnloop:
-                          move.b             (a3)+,d0
-                          move.w             d1,d2
-                          asr.w              #3,d2
-                          move.b             d1,d3
-                          not.b              d3
-                          bclr.b             d3,-40(a0,d2.w)
-                          bclr.b             d3,(a0,d2.w)
-                          bclr.b             d3,40(a0,d2.w)
-                          bclr.b             d3,-40(a1,d2.w)
-                          bclr.b             d3,(a1,d2.w)
-                          bclr.b             d3,40(a1,d2.w)
-                          bclr.b             d3,-40(a2,d2.w)
-                          btst               #0,d0
-                          beq.s              .nobp1
-                          bset.b             d3,-40(a0,d2.w)
-
-.nobp1:
-                          btst               #1,d0
-                          beq.s              .nobp2
-                          bset.b             d3,(a0,d2.w)
-
-.nobp2:
-                          btst               #2,d0
-                          beq.s              .nobp3
-                          bset.b             d3,40(a0,d2.w)
-
-.nobp3:
-                          btst               #3,d0
-                          beq.s              .nobp4
-                          bset.b             d3,-40(a1,d2.w)
-
-.nobp4:
-                          btst               #4,d0
-                          beq.s              .nobp5
-                          bset.b             d3,(a1,d2.w)
-
-.nobp5:
-                          btst               #5,d0
-                          beq.s              .nobp6
-                          bset.b             d3,40(a1,d2.w)
-
-.nobp6:
-                          btst               #6,d0
-                          beq.s              .nobp7
-                          bset.b             d3,-40(a2,d2.w)
-
-.nobp7:
-                          addq               #1,d1
-                          dbra               d7,.plotscrnloop
-
-***************************************************************************
-
-                          rts
-
-*********************************************************************************************
-
 CLEARKEYBOARD:
 
                           move.l             #KeyMap,a5
@@ -2752,7 +2423,9 @@ USEPLR1:
 
 *********************************************************************************************
 
-DRAWINGUN:
+DrawInGun:
+; d0 = GunSelected
+; d1 = GunFrame
 
                           move.l             #Objects+9*16,a0
                           move.l             4(a0),a5                                    ; ptr
@@ -2778,21 +2451,23 @@ DRAWINGUN:
                           lea                (a5,d1.w),a5                                ; right ptr
  
                           move.w             #31,d0
-                          bsr.b              DRAWCHUNK
+                          bsr.b              DrawChunk
                           addq.w             #4,a6                                       ; Skip register
                           move.w             #31,d0
-                          bsr.b              DRAWCHUNK
+                          bsr.b              DrawChunk
                           addq.w             #4,a6
                           move.w             #31,d0
-                          bsr.b              DRAWCHUNK
+                          bsr.b              DrawChunk
                           rts
  
 *********************************************************************************************
 
-DRAWCHUNK:
-; d0=Color registers
-; a6=fromPt
-; a4=pal
+DrawChunk:
+; d0=Count of color registers (31)
+; d7=YOffset
+; a6=fromPt + offset to lines start (Copper chunky screen)
+; a4=Data source (12bit chunky pixels)
+; a5=Ptr to gun
 
                           move.w             #78,d3
                           sub.w              d7,d3
@@ -2802,7 +2477,7 @@ DRAWCHUNK:
                           bne.s              .noblank
 
                           addq               #4,a6                                       ; skip col reg
-                          dbra               d0,DRAWCHUNK 
+                          dbra               d0,DrawChunk 
                           rts
  
 .noblank:
@@ -2823,7 +2498,7 @@ DRAWCHUNK:
                           dbra               d3,.drawdown
 
                           addq               #4,a6
-                          dbra               d0,DRAWCHUNK
+                          dbra               d0,DrawChunk
                           rts
 
 secc:
@@ -2839,7 +2514,7 @@ secc:
                           dbra               d3,.drawdown
 
                           addq               #4,a6
-                          dbra               d0,DRAWCHUNK
+                          dbra               d0,DrawChunk
                           rts
 
 thirdd:
@@ -2856,7 +2531,7 @@ thirdd:
                           dbra               d3,.drawdown
 
                           addq               #4,a6
-                          dbra               d0,DRAWCHUNK
+                          dbra               d0,DrawChunk
                           rts
  
 *********************************************************************************************
@@ -2913,7 +2588,7 @@ USEPLR2:
                           asr.l              #7,d0
                           move.w             d0,4(a0)
 
-***********************************
+****************************************************************
 
                           move.l             PLR1_Obj,a0 
 
@@ -2970,7 +2645,7 @@ USEPLR2:
                           asr.l              #7,d0
                           move.w             d0,4(a0)
 
-**********************************
+****************************************************************
 
                           move.l             PLR2_Obj,a0
                           move.w             #-1,12+64(a0)
@@ -3480,9 +3155,7 @@ notintop:
                           move.l             d0,PLR1s_tyoff
                           move.w             p1_angpos,tmpangpos
 
-                          ; move.l (a0),a0		; jump to viewpoint list
-
-                          ; A0 is pointing at a pointer to list of points to rotate
+S
                           
                           move.w             (a0)+,d1
                           ext.l              d1
@@ -3786,10 +3459,12 @@ subroomloop:
                           move.w             -(a0),d7
                           blt                jumpoutofrooms
  
+ ****************************************************************
                         ; bsr setlrclip
                         ; move.w leftclip,d0
                         ; cmp.w rightclip,d0
                         ; bge subroomloop
+****************************************************************
 
                           move.l             a0,-(a7)
  
@@ -3879,7 +3554,7 @@ outofrcliplop:
                           move.l             ToUpperFloor(a1),BOTOFROOM
  
                           move.l             #currentPointBrights+2,pointBrightsPtr
-                          bsr                dothisroom
+                          bsr                DoThisRoom
 
 noupperroom:
                           move.l             ThisRoomToDraw,a0
@@ -3908,7 +3583,7 @@ noupperroom:
                           move.l             d2,AFTERWATTOP
 
 .belowfirst:
-                          bsr                dothisroom 
+                          bsr                DoThisRoom 
                           bra                dontbothercantseeit
 
 botfirst:
@@ -3938,10 +3613,11 @@ botfirst:
                           move.l             d2,AFTERWATTOP
 
 .belowfirst:
-                          bsr                dothisroom
+                          bsr                DoThisRoom
                           move.l             ThisRoomToDraw+4,a0
                           cmp.l              LEVELGRAPHICS,a0
                           beq.s              noupperroom2
+
                           move.l             #currentPointBrights+2,pointBrightsPtr
 
                           move.l             ROOMBACK,a1
@@ -3949,7 +3625,7 @@ botfirst:
                           move.l             ToUpperFloor(a1),BOTOFROOM
 
                           st                 DOUPPER
-                          bsr                dothisroom
+                          bsr                DoThisRoom
 
 noupperroom2:
 dontbothercantseeit:
@@ -3967,60 +3643,69 @@ nomoretodoatall:
                           bra                subroomloop
 
 jumpoutofrooms:
+
+****************************************************************
+
                           tst.b              DONTDOGUN
-                          bne.b              NOGUNLOOK
+                          bne.b              noGunLook
 
                           cmp.b              #'s',mors
-                          beq.s              drawslavegun
+                          beq.s              drawSlaveGun
+
+****************************************************************
 
                           moveq              #0,d0
                           move.b             PLR1_GunSelected,d0
                           moveq              #0,d1
                           move.b             PLR1_GunFrame,d1
-                          bsr                DRAWINGUN
-                          bra.b              drawngun
+                          bsr                DrawInGun
+                          bra.b              drawnPlr1Gun
 
-drawslavegun:
+****************************************************************
+
+drawSlaveGun:
                           moveq              #0,d0
                           move.b             PLR2_GunSelected,d0
                           moveq              #0,d1
                           move.b             PLR2_GunFrame,d1
-                          bsr                DRAWINGUN
+                          bsr                DrawInGun
 
-drawngun:
-NOGUNLOOK:
+****************************************************************
+
+drawnPlr1Gun:
+noGunLook:
 
 ****************************************************************
 
                           moveq              #0,d1
                           move.b             PLR1_GunFrame,d1
                           sub.w              TempFrames,d1
-                          bgt.s              .nn
+                          bgt.s              .continuePlr1GunFrame
                           moveq              #0,d1
 
-.nn:
+.continuePlr1GunFrame:
                           move.b             d1,PLR1_GunFrame
+                          ble.s              .doneFirePlr1
  
-                          ble.s              .donefire
                           subq.b             #1,PLR1_GunFrame
 
-.donefire:
+.doneFirePlr1:
 
 ****************************************************************
 
                           moveq              #0,d1
                           move.b             PLR2_GunFrame,d1
                           sub.w              TempFrames,d1
-                          bgt.s              .nn2
+                          bgt.s              .continuePlr2GunFrame
                           moveq              #0,d1
 
-.nn2:
-                          move.b             d2,PLR2_GunFrame
+.continuePlr2GunFrame:
+                          move.b             d1,PLR2_GunFrame
+                          ble.s              .doneFirePlr2
  
-                          ble.s              .donefire2
                           subq.b             #1,PLR2_GunFrame
 
-.donefire2:
+.doneFirePlr2:
 
 ****************************************************************
 ; Water 
@@ -4126,7 +3811,7 @@ DOUPPER:                  dc.w               0
 
 *********************************************************************************************
 
-dothisroom:
+DoThisRoom:
 ; a0 = ThisRoomToDraw+n
 
                           move.w             (a0)+,d0
@@ -4265,6 +3950,7 @@ ReadMouse:
 
                           cmp.w              #127,d0
                           blt.b              nonegy
+
                           move.w             #255,d1
                           sub.w              d0,d1
                           move.w             d1,d0
@@ -4273,6 +3959,7 @@ ReadMouse:
 nonegy:
                           cmp.w              #-127,d0
                           bge.b              nonegy2
+
                           move.w             #255,d1
                           add.w              d0,d1
                           move.w             d1,d0
@@ -4288,7 +3975,7 @@ nonegy2:
 
                           clr.l              d0
                           clr.l              d1
-                          move.w             $a(a6),d0
+                          move.w             joy0dat(a6),d0
                           ext.w              d0
                           ext.l              d0
                           move.w             d0,d3
@@ -4297,6 +3984,7 @@ nonegy2:
 
                           cmp.w              #127,d0
                           blt.b              nonegx
+
                           move.w             #255,d1
                           sub.w              d0,d1
                           move.w             d1,d0
@@ -4305,6 +3993,7 @@ nonegy2:
 nonegx:
                           cmp.w              #-127,d0
                           bge.b              nonegx2
+                          
                           move.w             #255,d1
                           add.w              d0,d1
                           move.w             d1,d0
@@ -4321,7 +4010,9 @@ nonegx2:
                           and.w              #2047,d0
                           move.w             d0,oldx2
  
-                          asl.w              #2,d0
+                          move.w             sensitivity,d2
+                          asl.w              d2,d0              
+
                           sub.w              prevx,d0
                           add.w              d0,prevx
                           add.w              d0,angpos
@@ -4336,6 +4027,47 @@ noturn:
                           rts
 
 *********************************************************************************************
+; Setup mouse sensitivity
+; 2 = slow = 's', 3 = medium = 'm', 4 = fast = 'f', 5 = boost = 'b'
+
+SetupMouseSensitivity:
+
+                          cmp.b              #'b',Prefsfile+4
+                          bne.s              .notBoost
+
+                          move.w             #5,sensitivity
+                          bra.b              .doneSensitivity
+
+.notBoost:
+                          cmp.b              #'f',Prefsfile+4
+                          bne.s              .notFast
+
+                          move.w             #4,sensitivity
+                          bra.b              .doneSensitivity
+
+.notFast:
+                          cmp.b              #'m',Prefsfile+4
+                          bne.s              .notMedium
+
+                          move.w             #3,sensitivity
+                          bra.b              .doneSensitivity
+
+.notMedium:
+                          cmp.b              #'s',Prefsfile+4
+                          bne.s              .notSlow
+
+                          move.w             #2,sensitivity
+                          bra.b              .doneSensitivity
+
+.notSlow:
+                          move.w             #3,sensitivity
+
+.doneSensitivity:
+                          rts
+
+*********************************************************************************************
+
+sensitivity:              dc.w               3
 
 lrs:                      dc.w               0
 prevx:                    dc.w               0
@@ -4365,8 +4097,10 @@ RotateLevelPts:
                           move.w             xoff,d4
                           move.w             zoff,d5
  
+ ****************************************************************
                           ; move.w #$c40,$dff106
                           ; move.w #$f00,$dff180
+****************************************************************                        
  
 pointrotlop:
                           move.w             (a0)+,d7
@@ -4420,8 +4154,10 @@ putin:
 
 outofpointrot:
 
+****************************************************************
                           ; move.w #$c40,$dff106
                           ; move.w #$ff0,$dff180
+****************************************************************
 
                           rts
 
@@ -5010,7 +4746,7 @@ exitToMainMenu:
 
 .noBack:
 
-*******************************
+****************************************************************
                           ; cmp.b #'n',mors
                           ; bne.s .nonextlev
                           ; cmp.w #15,MAXLEVEL
@@ -5018,7 +4754,7 @@ exitToMainMenu:
                           ; add.w #1,MAXLEVEL
                           ; st FINISHEDLEVEL
                           ;.nonextlev:
-******************************
+****************************************************************
 
                           bsr                CleanupForMainMenu
                           rts
@@ -5064,7 +4800,10 @@ CleanupForMainMenu:
 *******************************************************************
 
                           jsr                ReleaseLevelMemory                          ; AB3DI
-                          jsr                ReleaseCopperScrnMemory                     ; LoadFromDisks
+
+*******************************************************************
+
+                          jsr                ReleaseCopperScrnMemory                     ; ScreenSetup
 
 *******************************************************************
                           
@@ -5102,10 +4841,7 @@ across:
                           rts
 
 *********************************************************************************************
- 
-*************************************
-* Set left and right clip values
-*************************************
+; Set left and right clip values
 
 NEWsetlclip:
 
@@ -5242,6 +4978,8 @@ FIRSTsetlrclip:
                           move.w             d1,rightclip
 
 .rightnotoktoclip:
+
+****************************************************************
                           ; move.w leftclip,d0
                           ; move.w rightclip,d1
                           ; cmp.w d0,d1
@@ -5249,6 +4987,7 @@ FIRSTsetlrclip:
                           ; move.w #96,rightclip
                           ; move.w #0,leftclip
                           ;.noswap:
+****************************************************************
 
                           rts
 
@@ -5404,8 +5143,7 @@ below:
                           move.w             d6,minz
                           move.w             d7,bottomline
 
-                          ; Go round each point finding out
-                          ; if it should be visible or not.
+                        ; Go round each point finding out if it should be visible or not.
 
                           move.l             a0,-(a7)
 
@@ -6292,7 +6030,7 @@ doneclip:
 .notzero:
                           muls               linedir,d1
                           add.l              d1,a6
-                          move.l             #floorscalecols,a1
+                          move.l             #floorScaleCols,a1
                           move.l             LineRoutineToUse,a5
  
                           tst.b              gourfloor
@@ -6545,7 +6283,7 @@ noclipleftGOUR:
                           move.l             a6,a3
                           movem.l            d0/d7/a2/a4/a5/a6,-(a7)
                           move.w             dst,d0
-                          lea                floorscalecols,a1
+                          lea                floorScaleCols,a1
                           move.l             floortile,a0
                           adda.w             whichtile,a0
                           jsr                pastfloorbright
@@ -6626,7 +6364,7 @@ dofloornoclipGOUR:
                           movem.l            d0/d7/a2/a4/a5/a6,-(a7)
                           move.w             d6,d0
                           move.w             d0,dst
-                          lea                floorscalecols,a1
+                          lea                floorScaleCols,a1
                           move.l             floortile,a0
                           adda.w             whichtile,a0
                           jsr                pastfloorbright
@@ -6795,7 +6533,7 @@ FloorLine:
                           move.w             #28,d1
 
 .smallbright:
-                          lea                floorscalecols,a1
+                          lea                floorScaleCols,a1
                           add.l              floorbright(pc,d1.w*4),a1
                           bra                pastfloorbright
 
@@ -6810,22 +6548,22 @@ BumpLine:
                           tst.b              smoothbumps
                           beq.s              Chunky
  
-                          move.l             #SmoothTile,a0
-                          lea                Smoothscalecols,a1
+                          move.l             #smoothTile,a0
+                          lea                smoothScaleCols,a1
                           bra.b              pastast
  
 Chunky:
                           moveq              #0,d2
-                          move.l             #Bumptile,a0
+                          move.l             #bumpTile,a0
                           move.w             whichtile,d2
                           adda.w             d2,a0
                           ror.l              #2,d2
                           lsr.w              #6,d2
                           rol.l              #2,d2
                           and.w              #15,d2
-                          move.l             #ConstCols,a1
+                          move.l             #constCols,a1
                           move.w             (a1,d2.w*2),ConstCol
-                          lea                Bumpscalecols,a1
+                          lea                bumpScaleCols,a1
  
 pastast:
                           move.w             lighttype,d1
@@ -7827,20 +7565,20 @@ test:                     dc.l               0
 
 *********************************************************************************************
 
-ConstCols:                ; incbin "ConstCols"      
+constCols:                incbin             "data/pal/ConstCols"      
                           even
-Smoothscalecols:          ; incbin "smoothbumppalscaled" 
+smoothScaleCols:          incbin             "data/pal/SmoothBumpPalScaled" 
                           even
-SmoothTile:               ; incbin "smoothbumptile" 
+smoothTile:               incbin             "data/gfx/SmoothBumpTile" 
                           even
-Bumpscalecols:            ; incbin "Bumppalscaled"
+bumpScaleCols:            incbin             "data/pal/BumpPalScaled"
                           even
-Bumptile:                 ; incbin "bumptile"
+bumpTile:                 incbin             "data/gfx/BumpTile"
                           even
 
 *********************************************************************************************	
 
-floorscalecols:           ;incbin              "data/FloorPalScaled"
+floorScaleCols:           ; incbin              "data/FloorPalScaled"
                           include            "data/pal/FloorPalScaled.s"
                           ds.w               256*4
                           even
@@ -8309,7 +8047,7 @@ CHEATNUM:                 dc.l               0
 
 *********************************************************************************************
  
-nullspr:                  dc.l               0
+nullSpr:                  dc.l               0
                           cnop               0,8
 
 *********************************************************************************************

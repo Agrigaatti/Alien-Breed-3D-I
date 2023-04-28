@@ -1,13 +1,12 @@
     IFND    GRAPHICS_GFXBASE_I
 GRAPHICS_GFXBASE_I  SET 1
 **
-**	$VER: gfxbase.i 39.33 (21.4.1993)
-**	Includes Release 45.1
+**	$VER: gfxbase.i 47.1 (30.7.2019)
 **
 **	graphics base definitions
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND    EXEC_LISTS_I
@@ -112,8 +111,8 @@ GRAPHICS_GFXBASE_I  SET 1
 	BYTE	gb_WantChips
 	UBYTE	gb_BoardMemType
 	UBYTE	gb_Bugs
-	ULONG	gb_LayersBase
-	ULONG	gb_ColorMask
+	ULONG   gb_LayersBase
+	ULONG 	gb_ColorMask
 	APTR	gb_IVector
 	APTR	gb_IData
 	ULONG	gb_SpecialCounter
@@ -129,7 +128,9 @@ GRAPHICS_GFXBASE_I  SET 1
 	WORD	gb_GfxFlags
 	ULONG	gb_VBCounter
 	APTR	gb_HashTableSemaphore
-	STRUCT		gb_HWEmul,9*4
+	STRUCT 	gb_HWEmul,9*4
+	APTR    gb_Scratch
+	ULONG   gb_ScratchSize
 	LABEL	gb_SIZE
 
 gb_ChunkyToPlanarPtr	equ	gb_HWEmul
@@ -137,7 +138,7 @@ gb_ChunkyToPlanarPtr	equ	gb_HWEmul
 * bits for dalestuff, which may go away when blitter becomes a resource
 OWNBLITTERn equ 0   * blitter owned bit
 QBOWNERn    equ 1   * blitter owned by blit queuer
-BLITMSG_FAULTn	equ 2
+BLITMSG_FAULTn  equ 2
 
 BLITMSG_FAULT	equ 1<<BLITMSG_FAULTn
 QBOWNER		equ 1<<QBOWNERn
@@ -182,10 +183,10 @@ PALn		equ 2
 PAL		equ 1<<PALn
 
 
-TODA_SAFEn	equ 3
-TODA_SAFE	equ 1<<TODA_SAFEn
+TODA_SAFEn  	equ 3
+TODA_SAFE   	equ 1<<TODA_SAFEn
 
-REALLY_PALn	equ	4
+REALLY_PALn	equ	4	
 ; what is actual crystal frequency (as opposed to what bootmenu set the agnus to)?
 REALLY_PAL	equ	1<<REALLY_PALn
 

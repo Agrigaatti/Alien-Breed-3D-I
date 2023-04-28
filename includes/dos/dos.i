@@ -1,12 +1,13 @@
 	IFND	DOS_DOS_I
 DOS_DOS_I SET	1
-**	$VER: dos.i 36.27 (5.4.1992)
-**	Includes Release 45.1
+
 **
-**	Standard asm header for AmigaDOS
+**	$VER: dos.h 47.1 (29.7.2019)
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Standard C header for AmigaDOS 
+**
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I
@@ -17,16 +18,16 @@ DOSNAME	    MACRO
       DC.B  'dos.library',0
       ENDM
 
-* Predefined Amiga DOS global constants
+* Predefined Amiga DOS global constants 
 
 DOSTRUE	      EQU     -1
 DOSFALSE      EQU      0
 
-* Mode parameter to Open()
-MODE_OLDFILE	     EQU   1005	  * Open existing file read/write
-*				  * positioned at beginning of file.
-MODE_NEWFILE	     EQU   1006	  * Open freshly created file (delete
-*				  * old file) read/write
+* Mode parameter to Open() 
+MODE_OLDFILE	     EQU   1005	  * Open existing file read/write 
+*				  * positioned at beginning of file. 
+MODE_NEWFILE	     EQU   1006	  * Open freshly created file (delete 
+*				  * old file) read/write	    
 MODE_READWRITE	     EQU   1004	  * Open old file w/shared lock,
 *				  * creates file if doesn't exist.
 
@@ -75,7 +76,7 @@ TICKS_PER_SECOND EQU 50		; Number of ticks in one second
    ; They should be initialized to 0 sending an ACTION_EXAMINE packet.
    ; When Examine() is called, these are set to 0 for you.
    ; AllocDosObject() also initializes them to 0.
-   UWORD  fib_OwnerUID		; owner's UID
+   UWORD  fib_OwnerUID		; owner's UID 
    UWORD  fib_OwnerGID		; owner's GID
 
    STRUCT fib_Reserved,32
@@ -95,6 +96,7 @@ TICKS_PER_SECOND EQU 50		; Number of ticks in one second
    BITDEF   FIB,GRP_EXECUTE,9	; Group: file is executable
    BITDEF   FIB,GRP_DELETE,8	; Group: prevent file from being deleted
 
+   BITDEF   FIB,HOLD,7	        ; keep a pure module resident on its first use
    BITDEF   FIB,SCRIPT,6	; program is an execute script
    BITDEF   FIB,PURE,5		; program is reentrant and reexecutable
    BITDEF   FIB,ARCHIVE,4	; cleared whenever file is changed
@@ -124,26 +126,26 @@ BSTR	 MACRO			    * Long word pointer to BCPL string.
 * BCPL strings have a length in the first byte and then the characters.
 * For example:	s[0]=3 s[1]=S s[2]=Y s[3]=S
 
-* returned by Info()
+* returned by Info() 
  STRUCTURE InfoData,0
-   LONG id_NumSoftErrors	* number of soft errors on disk
-   LONG id_UnitNumber		* Which unit disk is (was) mounted on
-   LONG id_DiskState		* See defines below
-   LONG id_NumBlocks		* Number of blocks on disk
-   LONG id_NumBlocksUsed	* Number of block in use
-   LONG id_BytesPerBlock
+   LONG id_NumSoftErrors	* number of soft errors on disk 
+   LONG id_UnitNumber		* Which unit disk is (was) mounted on 
+   LONG id_DiskState		* See defines below 
+   LONG id_NumBlocks		* Number of blocks on disk 
+   LONG id_NumBlocksUsed	* Number of block in use 
+   LONG id_BytesPerBlock   
    LONG id_DiskType		* Disk Type code
-   BPTR id_VolumeNode		* BCPL pointer to volume node (see DosList)
+   BPTR id_VolumeNode		* BCPL pointer to volume node
    LONG id_InUse		* Flag, zero if not in use
-   LABEL id_SIZEOF		* InfoData
+   LABEL id_SIZEOF		* InfoData 
 
-* ID stands for InfoData
+* ID stands for InfoData 
 *	     Disk states
-ID_WRITE_PROTECTED	EQU	80	* Disk is write protected
-ID_VALIDATING		EQU	81	* Disk is currently being validated
-ID_VALIDATED		EQU	82	* Disk is consistent and writeable
+ID_WRITE_PROTECTED	EQU	80	* Disk is write protected 
+ID_VALIDATING		EQU	81	* Disk is currently being validated 
+ID_VALIDATED		EQU	82	* Disk is consistent and writeable 
 
-*	   Disk types
+*	   Disk types 
 * ID_INTER_* use international case comparison routines for hashing
 * Any other new filesystems should also use it, if possible
 ID_NO_DISK_PRESENT	EQU -1
@@ -155,10 +157,13 @@ ID_INTER_DOS_DISK	EQU  ('D'<<24)!('O'<<16)!('S'<<8)!(2)
 ID_INTER_FFS_DISK	EQU  ('D'<<24)!('O'<<16)!('S'<<8)!(3)
 ID_FASTDIR_DOS_DISK	EQU  ('D'<<24)!('O'<<16)!('S'<<8)!(4)
 ID_FASTDIR_FFS_DISK	EQU  ('D'<<24)!('O'<<16)!('S'<<8)!(5)
+ID_LONG_DOS_DISK	EQU  ('D'<<24)!('O'<<16)!('S'<<8)!(6)
+ID_LONG_FFS_DISK	EQU  ('D'<<24)!('O'<<16)!('S'<<8)!(7)
+ID_COMPLONG_FFS_DISK	EQU  ('D'<<24)!('O'<<16)!('S'<<8)!(8)
 ID_KICKSTART_DISK	EQU  ('K'<<24)!('I'<<16)!('C'<<8)!('K')
 ID_MSDOS_DISK		EQU  ('M'<<24)!('S'<<16)!('D'<<8)
 
-* Errors from IoErr(), etc.
+* Errors from IoErr(), etc. 
 ERROR_NO_FREE_STORE		  EQU  103
 ERROR_TASK_TABLE_FULL		  EQU  105
 ERROR_BAD_TEMPLATE		  EQU  114
@@ -188,10 +193,10 @@ ERROR_DIRECTORY_NOT_EMPTY	  EQU  216
 ERROR_TOO_MANY_LEVELS		  EQU  217
 ERROR_DEVICE_NOT_MOUNTED	  EQU  218
 ERROR_SEEK_ERROR		  EQU  219
-ERROR_COMMENT_TOO_BIG		  EQU  220
+ERROR_COMMENT_TOO_BIG		  EQU  220   
 ERROR_DISK_FULL			  EQU  221
 ERROR_DELETE_PROTECTED		  EQU  222
-ERROR_WRITE_PROTECTED		  EQU  223
+ERROR_WRITE_PROTECTED		  EQU  223 
 ERROR_READ_PROTECTED		  EQU  224
 ERROR_NOT_A_DOS_DISK		  EQU  225
 ERROR_NO_DISK			  EQU  226
@@ -208,11 +213,11 @@ ERROR_UNLOCK_ERROR		  EQU  243
 
 * error codes 303-305 are defined in dosasl.i
 
-* These are the return codes used by convention by AmigaDOS commands
-* See FAILAT and IF for relvance to EXECUTE files
-RETURN_OK			  EQU	 0  * No problems, success
-RETURN_WARN			  EQU	 5  * A warning only
-RETURN_ERROR			  EQU	10  * Something wrong
+* These are the return codes used by convention by AmigaDOS commands 
+* See FAILAT and IF for relvance to EXECUTE files		     
+RETURN_OK			  EQU	 0  * No problems, success 
+RETURN_WARN			  EQU	 5  * A warning only 
+RETURN_ERROR			  EQU	10  * Something wrong 
 RETURN_FAIL			  EQU	20  * Complete or severe failure
 
 * Bit numbers that signal you that a user has issued a break

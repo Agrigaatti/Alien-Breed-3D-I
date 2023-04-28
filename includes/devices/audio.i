@@ -1,13 +1,12 @@
 	IFND	DEVICES_AUDIO_I
 DEVICES_AUDIO_I SET	1
 **
-**	$VER: audio.i 36.3 (29.8.1990)
-**	Includes Release 45.1
+**	$VER: audio.i 47.1 (28.6.2019)
 **
 **	audio.device include file
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_IO_I

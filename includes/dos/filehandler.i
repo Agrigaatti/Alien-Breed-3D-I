@@ -1,13 +1,12 @@
 	IFND	DOS_FILEHANDLER_I
 DOS_FILEHANDLER_I SET	1
 **
-**	$VER: filehandler.i 36.5 (9.8.1992)
-**	Includes Release 45.1
+**	$VER: filehandler.i 47.1 (29.7.2019)
 **
-**	device and file handler specific code for AmigaDOS
+**	device and file handler specific code for AmigaDOS 
 **
-**	(C) Copyright 1986-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	  EXEC_TYPES_I
@@ -31,26 +30,26 @@ DOS_FILEHANDLER_I SET	1
 
  STRUCTURE DosEnvec,0
     ULONG de_TableSize	     ; Size of Environment vector
-    ULONG de_SizeBlock	     ; in longwords: standard value is 128
+    ULONG de_SizeBlock	     ; in longwords: physical disk block size
     ULONG de_SecOrg	     ; not used; must be 0
     ULONG de_Surfaces	     ; # of heads (surfaces). drive specific
-    ULONG de_SectorPerBlock  ; not used; must be 1
-    ULONG de_BlocksPerTrack  ; blocks per track. drive specific
-    ULONG de_Reserved	     ; DOS reserved blocks at start of partition.
-    ULONG de_PreAlloc	     ; DOS reserved blocks at end of partition
-    ULONG de_Interleave	     ; usually 0
-    ULONG de_LowCyl	     ; starting cylinder. typically 0
-    ULONG de_HighCyl	     ; max cylinder. drive specific
-    ULONG de_NumBuffers	     ; Initial # DOS of buffers.
-    ULONG de_BufMemType	     ; type of mem to allocate for buffers
-    ULONG de_MaxTransfer     ; Max number of bytes to transfer at a time
-    ULONG de_Mask	     ; Address Mask to block out certain memory
-    LONG  de_BootPri	     ; Boot priority for autoboot
+    ULONG de_SectorPerBlock  ; physical sectors per logical block
+    ULONG de_BlocksPerTrack  ; blocks per track. drive specific 
+    ULONG de_Reserved	     ; DOS reserved blocks at start of partition. 
+    ULONG de_PreAlloc	     ; DOS reserved blocks at end of partition 
+    ULONG de_Interleave	     ; usually 0 
+    ULONG de_LowCyl	     ; starting cylinder. typically 0 
+    ULONG de_HighCyl	     ; max cylinder. drive specific 
+    ULONG de_NumBuffers	     ; Initial # DOS of buffers.  
+    ULONG de_BufMemType	     ; type of mem to allocate for buffers 
+    ULONG de_MaxTransfer     ; Max number of bytes to transfer at a time 
+    ULONG de_Mask	     ; Address Mask to block out certain memory 
+    LONG  de_BootPri	     ; Boot priority for autoboot 
     ULONG de_DosType	     ; ASCII (HEX) string showing filesystem type;
 			     ; 0X444F5300 is old filesystem,
-			     ; 0X444F5301 is fast file system
-    ULONG de_Baud	     ; Baud rate for serial handler
-    ULONG de_Control	     ; Control word for handler/filesystem
+			     ; 0X444F5301 is fast file system 
+    ULONG de_Baud            ; Baud rate for serial handler
+    ULONG de_Control         ; Control word for handler/filesystem
     ULONG de_BootBlocks      ; Number of blocks containing boot code
 
     LABEL DosEnvec_SIZEOF
@@ -79,9 +78,18 @@ DE_BOOTPRI	EQU	15	; Boot priority for autoboot
 DE_DOSTYPE	EQU	16	; ASCII (HEX) string showing filesystem type
 				; 0X444F5300 is old filesystem,
 				; 0X444F5301 is fast file system
-DE_BAUD	EQU	17	; Baud rate for serial handler
-DE_CONTROL	EQU	18	; Control word for handler/filesystem
-DE_BOOTBLOCKS	EQU	19	; Number of blocks containing boot code
+DE_BAUD         EQU 	17	; Baud rate for serial handler
+DE_CONTROL      EQU	18	; Control word for handler/filesystem
+DE_BOOTBLOCKS   EQU	19	; Number of blocks containing boot code
+
+*
+* Starting with release 3.1.4, the upper 16 bits of the
+* DE_INTERLEAVE entry contain the following additional flags:
+*
+   BITDEF ENV,SCSIDIRECT,16   ;Use HD_SCSICMD instead of TD_READ/TD_READ64 
+   BITDEF ENV,SUPERFLOPPY,17  ;Request device geometry by TD_GETGEOMETRY or
+   	  		      ;HD_SCSICMD, DE_LOWCYL must be 0
+   BITDEF ENV,DISABLENSD,18   ;Do not query for NSD
 
 *
 * The file system startup message is linked into a device node's startup

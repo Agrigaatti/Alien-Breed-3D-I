@@ -1,13 +1,12 @@
-	IFND	PREF_ASL_I
-PREF_ASL_I	SET	1
+	IFND	PREFS_ASL_I
+PREFS_ASL_I	SET	1
 **
-**	$VER: asl.i 45.1 (27.10.2000)
-**	Includes Release 45.1
+**	$VER: asl.i 47.1 (2.8.2019)
 **
 **	File format for ASL ("application support library") preferences
 **
-**	(C) Copyright 1991-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

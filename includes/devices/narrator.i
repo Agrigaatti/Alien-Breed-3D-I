@@ -1,15 +1,13 @@
 	IFND DEVICES_NARRATOR_I
 DEVICES_NARRATOR_I	SET 1
 **
-**	$VER: narrator.i 37.7 (12.3.1991)
-**	Includes Release 45.1
+**	$VER: narrator.i 47.1 (28.6.2019)
 **
-**	V37 Narrator device ASM include file
-**
+**	V37 Narrator device C language include file
 **	Copyright 1990, 1991 Joseph Katz/Mark Barton.
 **	All rights reserved.
 **
-**	This include file (narrator.i) may be freely distributed
+**	This include file (narrator.h) may be freely distributed
 **	as long as the above copyright notice remains intact.
 **
 

@@ -1,13 +1,12 @@
 	IFND	DEVICES_CD_I
 DEVICES_CD_I SET	1
 **
-**	$VER: cd.i 40.12 (12.8.1993)
-**	Includes Release 45.1
+**	$VER: cd.i 47.1 (28.6.2019)
 **
 **	cd.device include file
 **
-**	(C) Copyright 1992-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	INCLUDE "exec/types.i"

@@ -1,13 +1,12 @@
 	IFND	LIBRARIES_CONFIGREGS_I
 LIBRARIES_CONFIGREGS_I	SET	1
 **
-**	$VER: configregs.i 36.11 (3.11.1990)
-**	Includes Release 45.1
+**	$VER: configregs.i 47.1 (29.7.2019)
 **
 **	AutoConfig (tm) hardware register and bit definitions
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND	EXEC_TYPES_I
@@ -46,7 +45,7 @@ LIBRARIES_CONFIGREGS_I	SET	1
     UBYTE	er_Product	;Product number, assigned by manufacturer
     UBYTE	er_Flags	;Flags
     UBYTE	er_Reserved03	;Must be zero ($ff inverted)
-    UWORD	er_Manufacturer ;Unique ID,ASSIGNED BY AMIGA, INC.!
+    UWORD	er_Manufacturer ;Unique ID
     ULONG	er_SerialNumber ;Available for use by manufacturer
     UWORD	er_InitDiagVec	;Offset to optional "DiagArea" structure
     UBYTE	er_Reserved0c

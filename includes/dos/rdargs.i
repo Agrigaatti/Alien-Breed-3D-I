@@ -1,13 +1,12 @@
 	IFND	DOS_RDARGS_I
 DOS_RDARGS_I SET 1
 **
-**	$VER: rdargs.i 36.7 (12.7.1990)
-**	Includes Release 45.1
+**	$VER: rdargs.i 47.1 (29.7.2019)
 **
 **	ReadArgs() structure definitions
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND EXEC_NODES_I
@@ -83,6 +82,8 @@ DOS_RDARGS_I SET 1
 *
 * RDA_Flags bits control how ReadArgs() works.	The flag bits are
 * defined below.  Defaults are initialized to ZERO.
+*
+* When parsing the input string needs to end with a newline
 *
 **********************************************************************
 

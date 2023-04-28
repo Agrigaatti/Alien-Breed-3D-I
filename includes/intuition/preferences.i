@@ -1,13 +1,12 @@
 	IFND  INTUITION_PREFERENCES_I
 INTUITION_PREFERENCES_I	SET  1
 **
-**	$VER: preferences.i 38.4 (16.9.1992)
-**	Includes Release 45.1
+**	$VER: preferences.i 47.1 (1.8.2019)
 **
 **	Structure definition for old-style preferences
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND EXEC_TYPES_I

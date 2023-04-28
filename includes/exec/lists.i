@@ -1,14 +1,12 @@
 	IFND	EXEC_LISTS_I
 EXEC_LISTS_I	SET	1
 **
-**	$VER: lists.i 39.1 (28.5.1992)
-**	Includes Release 45.1
+**	$VER: lists.i 47.1 (28.6.2019)
 **
-**	Definitions and macros for use with Exec lists.  Most of the
-**	macros require ownership or locking of the list before use.
+**	Definitions and macros for use with Exec lists
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND EXEC_NODES_I
@@ -45,7 +43,7 @@ NEWLIST     MACRO   ; list
 	    MOVE.L  \1,LH_TAILPRED(\1)
 	    ADDQ.L  #4,\1	;Get address of LH_TAIL
 	    CLR.L   (\1)	;Clear LH_TAIL
-	    MOVE.L  \1,-(\1)	;Address of LH_TAIL to LH_HEAD
+	    MOVE.L  \1,-(\1)    ;Address of LH_TAIL to LH_HEAD
 	    ENDM
 
 ;Test if list is empty (list address in register)
@@ -101,7 +99,7 @@ TSTNODE     MACRO   ; node,=next
 NEXTNODE    MACRO   ; next=next,=current,exit_label ([.s],DX,AX,DISP16)
 	    MOVE.L  \1,\2
 	    MOVE.L  (\2),\1
-	    IFC     '\0',''	;Check extension
+	    IFC     '\0',''     ;Check extension
 	    BEQ     \3
 	    ENDC
 	    IFNC    '\0',''

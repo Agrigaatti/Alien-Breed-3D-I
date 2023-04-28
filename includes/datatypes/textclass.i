@@ -1,13 +1,12 @@
 	IFND DATATYPES_TEXTCLASS_I
 DATATYPES_TEXTCLASS_I	SET	1
 **
-**  $VER: textclass.i 39.2 (24.6.1992)
-**  Includes Release 45.1
+**	$VER: textclass.i 47.1 (28.6.2019)
 **
 **  Interface definitions for DataType text objects.
 **
-**  (C) Copyright 1992-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 	IFND UTILITY_TAGITEM_I
@@ -24,9 +23,7 @@ DATATYPES_TEXTCLASS_I	SET	1
 
 ;------------------------------------------------------------------------------
 
-TEXTDTCLASS	MACRO
-	DC.B	'text.datatype',0
-	ENDM
+TEXTDTCLASS	equ	'text.datatype'
 
 ;------------------------------------------------------------------------------
 
@@ -42,11 +39,11 @@ TDTA_LineList	equ	(DTA_Dummy+302)
 	STRUCT	ln_Link,MLN_SIZE		; to link the lines together
 	APTR	ln_Text				; pointer to the text for this	line
 	ULONG	ln_TextLen			; character length of the text for this line
-	UWORD	ln_XOffset			; where in the	line the text starts
+	UWORD	ln_XOffset			; where in the  line the text starts
 	UWORD	ln_YOffset			; line the text is on
 	UWORD	ln_Width			; Width of line in pixels
 	UWORD	ln_Height			; Height of line in pixels
-	UWORD	ln_Flags			; info	on the line
+	UWORD	ln_Flags			; info  on the line
 	BYTE	ln_FgPen			; foreground pen
 	BYTE	ln_BgPen			; background pen
 	ULONG	ln_Style			; Font style

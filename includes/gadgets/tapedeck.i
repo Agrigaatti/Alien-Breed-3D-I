@@ -1,13 +1,12 @@
 	IFND GADGETS_TAPEDECK_I
 GADGETS_TAPEDECK_I	SET	1
 **
-**	$VER: tapedeck.i 40.1 (12.3.1993)
-**	Includes Release 45.1
+**	$VER: tapedeck.i 47.1 (30.7.2019)
 **
-**	Definitions for the gradientslider BOOPSI class
+**	Definitions for the tapedeck BOOPSI class
 **
-**	(C) Copyright 1992-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

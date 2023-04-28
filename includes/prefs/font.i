@@ -1,13 +1,12 @@
 	IFND	PREFS_FONT_I
 PREFS_FONT_I	SET	1
 **
-**	$VER: font.i 38.2 (27.9.1991)
-**	Includes Release 45.1
+**	$VER: font.i 47.1 (2.8.2019)
 **
 **	File format for font preferences
 **
-**	(C) Copyright 1991-2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------
@@ -34,6 +33,7 @@ FONTNAMESIZE equ 128
 	UBYTE  fp_FrontPen
 	UBYTE  fp_BackPen
 	UBYTE  fp_DrawMode
+    UBYTE  fp_SpecialDrawMode
 	STRUCT fp_TextAttr,ta_SIZEOF
 	STRUCT fp_Name,FONTNAMESIZE
    LABEL FontPrefs_SIZEOF

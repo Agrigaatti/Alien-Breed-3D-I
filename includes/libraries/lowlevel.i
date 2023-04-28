@@ -1,13 +1,12 @@
 	IFND	LIBRARIES_LOWLEVEL_I
 LIBRARIES_LOWLEVEL_I  SET 1
 **
-**	$VER: lowlevel.i 40.7 (30.7.1993)
-**	Includes Release 45.1
+**	$VER: lowlevel.i 47.1 (29.7.2019)
 **
-**	lowlevel.library interface structures and definitions
+**	lowlevel.library interface structures and definitions.
 **
-**	(C) Copyright 2001 Amiga, Inc.
-**	All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 ;---------------------------------------------------------------------------

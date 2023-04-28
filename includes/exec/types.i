@@ -1,17 +1,16 @@
 	IFND	EXEC_TYPES_I
 EXEC_TYPES_I	SET	1
 **
-**	$VER: types.i 39.1 (24.2.1993)
-**	Includes Release 45.1
+**	$VER: types.i 47.1 (28.7.2019)
 **
 **	Data storage macros.  Must be included before any other Amiga include.
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 
-INCLUDE_VERSION	EQU 40	;Version of the include files in use. (Do not
+INCLUDE_VERSION	EQU 47	;Version of the include files in use. (Do not
 			;use this label for OpenLibrary() calls!)
 
 

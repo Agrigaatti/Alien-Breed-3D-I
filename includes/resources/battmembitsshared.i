@@ -1,18 +1,17 @@
 	IFND	RESOURCES_BATTMEMSHARED_I
 RESOURCES_BATTMEMBITSSHARED_I	SET	1
 **
-**	$VER: battmembitsshared.i 39.2 (4.6.1993)
-**	Includes Release 45.1
+**	$VER: battmembitsshared.i 47.1 (3.8.2019)
 **
 **	BattMem shared specific bit definitions.
 **
-**	(C) Copyright 1989-2001 Amiga, Inc.
-**		All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
 
 *
-* Shared bits in the battery-backed-up ram.
+* Shared bits in the battery-backedup ram.
 *
 *	Bits 64 and above
 *
@@ -80,5 +79,18 @@ BATTMEM_SCSI_FAST_SYNC_LEN	EQU	1
 
 BATTMEM_SCSI_TAG_QUEUES_ADDR	EQU	70
 BATTMEM_SCSI_TAG_QUEUES_LEN	EQU	1
+
+*
+* IDE_EXTRA_WAIT
+*
+*		Makes the system wait an additional number of seconds on
+*		every boot before accessing the IDE drives.  Currently
+*		in V40 the number is 8 seconds.  Equivalent to the SCSI
+*		TIMEOUT bit.
+*		Default=0=no extra wait
+*
+
+BATTMEM_IDE_EXTRA_WAIT_ADDR	EQU	71
+BATTMEM_IDE_EXTRA_WAIT_LEN	EQU	1
 
 	ENDC	; RESOURCES_BATTMEMSHARED_I

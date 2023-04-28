@@ -1,13 +1,12 @@
 	IFND	EXEC_DEVICES_I
 EXEC_DEVICES_I	SET	1
 **
-**	$VER: devices.i 39.0 (15.10.1991)
-**	Includes Release 45.1
+**	$VER: devices.i 47.1 (28.6.2019)
 **
 **	Include file for use by Exec device drivers
 **
-**	(C) Copyright 1985-2001 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (C) 2019 Hyperion Entertainment CVBA.
+**	    Developed under license.
 **
 
     IFND EXEC_LIBRARIES_I
@@ -26,7 +25,7 @@ EXEC_DEVICES_I	SET	1
 *----------------------------------------------------------------
 
  STRUCTURE  DD,LIB_SIZE
-    LABEL   DD_SIZE			; identical to library
+    LABEL   DD_SIZE                     ; identical to library
 
 
 *----------------------------------------------------------------
@@ -35,7 +34,7 @@ EXEC_DEVICES_I	SET	1
 *
 *----------------------------------------------------------------
 
- STRUCTURE  UNIT,MP_SIZE		; queue for requests
+ STRUCTURE  UNIT,MP_SIZE                ; queue for requests
     UBYTE   UNIT_FLAGS
     UBYTE   UNIT_pad
     UWORD   UNIT_OPENCNT
@@ -44,7 +43,7 @@ EXEC_DEVICES_I	SET	1
 
 *------ UNIT_FLAG definitions:
 
-    BITDEF  UNIT,ACTIVE,0		; driver is active
-    BITDEF  UNIT,INTASK,1		; running in driver's task
+    BITDEF  UNIT,ACTIVE,0               ; driver is active
+    BITDEF  UNIT,INTASK,1               ; running in driver's task
 
 	ENDC	; EXEC_DEVICES_I
