@@ -6,7 +6,6 @@
 <br>
 Original Team 17 sources : https://github.com/videogamepreservation/alienbreed3dii.git<br>
 RTG version sources : https://github.com/mheyer32/ab3d-rtg<br>
-AmigaOS includes : https://github.com/kusma/amiga-dev<br>
 VS Code extension : https://marketplace.visualstudio.com/items?itemName=prb28.amiga-assembly<br>
 <br>
 Builds & runs & can play<br>
